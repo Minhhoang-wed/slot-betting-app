@@ -280,7 +280,8 @@ function updateGameConfig() {
   gameState.prizeValue = parseInt(document.getElementById("prizeValueInput").value) || 1350000;
 
   document.getElementById("heroGameTitle").innerText = gameState.name;
-  document.getElementById("liveTickerText").innerText = `🔥 KÈO HOT ${gameState.totalSlots} SLOT: ${gameState.name} • Giá ${formatVND(gameState.slotPrice)}/Slot • Giải thưởng ${formatVND(gameState.prizeValue)}`;
+  const liveTicker = document.getElementById("liveTickerText");
+  if (liveTicker) liveTicker.innerText = `🔥 KÈO HOT ${gameState.totalSlots} SLOT: ${gameState.name} • Giá ${formatVND(gameState.slotPrice)}/Slot • Giải thưởng ${formatVND(gameState.prizeValue)}`;
 
   updateHeroStats();
   updateSplitAmounts();
