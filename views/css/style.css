@@ -2136,12 +2136,7 @@ input[type="number"] {
 }
 
 .menu-pill-price-badge {
-  background: rgba(0, 0, 0, 0.4);
-  padding: 1px 6px;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  color: var(--accent-gold);
-  font-weight: 800;
+  display: none !important;
 }
 
 .btn-chip-add-menu {

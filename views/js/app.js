@@ -1757,7 +1757,6 @@ function renderMenuPills() {
     btn.innerHTML = `
       <i class="fa-solid ${isActive ? 'fa-fire text-gold' : 'fa-circle-dot text-muted'}"></i>
       <span>${m.name}</span>
-      <span class="menu-pill-price-badge">${formatVND(m.slot_price)}</span>
     `;
     btn.onclick = () => selectMenu(m.id);
     container.appendChild(btn);
