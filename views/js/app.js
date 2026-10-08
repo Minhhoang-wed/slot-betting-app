@@ -2750,3 +2750,27 @@ function exportCurrentMenuCsv() {
   showToast(`Đang tải file Báo Cáo của ${gameState.name}...`);
 }
 
+// ================= QUICK SETTINGS & UTILITIES DROPDOWN =================
+function toggleQuickMenu(event) {
+  if (event) event.stopPropagation();
+  const dropdown = document.getElementById("quickMenuDropdown");
+  const btn = document.getElementById("quickMenuToggleBtn");
+  if (!dropdown || !btn) return;
+  const isShow = dropdown.classList.toggle("show");
+  btn.classList.toggle("active", isShow);
+}
+
+function closeQuickMenu() {
+  const dropdown = document.getElementById("quickMenuDropdown");
+  const btn = document.getElementById("quickMenuToggleBtn");
+  if (dropdown) dropdown.classList.remove("show");
+  if (btn) btn.classList.remove("active");
+}
+
+document.addEventListener("click", function(e) {
+  const wrapper = document.getElementById("quickMenuWrapper");
+  if (wrapper && !wrapper.contains(e.target)) {
+    closeQuickMenu();
+  }
+});
+

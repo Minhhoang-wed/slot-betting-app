@@ -54,19 +54,54 @@
             <span class="pill-icon"><i class="fa-solid fa-bag-shopping"></i></span>
             <span class="pill-title">Mỹ Phẩm Bán Lẻ</span>
           </button>
-          <button id="tabBtnSettings" class="nav-pill" onclick="switchTab('settings')">
-            <span class="pill-icon"><i class="fa-solid fa-sliders"></i></span>
-            <span class="pill-title">Cấu Hình Shop & QR</span>
-          </button>
         </nav>
 
-        <div class="navbar-actions" style="display: flex; align-items: center; gap: 8px;">
-          <button id="soundToggleBtn" class="sound-chip active" onclick="toggleAudio()" title="Bật/Tắt âm thanh Gameshow">
-            <i class="fa-solid fa-volume-high"></i> <span id="soundLabel">Âm thanh: BẬT</span>
-          </button>
-          <button class="live-hud-btn" onclick="toggleStreamHUD()" title="Chế độ Trình chiếu Live cho Streamer">
-            <i class="fa-solid fa-expand"></i> Màn Hình Live (HUD)
-          </button>
+        <div class="navbar-actions">
+          <div class="dropdown-wrapper" id="quickMenuWrapper">
+            <button id="quickMenuToggleBtn" class="btn-quick-menu-toggle" onclick="toggleQuickMenu(event)" title="Cài Đặt & Tiện Ích">
+              <i class="fa-solid fa-sliders"></i>
+              <span>Cài Đặt & Tiện Ích</span>
+              <i class="fa-solid fa-chevron-down toggle-arrow-icon" id="quickMenuArrow"></i>
+            </button>
+
+            <div id="quickMenuDropdown" class="quick-menu-dropdown-panel">
+              <!-- Mục 1: Cấu hình Shop & QR -->
+              <button id="tabBtnSettings" class="dropdown-item-btn" onclick="switchTab('settings'); closeQuickMenu();">
+                <div class="dropdown-item-icon"><i class="fa-solid fa-gear text-gold"></i></div>
+                <div class="dropdown-item-text">
+                  <span class="dropdown-item-title">Cấu Hình Shop & QR</span>
+                  <span class="dropdown-item-desc">Tài khoản VietQR & Ngân hàng</span>
+                </div>
+              </button>
+
+              <div class="dropdown-divider"></div>
+
+              <!-- Mục 2: Âm thanh gameshow -->
+              <div class="dropdown-item-row">
+                <div class="dropdown-item-info">
+                  <div class="dropdown-item-icon"><i class="fa-solid fa-volume-high text-gold"></i></div>
+                  <div class="dropdown-item-text">
+                    <span class="dropdown-item-title">Âm Thanh Gameshow</span>
+                    <span class="dropdown-item-desc">Âm thanh click & trúng giải</span>
+                  </div>
+                </div>
+                <button id="soundToggleBtn" class="sound-chip active" onclick="toggleAudio()" title="Bật/Tắt âm thanh">
+                  <i class="fa-solid fa-volume-high"></i> <span id="soundLabel">BẬT</span>
+                </button>
+              </div>
+
+              <div class="dropdown-divider"></div>
+
+              <!-- Mục 3: Màn hình Live HUD -->
+              <button class="dropdown-item-btn" onclick="toggleStreamHUD(); closeQuickMenu();">
+                <div class="dropdown-item-icon"><i class="fa-solid fa-expand text-gold"></i></div>
+                <div class="dropdown-item-text">
+                  <span class="dropdown-item-title">Màn Hình Live (HUD)</span>
+                  <span class="dropdown-item-desc">Giao diện chiếu OBS cho livestream</span>
+                </div>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
