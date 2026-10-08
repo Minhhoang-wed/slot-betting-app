@@ -59,7 +59,12 @@
 
 body {
   font-family: var(--font-main);
-  background-color: var(--bg-app);
+  background-color: #f7f4ee;
+  background-image: url('../images/luxury-bg.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--text-primary);
   min-height: 100vh;
   line-height: 1.5;
@@ -81,12 +86,7 @@ input, select, textarea, button, optgroup, option {
 
 /* ================= AMBIENT GLOW EFFECTS ================= */
 .ambient-glow {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(120px);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0.35;
+  display: none !important;
 }
 
 .glow-1 {
@@ -223,10 +223,11 @@ input, select, textarea, button, optgroup, option {
 
 /* ================= MODERN NAVBAR ================= */
 .app-navbar {
-  background: rgba(20, 18, 17, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(232, 227, 218, 0.7);
+  box-shadow: 0 4px 20px -2px rgba(28, 25, 23, 0.04);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -358,8 +359,10 @@ input, select, textarea, button, optgroup, option {
 
 /* ================= JACKPOT HERO DASHBOARD (CÂN CHỈNH KÍCH CỠ CHUẨN) ================= */
 .jackpot-hero-card {
-  background: linear-gradient(135deg, #201c1a 0%, #1a1715 100%); border: 1px solid rgba(212, 163, 115, 0.25);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: var(--radius-xl);
   padding: 26px 32px;
   display: flex;
@@ -367,7 +370,7 @@ input, select, textarea, button, optgroup, option {
   align-items: center;
   gap: 24px;
   margin-bottom: 24px;
-  box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px -10px rgba(28, 25, 23, 0.08), 0 0 0 1px rgba(232, 227, 218, 0.6);
   position: relative;
   overflow: hidden;
   flex-wrap: wrap;
@@ -517,11 +520,13 @@ input, select, textarea, button, optgroup, option {
 
 /* ================= SURFACE CARDS ================= */
 .surface-card {
-  background: #ffffff;
-  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: var(--radius-lg);
   padding: 24px;
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 10px 30px -5px rgba(28, 25, 23, 0.06), 0 0 0 1px rgba(232, 227, 218, 0.5);
   position: relative;
 }
 
@@ -1919,8 +1924,10 @@ input, select, textarea, button, optgroup, option {
 
 /* ================= MULTI-MENU SWITCHER & ROUND DOCK ================= */
 .menu-switcher-dock {
-  background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: var(--radius-md);
   padding: 12px 18px;
   margin-bottom: 20px;
@@ -1929,8 +1936,7 @@ input, select, textarea, button, optgroup, option {
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  box-shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px -4px rgba(28, 25, 23, 0.05), 0 0 0 1px rgba(232, 227, 218, 0.5);
 }
 
 .menu-dock-left {
@@ -2084,8 +2090,10 @@ input, select, textarea, button, optgroup, option {
 
 /* ================= ROUNDS DOCK (HIỂN THỊ CÁC CHUYẾN TRỰC TIẾP) ================= */
 .rounds-switcher-dock {
-  background: rgba(15, 23, 42, 0.75);
-  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: var(--radius-md);
   padding: 10px 16px;
   margin-bottom: 20px;
@@ -2094,7 +2102,7 @@ input, select, textarea, button, optgroup, option {
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px -4px rgba(28, 25, 23, 0.05), 0 0 0 1px rgba(232, 227, 218, 0.5);
 }
 
 .rounds-dock-left {
