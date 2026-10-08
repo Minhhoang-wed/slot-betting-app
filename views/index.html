@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LUCKY SLOT PRO • Gameshow Kèo 12 Slot & Quản Lý Bill Livestream</title>
+  
+  <!-- Google Fonts: Be Vietnam Pro (100% Chuẩn Tiếng Việt không lỗi dấu) & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 Pro Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Libraries: html2canvas & Canvas Confetti -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-midnight">
+  <!-- Dynamic Ambient Glow Background -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <div class="app-shell">
+    
+    <!-- Top Live Ticker Bar -->
+    <aside class="live-ticker-bar">
+      <div class="ticker-left">
+        <span class="live-badge"><span class="pulse-dot"></span> LIVE STREAMING</span>
+        <span class="ticker-text" id="liveTickerText">🔥 KÈO HOT 12 SLOT: Set Mỹ Phẩm YSL + Serum B5 • Giá 200k/Slot • Giải thưởng 1,350,000 đ</span>
+      </div>
+      <div class="ticker-right">
+        <button id="soundToggleBtn" class="sound-chip active" onclick="toggleAudio()" title="Bật/Tắt âm thanh Gameshow">
+          <i class="fa-solid fa-volume-high"></i> <span id="soundLabel">Âm thanh: BẬT</span>
+        </button>
+        <button class="live-hud-btn" onclick="toggleStreamHUD()" title="Chế độ Trình chiếu Live cho Streamer">
+          <i class="fa-solid fa-expand"></i> Màn Hình Live (HUD)
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Navigation Bar -->
+    <header class="app-navbar">
+      <div class="navbar-container">
+        <div class="brand-group">
+          <div class="brand-avatar">
+            <i class="fa-solid fa-crown text-gold"></i>
+          </div>
+          <div class="brand-meta">
+            <div class="brand-name-row">
+              <h1 class="brand-title">LUCKY SLOT PRO</h1>
+              <span class="pro-tag">V2.0 LUXURY</span>
+            </div>
+            <p class="brand-desc">Hệ Thống Quản Lý Kèo Livestream • Chia Thưởng 2/3 • Xuất Bill VietQR</p>
+          </div>
+        </div>
+
+        <nav class="nav-segment">
+          <button id="tabBtnGame" class="nav-pill active" onclick="switchTab('game')">
+            <span class="pill-icon"><i class="fa-solid fa-dice-d20"></i></span>
+            <span class="pill-title">Bàn Kèo Slot</span>
+            <span class="pill-badge" id="activeSlotPillBadge">12 Ô</span>
+          </button>
+          <button id="tabBtnReports" class="nav-pill" onclick="switchTab('reports')">
+            <span class="pill-icon"><i class="fa-solid fa-file-excel"></i></span>
+            <span class="pill-title">Thống Kê & Xuất File</span>
+            <span class="pill-badge" id="reportCountBadge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">4 Menu</span>
+          </button>
+          <button id="tabBtnShop" class="nav-pill" onclick="switchTab('shop')">
+            <span class="pill-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+            <span class="pill-title">Mỹ Phẩm Bán Lẻ</span>
+          </button>
+          <button id="tabBtnSettings" class="nav-pill" onclick="switchTab('settings')">
+            <span class="pill-icon"><i class="fa-solid fa-sliders"></i></span>
+            <span class="pill-title">Cấu Hình Shop & QR</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- App Body Content -->
+    <main class="app-main">
+
+      <!-- ================= TAB 1: KÈO SLOT & ĐIỀU HÀNH CHUYẾN ================= -->
+      <section id="tabGame" class="tab-pane active">
+
+        <!-- DOCK 1: CHỌN MENU KÈO & QUẢN LÝ CRUD MENU -->
+        <div class="menu-switcher-dock">
+          <div class="menu-dock-left">
+            <div class="dock-label">
+              <i class="fa-solid fa-layer-group text-gold"></i>
+              <span>MENU KÈO:</span>
+            </div>
+            <div class="menu-pills-scroll" id="menuPillsContainer">
+              <!-- Dynamically rendered via JS -->
+            </div>
+          </div>
+
+          <div class="menu-dock-right">
+            <button class="btn-chip-add-menu" onclick="openAddMenuModal()" title="Tạo thêm menu kèo mới">
+              <i class="fa-solid fa-plus"></i> Thêm Menu
+            </button>
+            <button class="btn-chip-edit-menu" onclick="openEditActiveMenuModal()" title="Chỉnh sửa thông số Menu đang chọn">
+              <i class="fa-solid fa-pen-to-square"></i> Sửa Menu
+            </button>
+            <button class="btn-chip-delete-menu" onclick="deleteActiveMenu()" title="Xóa Menu đang chọn">
+              <i class="fa-solid fa-trash-can"></i> Xóa
+            </button>
+          </div>
+        </div>
+
+        <!-- DOCK 2: CÁC CHUYẾN CỦA MENU NÀY (HIỂN THỊ 2-3 CHUYẾN TRỰC TIẾP & MỞ CHUYẾN MỚI) -->
+        <div class="rounds-switcher-dock">
+          <div class="rounds-dock-left">
+            <div class="dock-label">
+              <i class="fa-solid fa-circle-play text-accent"></i>
+              <span>CÁC CHUYẾN CỦA MENU NÀY:</span>
+            </div>
+            <div class="rounds-pills-scroll" id="roundsPillsContainer">
+              <!-- Dynamically rendered via JS: Chuyến 1, Chuyến 2, Chuyến 3... -->
+            </div>
+            <button class="btn-chip-add-round" onclick="openAddRoundModal()" title="Thêm chuyến mới cho Menu này">
+              <i class="fa-solid fa-plus"></i> Thêm Chuyến
+            </button>
+            <button class="btn-chip-edit-round" onclick="openEditActiveRoundModal()" title="Chỉnh sửa thông số Chuyến đang chọn">
+              <i class="fa-solid fa-pen-to-square"></i> Sửa Chuyến
+            </button>
+            <button class="btn-chip-delete-round" onclick="deleteActiveRound()" title="Xóa Chuyến đang chọn">
+              <i class="fa-solid fa-trash-can"></i> Xóa Chuyến
+            </button>
+          </div>
+
+          <div class="menu-dock-right">
+            <button class="btn-neon-round-next" onclick="triggerNextRound()" title="Chốt chuyến hiện tại và tự động mở chuyến mới">
+              <i class="fa-solid fa-forward-step"></i> Chốt & Sang Chuyến Mới
+            </button>
+            <button class="btn-ghost-light btn-round-history" onclick="openRoundHistoryModal()" title="Xem lịch sử các chuyến đã xong">
+              <i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử (<span id="historyCountBadge">0</span>)
+            </button>
+          </div>
+        </div>
+
+        <!-- HERO JACKPOT DASHBOARD BANNER -->
+        <div class="jackpot-hero-card">
+          <div class="jackpot-left">
+            <div class="jackpot-badge-row">
+              <span class="badge-menu-active" id="heroActiveMenuTag"><i class="fa-solid fa-fire text-gold"></i> MENU KÈO 150K</span>
+              <span class="badge-round-active" id="heroActiveRoundTag"><i class="fa-solid fa-rotate text-accent"></i> CHUYẾN #1</span>
+              <span class="badge-status-pill" id="heroGameStatus">🟢 ĐANG MỞ ĐĂNG KÝ</span>
+            </div>
+            <div class="jackpot-amount-row">
+              <span class="jackpot-currency">₫</span>
+              <span class="jackpot-digits" id="heroPrizeDisplay">1.350.000</span>
+            </div>
+            <p class="jackpot-subtitle" id="heroGameTitle">Set Mỹ Phẩm Cao Cấp YSL + Serum Phục Hồi B5</p>
+          </div>
+
+          <div class="jackpot-stats-bento">
+            <div class="bento-box">
+              <div class="bento-icon-box bg-gradient-blue"><i class="fa-solid fa-ticket"></i></div>
+              <div class="bento-info">
+                <span class="bento-label">Giá Mỗi Slot</span>
+                <span class="bento-value text-gold" id="heroSlotPrice">200.000 đ</span>
+              </div>
+            </div>
+
+            <div class="bento-box">
+              <div class="bento-icon-box bg-gradient-purple"><i class="fa-solid fa-users"></i></div>
+              <div class="bento-info">
+                <span class="bento-label">Đã Điền / Tổng</span>
+                <span class="bento-value text-accent" id="heroSlotRatio">8 / 12 Slot</span>
+              </div>
+            </div>
+
+            <div class="bento-box">
+              <div class="bento-icon-box bg-gradient-green"><i class="fa-solid fa-chart-pie"></i></div>
+              <div class="bento-info">
+                <span class="bento-label">Tiến Độ Lấp Đầy</span>
+                <span class="bento-value text-green" id="heroPercent">67%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MAIN 2-COLUMN WORKSPACE -->
+        <div class="workspace-grid">
+
+          <!-- LEFT COLUMN: THIẾT LẬP KÈO & SƠ ĐỒ BÀN 12 SLOT -->
+          <div class="surface-card">
+            <div class="card-top-bar">
+              <div class="top-bar-title">
+                <span class="icon-circle icon-purple"><i class="fa-solid fa-table-cells-large"></i></span>
+                <div>
+                  <h2 class="card-heading">Bàn Kèo 12 Slot Trực Quan</h2>
+                  <p class="card-caption">Bấm vào ô để gán hoặc giải phóng slot cho khách</p>
+                </div>
+              </div>
+
+              <div class="top-bar-actions" style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn-ghost-primary" onclick="addSingleSlot()" title="Thêm 1 ô slot vào bàn">
+                  <i class="fa-solid fa-plus"></i> Thêm Ô
+                </button>
+                <button class="btn-ghost-light" onclick="removeSingleSlot()" title="Bớt 1 ô slot khỏi bàn">
+                  <i class="fa-solid fa-minus"></i> Bớt Ô
+                </button>
+                <button class="btn-ghost-danger" onclick="resetCurrentGame()" title="Tạo ván mới">
+                  <i class="fa-solid fa-rotate-right"></i> Làm Mới Kèo
+                </button>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <!-- Cải tiến Layout thanh Cấu hình Kèo không bị tràn / co chữ -->
+              <div class="inline-config-bar">
+                <div class="config-grid-row">
+                  <div class="config-input-group flex-2">
+                    <label><i class="fa-solid fa-tag"></i> Tên Kèo / Phần Thưởng:</label>
+                    <input type="text" id="gameName" class="modern-input" value="Kèo Set Mỹ Phẩm YSL + Serum Cao Cấp" onchange="updateGameConfig()">
+                  </div>
+                  <div class="config-input-group flex-1">
+                    <label><i class="fa-solid fa-cubes"></i> Số Lượng Slot:</label>
+                    <select id="totalSlotsSelect" class="modern-select" onchange="changeTotalSlots(this.value)">
+                      <option value="6">6 Slot</option>
+                      <option value="8">8 Slot</option>
+                      <option value="10">10 Slot</option>
+                      <option value="12" selected>12 Slot (Chuẩn)</option>
+                      <option value="16">16 Slot</option>
+                      <option value="20">20 Slot</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="config-grid-row mt-2">
+                  <div class="config-input-group flex-1">
+                    <label><i class="fa-solid fa-coins"></i> Giá Mỗi Slot (VNĐ):</label>
+                    <input type="number" id="slotPriceInput" class="modern-input" value="200000" step="10000" onchange="updateGameConfig()">
+                  </div>
+                  <div class="config-input-group flex-1">
+                    <label><i class="fa-solid fa-trophy"></i> Tổng Giải Thưởng (VNĐ):</label>
+                    <input type="number" id="prizeValueInput" class="modern-input" value="1350000" step="50000" onchange="updateGameConfig()">
+                  </div>
+                </div>
+              </div>
+
+              <!-- LUXURY 3D SLOT BOARD -->
+              <div class="slot-arena">
+                <div class="arena-header">
+                  <div class="arena-title"><i class="fa-solid fa-chess-board text-gold"></i> SƠ ĐỒ BÀN ĐẤU (12 VỊ TRÍ)</div>
+                  <div class="legend-group">
+                    <span class="legend-item"><span class="legend-dot dot-free"></span> Slot Trống</span>
+                    <span class="legend-item"><span class="legend-dot dot-taken"></span> Đã Có Chủ</span>
+                    <span class="legend-item"><span class="legend-dot dot-winner"></span> Winner 👑</span>
+                  </div>
+                </div>
+
+                <div class="slot-tiles-grid" id="slotGrid">
+                  <!-- Dynamically rendered via JS -->
+                </div>
+              </div>
+
+              <!-- QUICK REGISTRATION BAR -->
+              <div class="quick-register-dock">
+                <div class="dock-header">
+                  <div class="dock-title"><i class="fa-solid fa-bolt text-gold"></i> Đăng Ký Slot Nhanh Cho Khách:</div>
+                  <span class="dock-tip">Nhập tên khách và chọn số lượng slot</span>
+                </div>
+                <div class="dock-form">
+                  <div class="input-with-icon flex-2">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="regPlayerName" class="modern-input input-dock" placeholder="Nhập tên khách (VD: Chị Lan, Anh A...)">
+                  </div>
+                  <div class="input-with-icon flex-1">
+                    <i class="fa-solid fa-ticket"></i>
+                    <input type="number" id="regSlotCount" class="modern-input input-dock" min="1" max="12" value="1">
+                  </div>
+                  <button class="btn-neon-purple btn-dock" onclick="quickRegisterSlots()">
+                    <i class="fa-solid fa-plus"></i> Đăng Ký
+                  </button>
+                </div>
+                
+                <div class="slot-shortcut-chips">
+                  <span class="chips-label">Bấm gán nhanh slot trống:</span>
+                  <div class="chips-container" id="quickSlotSuggestions"></div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: CHỐT KẾT QUẢ & CHIA GIẢI 2 / 3 (HOST DECISION CENTER) -->
+          <div class="surface-card">
+            <div class="card-top-bar">
+              <div class="top-bar-title">
+                <span class="icon-circle icon-gold"><i class="fa-solid fa-crown"></i></span>
+                <div>
+                  <h2 class="card-heading">Trung Tâm Quyết Toán & Chia Giải</h2>
+                  <p class="card-caption">Host chọn 1 người Win hoặc chia đều 2 / 3 người theo yêu cầu</p>
+                </div>
+              </div>
+              <span class="badge-counter-gold" id="playerCountBadge">0 Người Chơi</span>
+            </div>
+
+            <div class="card-content">
+
+              <!-- PLAYERS SUMMARY TABLE -->
+              <div class="players-list-scroll">
+                <table class="modern-table">
+                  <thead>
+                    <tr>
+                      <th>Khách Hàng</th>
+                      <th>Slot Đã Giữ</th>
+                      <th>Tổng Tiền Cược</th>
+                      <th class="text-right">Hành Động</th>
+                    </tr>
+                  </thead>
+                  <tbody id="playerTableBody">
+                    <!-- Dynamic -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- SETTLEMENT MODE SELECTOR (DẠNG DANH SÁCH RỘNG KHÔNG BỊ CO CHỮ) -->
+              <div class="settle-decision-box">
+                <div class="decision-heading">
+                  <i class="fa-solid fa-scale-balanced text-gold"></i>
+                  <span>CHỌN CHẾ ĐỘ QUYẾT TOÁN THẮNG GIẢI:</span>
+                </div>
+
+                <div class="mode-cards-stack">
+                  <!-- Mode 1: Solo Win -->
+                  <div class="mode-card active" id="modeCardSolo" onclick="selectSettleMode('solo')">
+                    <div class="mode-icon-badge"><i class="fa-solid fa-trophy"></i></div>
+                    <div class="mode-info">
+                      <span class="mode-name">1 Người Thắng Tất Cả (Solo Win)</span>
+                      <span class="mode-sub">Nhận trọn 100% giải thưởng (<span id="soloAmountText">1.350.000 đ</span>)</span>
+                    </div>
+                    <div class="mode-radio-check"><i class="fa-solid fa-check"></i></div>
+                  </div>
+
+                  <!-- Mode 2: Chia 2 -->
+                  <div class="mode-card" id="modeCardSplit2" onclick="selectSettleMode('split2')">
+                    <div class="mode-icon-badge"><i class="fa-solid fa-people-arrows"></i></div>
+                    <div class="mode-info">
+                      <span class="mode-name">Chia Đôi (Chia 2)</span>
+                      <span class="mode-sub" id="split2AmountText">Mỗi người nhận: 675.000 đ</span>
+                    </div>
+                    <div class="mode-radio-check"><i class="fa-solid fa-check"></i></div>
+                  </div>
+
+                  <!-- Mode 3: Chia 3 -->
+                  <div class="mode-card" id="modeCardSplit3" onclick="selectSettleMode('split3')">
+                    <div class="mode-icon-badge"><i class="fa-solid fa-users-rays"></i></div>
+                    <div class="mode-info">
+                      <span class="mode-name">Chia Ba (Chia 3)</span>
+                      <span class="mode-sub" id="split3AmountText">Mỗi người nhận: 450.000 đ</span>
+                    </div>
+                    <div class="mode-radio-check"><i class="fa-solid fa-check"></i></div>
+                  </div>
+                </div>
+
+                <!-- TÙY CHỌN CẤN TRỪ TIỀN CƯỢC -->
+                <div class="deduct-toggle-bar">
+                  <div class="deduct-toggle-info">
+                    <span class="deduct-title"><i class="fa-solid fa-calculator text-gold"></i> Quy tắc tính tiền người thắng:</span>
+                    <span class="deduct-desc" id="deductExplainText">Đang chọn: <b>Tự động cấn trừ</b> (Người thắng nhận = Tiền giải - Tiền mua slot).</span>
+                  </div>
+                  <div class="deduct-btns">
+                    <button type="button" id="btnDeductTrue" class="btn-deduct-toggle active" onclick="setDeductSlotCost(true)">
+                      <i class="fa-solid fa-scale-balanced"></i> Cấn Trừ Net
+                    </button>
+                    <button type="button" id="btnDeductFalse" class="btn-deduct-toggle" onclick="setDeductSlotCost(false)">
+                      <i class="fa-solid fa-gift"></i> Nhận Đủ 100%
+                    </button>
+                  </div>
+                </div>
+
+                <!-- WINNERS SELECTION CHECKBOXES -->
+                <div class="winner-selector-area">
+                  <div class="selector-title-row">
+                    <span id="winnerSelectionGuideText"><i class="fa-solid fa-circle-check text-green"></i> Tick chọn <b>1 người nhận giải</b>:</span>
+                    <span class="text-xs text-muted" id="winnerSelectedCount">Đã chọn: 0</span>
+                  </div>
+
+                  <div class="winner-pills-wrap" id="winnerCheckboxesList">
+                    <!-- Dynamic pills -->
+                  </div>
+                </div>
+
+                <!-- ACTION BUTTONS -->
+                <div class="decision-actions-row">
+                  <button class="btn-neon-gold flex-2" onclick="finalizeGameResults()">
+                    <i class="fa-solid fa-calculator"></i> Tính Kết Quả & Xuất Báo Cáo
+                  </button>
+                  <button class="btn-neon-roulette flex-1" onclick="spinRandomWinner()" title="Quay Roulette ngẫu nhiên">
+                    <i class="fa-solid fa-shuffle"></i> Quay Random
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- BẢNG TỔNG KẾT TÀI CHÍNH (NET SETTLEMENT) & XUẤT BILL -->
+        <div class="final-settlement-surface" id="finalResultCard">
+          <div class="settle-card-header">
+            <div class="header-badge-title">
+              <span class="gold-trophy-circle"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+              <div>
+                <h2 class="settle-title">BẢNG QUYẾT TOÁN RÒNG (NET SETTLEMENT) & XUẤT FILE BILL</h2>
+                <p class="settle-desc">Tự động cấn trừ: Tiền Thưởng - Tiền Cược. Hiển thị rõ số tiền khách cần chuyển hoặc shop cần trả.</p>
+              </div>
+            </div>
+
+            <div class="header-quick-tools" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-neon-round-next" style="padding: 6px 14px; font-size: 0.8rem;" onclick="triggerNextRound()" title="Chốt chuyến hiện tại và tự động mở chuyến mới">
+                <i class="fa-solid fa-forward-step"></i> Chốt & Mở Chuyến Mới
+              </button>
+              <button class="btn-ghost-light" onclick="exportCurrentMenuCsv()" title="Tải file báo cáo của Menu này">
+                <i class="fa-solid fa-file-csv text-green"></i> Xuất File Menu Này
+              </button>
+              <button class="btn-ghost-primary" onclick="switchTab('reports')" title="Chuyển sang màn hình Báo Cáo">
+                <i class="fa-solid fa-chart-pie"></i> Xem Báo Cáo Tất Cả Menu
+              </button>
+            </div>
+          </div>
+
+          <div class="settle-card-body">
+            <!-- Summary Banner -->
+            <div class="result-highlight-ribbon" id="summaryMetaBar"></div>
+
+            <!-- Settlement Data Table -->
+            <div class="modern-table-wrap">
+              <table class="modern-table result-table">
+                <thead>
+                  <tr>
+                    <th>Khách Hàng</th>
+                    <th>Slot Đã Mua</th>
+                    <th>Tiền Vốn (A)</th>
+                    <th>Tiền Thưởng (B)</th>
+                    <th>Số Tiền Thực Tế (Net = B - A)</th>
+                    <th>Trạng Thái Quyết Toán</th>
+                    <th class="text-right">Hành Động</th>
+                  </tr>
+                </thead>
+                <tbody id="finalSettlementTableBody">
+                  <tr>
+                    <td colspan="7" class="text-center text-muted py-5">
+                      <i class="fa-solid fa-hourglass-start text-xl mb-2 text-muted"></i>
+                      <p>Vui lòng bấm <b>"Tính Kết Quả & Xuất Báo Cáo"</b> ở trên để xem bảng quyết toán chi tiết.</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= TAB: BÁO CÁO THỐNG KÊ & XUẤT FILE CHO ADMIN ================= -->
+      <section id="tabReports" class="tab-pane">
+
+        <!-- HEADER BANNER FOR REPORTS -->
+        <div class="reports-header-card">
+          <div class="reports-header-left">
+            <div class="badge-gold-neon mb-2">
+              <i class="fa-solid fa-file-invoice-dollar"></i> TRUNG TÂM BÁO CÁO & XUẤT DANH SÁCH KHÁCH HÀNG
+            </div>
+            <h2 class="reports-title">Thống Kê Khách Mua Nhiều Menu & Nhiều Chuyến</h2>
+            <p class="reports-desc">Tra cứu chính xác từng khách đã vào bao nhiêu slot ở từng Menu, tiền cược, tiền trúng thưởng và xuất file Excel (CSV) chuẩn tiếng Việt 100%.</p>
+          </div>
+
+          <div class="reports-quick-actions">
+            <button class="btn-neon-green" onclick="downloadCurrentFilterMenuCsv()">
+              <i class="fa-solid fa-file-excel"></i> Xuất File Menu Đang Lọc (CSV)
+            </button>
+            <button class="btn-neon-purple" onclick="downloadAllMenusSummaryCsv()">
+              <i class="fa-solid fa-table-list"></i> Xuất Báo Cáo Tổng Hợp Tất Cả Menu
+            </button>
+            <button class="btn-ghost-light" onclick="downloadRoundsDetailCsv()">
+              <i class="fa-solid fa-list-check"></i> Xuất Lịch Sử Từng Chuyến
+            </button>
+          </div>
+        </div>
+
+        <!-- SEARCH BAR & MENU SELECTOR -->
+        <div class="surface-card mb-4" style="padding: 20px;">
+          <div class="search-filter-grid">
+            <div class="filter-field flex-2">
+              <label class="filter-label"><i class="fa-solid fa-user-tag text-gold"></i> Tra cứu nhanh Khách Hàng:</label>
+              <div class="input-with-icon">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="reportSearchCustomerInput" class="modern-input" placeholder="Gõ tên khách (Ví dụ: Người A, Chị Lan...) để xem ngay lịch sử..." oninput="filterCustomerReports()">
+              </div>
+            </div>
+
+            <div class="filter-field flex-1">
+              <label class="filter-label"><i class="fa-solid fa-layer-group text-accent"></i> Chọn Menu cần xem:</label>
+              <select id="reportMenuSelect" class="modern-select" onchange="onReportMenuChange(this.value)">
+                <option value="all">📊 Tất Cả Các Menu (Tổng Hợp)</option>
+                <!-- Dynamic options -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Customer Quick Insight Box (Tự động hiển thị khi tìm kiếm) -->
+          <div id="customerQuickInsight" class="customer-insight-box" style="display: none; margin-top: 16px;"></div>
+        </div>
+
+        <!-- BENTO STATS FOR THE SELECTED MENU / ALL -->
+        <div class="reports-stats-bento mb-4">
+          <div class="bento-box">
+            <div class="bento-icon-box bg-gradient-blue"><i class="fa-solid fa-users"></i></div>
+            <div class="bento-info">
+              <span class="bento-label">Khách Hàng Tham Gia</span>
+              <span class="bento-value text-accent" id="repStatTotalCustomers">0 Người</span>
+            </div>
+          </div>
+          <div class="bento-box">
+            <div class="bento-icon-box bg-gradient-purple"><i class="fa-solid fa-ticket"></i></div>
+            <div class="bento-info">
+              <span class="bento-label">Tổng Số Slot Đã Mua</span>
+              <span class="bento-value text-gold" id="repStatTotalSlots">0 Slot</span>
+            </div>
+          </div>
+          <div class="bento-box">
+            <div class="bento-icon-box bg-gradient-green"><i class="fa-solid fa-coins"></i></div>
+            <div class="bento-info">
+              <span class="bento-label">Tổng Tiền Cược Thu</span>
+              <span class="bento-value text-green" id="repStatTotalBuyCost">0 đ</span>
+            </div>
+          </div>
+          <div class="bento-box">
+            <div class="bento-icon-box bg-gradient-gold"><i class="fa-solid fa-trophy"></i></div>
+            <div class="bento-info">
+              <span class="bento-label">Tổng Tiền Thưởng Phát</span>
+              <span class="bento-value text-gold" id="repStatTotalPrizeWon">0 đ</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BẢNG 1: THỐNG KÊ CHI TIẾT KHÁCH THEO MENU -->
+        <div class="surface-card mb-4" id="reportSingleMenuCard">
+          <div class="card-top-bar">
+            <div class="top-bar-title">
+              <span class="icon-circle icon-gold"><i class="fa-solid fa-table-list"></i></span>
+              <div>
+                <h2 class="card-heading" id="reportTableTitle">Danh Sách Khách Hàng - Menu Kèo 150K</h2>
+                <p class="card-caption">Tổng hợp số slot khách đã vào qua các chuyến, tiền cược, tiền thắng và số dư ròng</p>
+              </div>
+            </div>
+            <div class="top-bar-actions">
+              <button class="btn-ghost-primary" onclick="downloadCurrentFilterMenuCsv()">
+                <i class="fa-solid fa-download"></i> Tải File CSV Menu Này
+              </button>
+            </div>
+          </div>
+
+          <div class="card-content">
+            <div class="modern-table-wrap">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>STT</th>
+                    <th>Khách Hàng</th>
+                    <th>Menu</th>
+                    <th>Số Chuyến Tham Gia</th>
+                    <th>Tổng Slot Đã Vào</th>
+                    <th>Chi Tiết Từng Chuyến</th>
+                    <th>Tổng Tiền Cược</th>
+                    <th>Tổng Thưởng</th>
+                    <th>Net Thực Tế</th>
+                    <th>Trạng Thái</th>
+                    <th class="text-right">Thao Tác</th>
+                  </tr>
+                </thead>
+                <tbody id="reportCustomersTableBody">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- BẢNG 2: MA TRẬN TỔNG HỢP TOÀN BỘ CÁC MENU (CROSS-MENU MATRIX) -->
+        <div class="surface-card mb-4" id="crossMenuMatrixCard">
+          <div class="card-top-bar">
+            <div class="top-bar-title">
+              <span class="icon-circle icon-purple"><i class="fa-solid fa-border-all"></i></span>
+              <div>
+                <h2 class="card-heading">Ma Trận Tổng Hợp Toàn Bộ Menu x Khách Hàng</h2>
+                <p class="card-caption">Xem số slot từng khách mua ở mỗi Menu trong buổi live, giúp kế toán chốt sổ cuối ngày 100% chuẩn xác</p>
+              </div>
+            </div>
+            <div class="top-bar-actions">
+              <button class="btn-ghost-primary" onclick="downloadAllMenusSummaryCsv()">
+                <i class="fa-solid fa-file-excel"></i> Tải File Tổng Hợp (CSV)
+              </button>
+            </div>
+          </div>
+
+          <div class="card-content">
+            <div class="modern-table-wrap">
+              <table class="modern-table">
+                <thead id="matrixTableHead">
+                  <!-- Dynamic header columns -->
+                </thead>
+                <tbody id="matrixTableBody">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- BẢNG 3: LỊCH SỬ TẤT CẢ CÁC CHUYẾN ĐÃ CHẠY CỦA CÁC MENU -->
+        <div class="surface-card mb-4" id="roundsHistoryCard">
+          <div class="card-top-bar">
+            <div class="top-bar-title">
+              <span class="icon-circle icon-green"><i class="fa-solid fa-clock-rotate-left"></i></span>
+              <div>
+                <h2 class="card-heading">Lịch Sử Các Chuyến Đã Diễn Ra (Rounds History)</h2>
+                <p class="card-caption">Danh sách toàn bộ các chuyến đã chốt của các Menu, danh sách người thắng và giải thưởng</p>
+              </div>
+            </div>
+            <div class="top-bar-actions">
+              <button class="btn-ghost-light" onclick="downloadRoundsDetailCsv()">
+                <i class="fa-solid fa-download"></i> Tải File Lịch Sử Chuyến
+              </button>
+            </div>
+          </div>
+
+          <div class="card-content">
+            <div class="modern-table-wrap">
+              <table class="modern-table">
+                <thead>
+                  <tr>
+                    <th>Chuyến #</th>
+                    <th>Tên Kèo / Menu</th>
+                    <th>Giá / Slot</th>
+                    <th>Trạng Thái</th>
+                    <th>Slot Đã Bán</th>
+                    <th>Người Thắng Cuộc</th>
+                    <th>Tổng Giải</th>
+                    <th>Thời Gian</th>
+                  </tr>
+                </thead>
+                <tbody id="roundsHistoryTableBody">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= TAB 2: BÁN HÀNG MỸ PHẨM BÌNH THƯỜNG ================= -->
+      <section id="tabShop" class="tab-pane">
+        <div class="workspace-grid">
+          
+          <!-- Product Catalog -->
+          <div class="surface-card">
+            <div class="card-top-bar">
+              <div class="top-bar-title">
+                <span class="icon-circle icon-purple"><i class="fa-solid fa-store"></i></span>
+                <div>
+                  <h2 class="card-heading">Danh Mục Mỹ Phẩm & Hàng Hóa</h2>
+                  <p class="card-caption">Bán hàng lẻ như siêu thị, tính bill tự động</p>
+                </div>
+              </div>
+              <button class="btn-ghost-primary" onclick="openAddProductModal()">
+                <i class="fa-solid fa-plus"></i> Thêm Món
+              </button>
+            </div>
+
+            <div class="card-content">
+              <div class="search-field-wrap">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchProductInput" class="modern-input" placeholder="Tìm kiếm nhanh tên mỹ phẩm..." oninput="filterProducts()">
+              </div>
+
+              <div class="cosmetics-catalog-grid" id="productGrid"></div>
+            </div>
+          </div>
+
+          <!-- Retail Shopping Cart -->
+          <div class="surface-card">
+            <div class="card-top-bar">
+              <div class="top-bar-title">
+                <span class="icon-circle icon-green"><i class="fa-solid fa-basket-shopping"></i></span>
+                <div>
+                  <h2 class="card-heading">Hóa Đơn Giỏ Hàng</h2>
+                  <p class="card-caption">Tự động tính tiền và tạo mã VietQR chuyển khoản</p>
+                </div>
+              </div>
+              <button class="btn-ghost-danger" onclick="clearCart()">
+                <i class="fa-solid fa-trash-can"></i> Xóa Giỏ
+              </button>
+            </div>
+
+            <div class="card-content">
+              <div class="customer-info-row">
+                <div class="config-input-group flex-2">
+                  <label>Tên Khách Hàng:</label>
+                  <input type="text" id="shopCustomerName" class="modern-input" placeholder="Tên khách mua...">
+                </div>
+                <div class="config-input-group flex-1">
+                  <label>Số Điện Thoại:</label>
+                  <input type="text" id="shopCustomerPhone" class="modern-input" placeholder="09xxxxxxx">
+                </div>
+              </div>
+
+              <div class="cart-items-scrollbox" id="cartItemsContainer">
+                <p class="text-muted text-center py-4">Chưa có sản phẩm nào trong giỏ hàng.</p>
+              </div>
+
+              <div class="cart-checkout-box">
+                <div class="checkout-line">
+                  <span>Tổng tiền hàng:</span>
+                  <span id="cartSubtotal" class="font-bold">0 đ</span>
+                </div>
+                <div class="checkout-line">
+                  <span>Chiết khấu / Giảm giá:</span>
+                  <input type="number" id="cartDiscount" class="modern-input input-compact text-right" value="0" onchange="calculateCartTotal()">
+                </div>
+                <div class="checkout-line grand-total-line">
+                  <span>KHÁCH CẦN TRẢ:</span>
+                  <span id="cartTotal" class="grand-total-amount">0 đ</span>
+                </div>
+
+                <button class="btn-neon-green btn-full mt-3" onclick="checkoutShopBill()">
+                  <i class="fa-solid fa-receipt"></i> Xuất Hóa Đơn & Tạo VietQR
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: CẤU HÌNH SHOP & VIETQR ================= -->
+      <section id="tabSettings" class="tab-pane">
+        <div class="surface-card max-w-2xl mx-auto">
+          <div class="card-top-bar">
+            <div class="top-bar-title">
+              <span class="icon-circle icon-gold"><i class="fa-solid fa-building-columns"></i></span>
+              <div>
+                <h2 class="card-heading">Cấu Hình Thông Tin Shop & Tài Khoản VietQR</h2>
+                <p class="card-caption">Thông tin này sẽ hiển thị trên Bill và tự động sinh mã VietQR để khách quét</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-content">
+            <div class="config-field">
+              <label>Tên Shop / Thương Hiệu</label>
+              <input type="text" id="cfgShopName" class="modern-input" value="NGỌC COSMETICS & LUCKY GAME">
+            </div>
+            <div class="config-field">
+              <label>Hotline / Zalo Liên Hệ</label>
+              <input type="text" id="cfgShopPhone" class="modern-input" value="0988 123 456">
+            </div>
+            <div class="config-field">
+              <label>Ngân Hàng Nhận Tiền</label>
+              <select id="cfgBankName" class="modern-select">
+                <option value="MB" selected>MB Bank (Ngân hàng Quân Đội)</option>
+                <option value="VCB">Vietcombank</option>
+                <option value="TCB">Techcombank</option>
+                <option value="ACB">ACB</option>
+                <option value="VPB">VPBank</option>
+                <option value="ICB">Vietinbank</option>
+                <option value="BIDV">BIDV</option>
+                <option value="TPB">TPBank</option>
+              </select>
+            </div>
+            <div class="config-field">
+              <label>Số Tài Khoản</label>
+              <input type="text" id="cfgBankAccount" class="modern-input" value="999988886666">
+            </div>
+            <div class="config-field">
+              <label>Tên Chủ Tài Khoản (In hoa không dấu)</label>
+              <input type="text" id="cfgBankOwner" class="modern-input" value="DUONG THI KHANH NGOC">
+            </div>
+            <div class="config-field">
+              <label>Ghi Chú Chân Bill (Footer)</label>
+              <textarea id="cfgBillFooter" class="modern-textarea" rows="2">Cảm ơn quý khách đã tham gia và ủng hộ Shop! Vui lòng chuyển khoản đúng nội dung.</textarea>
+            </div>
+            <button class="btn-neon-purple btn-full mt-3" onclick="saveSettings()">
+              <i class="fa-solid fa-floppy-disk"></i> Lưu Cấu Hình Ngân Hàng
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= MODAL: FILE BEAL / XUẤT BILL VIP TỪNG KHÁCH (HỖ TRỢ COMBO KÈO + SẢN PHẨM) ================= -->
+  <div id="billModal" class="luxury-modal-backdrop">
+    <div class="luxury-modal-card" style="max-width: 680px;">
+      <div class="modal-top">
+        <div class="modal-top-title">
+          <i class="fa-solid fa-receipt text-gold"></i>
+          <span>Chi Tiết Phiếu Quyết Toán (Combo Kèo + Mua Hàng)</span>
+        </div>
+        <button class="modal-close" onclick="closeBillModal()">&times;</button>
+      </div>
+
+      <div class="modal-scroll-body">
+
+        <!-- KHU VỰC GỘP SẢN PHẨM MỸ PHẨM MUA KÈM (VỪA CHƠI KÈO VỪA MUA HÀNG) -->
+        <div class="attach-product-bar mb-3">
+          <div class="attach-header">
+            <span class="attach-title"><i class="fa-solid fa-bag-shopping text-gold"></i> MUA KÈM SẢN PHẨM MỸ PHẨM (GỘP CHUNG VÀO BILL):</span>
+            <span class="text-xs text-muted">Vừa chơi cược vừa mua sản phẩm trong cùng 1 hóa đơn & 1 mã QR</span>
+          </div>
+          <div class="attach-inputs-row mt-2" style="display: flex; gap: 8px; align-items: center;">
+            <div style="flex: 2;">
+              <select id="billProductSelect" class="modern-select">
+                <option value="">-- Chọn món mỹ phẩm mua kèm --</option>
+              </select>
+            </div>
+            <div style="width: 80px;">
+              <input type="number" id="billProductQty" class="modern-input text-center" min="1" value="1" placeholder="SL">
+            </div>
+            <button class="btn-neon-purple" onclick="addProductToCurrentBill()" style="padding: 8px 14px; font-size: 0.82rem; white-space: nowrap;">
+              <i class="fa-solid fa-plus"></i> Thêm Vào Bill
+            </button>
+          </div>
+          <div id="billAttachedProductsList" class="attached-products-chips mt-2">
+            <!-- Danh sách các món đã mua kèm -->
+          </div>
+        </div>
+        
+        <!-- THẺ HÓA ĐƠN ĐỈNH CAO (CANVAS CAPTURE FRIENDLY) -->
+        <div id="printableBill" class="vip-receipt-ticket">
+          <!-- Header -->
+          <div class="ticket-header">
+            <div class="ticket-brand-badge"><i class="fa-solid fa-gem"></i></div>
+            <h3 class="ticket-shop-name" id="billShopName">NGỌC COSMETICS</h3>
+            <p class="ticket-shop-sub" id="billShopInfo">Hotline/Zalo: 0988 123 456</p>
+            <div class="ticket-dash-line"></div>
+            <h4 class="ticket-type-title" id="billTitle">PHIẾU QUYẾT TOÁN TỔNG HỢP</h4>
+            <div class="ticket-meta-row">
+              <span id="billCode">Mã Bill: #SLOT-202610-001</span>
+              <span id="billDateTime">07/10/2026 18:30</span>
+            </div>
+          </div>
+
+          <!-- Customer Info -->
+          <div class="ticket-customer-card">
+            <div class="t-row">
+              <span class="t-label">Khách Hàng:</span>
+              <span class="t-val text-bold-purple" id="billCustomerName">---</span>
+            </div>
+            <div class="t-row">
+              <span class="t-label">Kèo Đấu:</span>
+              <span class="t-val font-semibold" id="billGameName">Kèo 12 Slot - Mỹ Phẩm YSL</span>
+            </div>
+            <div class="t-row">
+              <span class="t-label">Slot Đã Chọn:</span>
+              <span class="t-val font-bold text-gold" id="billSlotsList">Slot #2, Slot #5</span>
+            </div>
+          </div>
+
+          <!-- Table of items (Cả Kèo Slot + Mỹ Phẩm mua kèm) -->
+          <div class="ticket-items-box">
+            <table class="ticket-table">
+              <thead>
+                <tr>
+                  <th>Nội dung thanh toán</th>
+                  <th class="text-right">Số tiền</th>
+                </tr>
+              </thead>
+              <tbody id="billItemsBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Net Callout Box -->
+          <div class="ticket-net-highlight" id="billNetBox">
+            <span class="net-status-title" id="billNetTitle">TỔNG TIỀN CẦN CHUYỂN SHOP</span>
+            <div class="net-main-amount" id="billNetAmount">400.000 đ</div>
+            <p class="net-instruction" id="billNetExplain">Vui lòng quét mã VietQR bên dưới để thanh toán nhanh:</p>
+          </div>
+
+          <!-- VietQR Section -->
+          <div class="ticket-qr-block" id="billQrSection">
+            <div class="qr-frame">
+              <img id="billQrImage" src="" alt="Mã QR VietQR" class="qr-canvas-img">
+            </div>
+            <div class="qr-bank-details">
+              <p><b>Ngân hàng:</b> <span id="billBankName">MB Bank</span></p>
+              <p><b>Số TK:</b> <span id="billBankAcc" class="font-mono text-bold-purple">999988886666</span></p>
+              <p><b>Chủ TK:</b> <span id="billBankOwner">DUONG THI KHANH NGOC</span></p>
+              <p class="qr-note-tag">Nội dung CK: <span id="billTransferContent" class="font-bold">SLOT A 400K</span></p>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="ticket-footer-msg" id="billFooterText">
+            Cảm ơn quý khách đã tham gia và ủng hộ Shop!
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Footer -->
+      <div class="modal-bottom-actions">
+        <button class="btn-action-light" onclick="copyBillText()">
+          <i class="fa-solid fa-copy"></i> Copy Text Zalo/FB
+        </button>
+        <button class="btn-action-green" onclick="downloadBillImage()">
+          <i class="fa-solid fa-download"></i> Tải Ảnh Bill (PNG)
+        </button>
+        <button class="btn-neon-gold" onclick="downloadSingleCustomerDetailCsv(currentBillData ? (currentBillData.customerName || currentBillData.playerName) : '')" title="Xuất file Excel CSV chi tiết tất cả các chuyến">
+          <i class="fa-solid fa-file-excel"></i> Xuất File Khách
+        </button>
+        <button class="btn-action-dim" onclick="closeBillModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CHỌN SẢN PHẨM MUA KÈM CHO KHÁCH (ATTACH PRODUCT) ================= -->
+  <div id="customerAttachProductModal" class="luxury-modal-backdrop">
+    <div class="luxury-modal-card" style="max-width: 520px;">
+      <div class="modal-top">
+        <div class="modal-top-title">
+          <i class="fa-solid fa-bag-shopping text-gold"></i>
+          <span>Thêm Sản Phẩm Mua Kèm Cho [<span id="attachModalCustomerName" class="text-accent"></span>]</span>
+        </div>
+        <button class="modal-close" onclick="closeAttachProductModal()">&times;</button>
+      </div>
+      <div class="modal-scroll-body" style="padding: 20px;">
+        <p class="text-xs text-muted mb-3">Khách vừa tham gia cược slot vừa chốt mua sản phẩm trên live. Chọn sản phẩm bên dưới để gộp chung vào Bill:</p>
+        
+        <div class="attach-inputs-row mb-3" style="display: flex; gap: 8px; align-items: center;">
+          <div style="flex: 2;">
+            <select id="attachModalProductSelect" class="modern-select">
+              <option value="">-- Chọn sản phẩm mỹ phẩm --</option>
+            </select>
+          </div>
+          <div style="width: 80px;">
+            <input type="number" id="attachModalProductQty" class="modern-input text-center" min="1" value="1" placeholder="SL">
+          </div>
+          <button class="btn-neon-green" onclick="addAttachModalProduct()" style="padding: 8px 14px; font-size: 0.82rem; white-space: nowrap;">
+            <i class="fa-solid fa-plus"></i> Thêm Món
+          </button>
+        </div>
+
+        <div class="attached-items-title font-bold text-xs text-muted uppercase mb-2">Sản phẩm đã chọn mua kèm:</div>
+        <div id="attachModalItemsList" style="min-height: 80px; max-height: 200px; overflow-y: auto;">
+          <!-- Dynamic list -->
+        </div>
+
+        <div class="attach-summary-box mt-3" style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+          <span class="text-sm font-bold">Tổng tiền hàng mua kèm:</span>
+          <span class="text-gold font-bold text-base" id="attachModalTotalAmount">0 đ</span>
+        </div>
+      </div>
+      <div class="modal-bottom-actions">
+        <button class="btn-neon-gold flex-1" onclick="saveAndOpenBillForCustomer()">
+          <i class="fa-solid fa-receipt"></i> Lưu & Xuất Bill Ngay
+        </button>
+        <button class="btn-action-dim" onclick="closeAttachProductModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: THÊM / SỬA SẢN PHẨM (PRODUCT CRUD) ================= -->
+  <div id="productModal" class="luxury-modal-backdrop">
+    <div class="luxury-modal-card" style="max-width: 480px;">
+      <div class="modal-top">
+        <div class="modal-top-title">
+          <i class="fa-solid fa-box-open text-purple"></i>
+          <span id="productModalTitle">Thêm Sản Phẩm Mới</span>
+        </div>
+        <button class="modal-close" onclick="closeProductModal()">&times;</button>
+      </div>
+      <div class="modal-scroll-body" style="padding: 20px;">
+        <input type="hidden" id="editProductId" value="">
+        <div class="config-field mb-3">
+          <label>Tên Sản Phẩm <span style="color: #f43f5e;">*</span></label>
+          <input type="text" id="editProductName" class="modern-input" placeholder="Ví dụ: Son YSL #01 Rouge Pur Couture">
+        </div>
+        <div class="config-field mb-3">
+          <label>Giá Bán (VNĐ) <span style="color: #f43f5e;">*</span></label>
+          <input type="number" id="editProductPrice" class="modern-input" placeholder="Ví dụ: 850000" step="10000">
+        </div>
+        <div class="config-field mb-3">
+          <label>Link Hình Ảnh (URL)</label>
+          <input type="text" id="editProductImg" class="modern-input" placeholder="https://images.unsplash.com/...">
+        </div>
+        <div class="quick-sample-imgs mt-2">
+          <span class="text-xs text-muted" style="display: block; margin-bottom: 6px;">Gợi ý ảnh mẫu nhanh:</span>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" class="chip-btn" onclick="setSampleImg('son')">💄 Son</button>
+            <button type="button" class="chip-btn" onclick="setSampleImg('serum')">🧪 Serum</button>
+            <button type="button" class="chip-btn" onclick="setSampleImg('nuochoa')">🌸 Nước hoa</button>
+            <button type="button" class="chip-btn" onclick="setSampleImg('kemchongnang')">☀️ KCN</button>
+            <button type="button" class="chip-btn" onclick="setSampleImg('phanphu')">✨ Phấn</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-bottom-actions">
+        <button class="btn-neon-purple flex-1" onclick="saveProductForm()">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Sản Phẩm
+        </button>
+        <button class="btn-action-dim" onclick="closeProductModal()">Hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: THAO TÁC TRỰC QUAN Ô SLOT (SLOT CRUD) ================= -->
+  <div id="slotActionModal" class="luxury-modal-backdrop">
+    <div class="luxury-modal-card" style="max-width: 440px;">
+      <div class="modal-top">
+        <div class="modal-top-title">
+          <i class="fa-solid fa-ticket text-gold"></i>
+          <span id="slotActionModalTitle">Quản Lý Slot #1</span>
+        </div>
+        <button class="modal-close" onclick="closeSlotModal()">&times;</button>
+      </div>
+      <div class="modal-scroll-body" style="padding: 20px;">
+        <input type="hidden" id="currentActionSlotId" value="">
+        <div class="slot-modal-info-box mb-3" id="slotModalCurrentStatus" style="margin-bottom: 14px;">
+          <!-- Dynamic -->
+        </div>
+        <div class="config-field mb-3">
+          <label>Tên Khách Hàng Gán Vào Slot:</label>
+          <input type="text" id="slotModalPlayerName" class="modern-input" placeholder="Nhập tên khách hàng...">
+        </div>
+        <div class="quick-sample-players mt-1">
+          <span class="text-xs text-muted" style="display: block; margin-bottom: 6px;">Chọn nhanh khách đang có trên bàn:</span>
+          <div id="slotModalQuickPlayers" style="display: flex; gap: 6px; flex-wrap: wrap;"></div>
+        </div>
+      </div>
+      <div class="modal-bottom-actions">
+        <button class="btn-neon-gold flex-1" onclick="saveSlotModal()">
+          <i class="fa-solid fa-check"></i> Lưu Khách Cho Slot
+        </button>
+        <button class="btn-action-light" id="btnReleaseSlot" onclick="releaseCurrentSlot()">
+          <i class="fa-solid fa-trash-can" style="color: #f43f5e;"></i> Trả Về Trống
+        </button>
+        <button class="btn-action-dim" onclick="closeSlotModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: TẠO MENU KÈO MỚI (MENU CRUD) ================= -->
+  <div id="menuModal" class="luxury-modal-backdrop">
+    <div class="luxury-modal-card" style="max-width: 480px;">
+      <div class="modal-top">
+        <div class="modal-top-title">
+          <i class="fa-solid fa-layer-group text-gold"></i>
+          <span id="menuModalTitle">Thêm Menu Kèo Mới</span>
+        </div>
+        <button class="modal-close" onclick="closeMenuModal()">&times;</button>
+      </div>
+      <div class="modal-scroll-body" style="padding: 20px;">
+        <input type="hidden" id="editMenuId" value="">
+        <div class="config-field mb-3">
+          <label>Tên Menu Kèo <span style="color: #f43f5e;">*</span></label>
+          <input type="text" id="newMenuName" class="modern-input" placeholder="Ví dụ: Menu Kèo 250K VIP">
+        </div>
+        <div class="config-field mb-3">
+          <label>Giá Mỗi Slot (VNĐ) <span style="color: #f43f5e;">*</span></label>
+          <input type="number" id="newMenuSlotPrice" class="modern-input" placeholder="Ví dụ: 250000" step="10000" oninput="autoCalculateMenuPrize()">
+        </div>
+        <div class="config-field mb-3">
+          <label>Số Lượng Slot Mặc Định</label>
+          <select id="newMenuTotalSlots" class="modern-select" onchange="autoCalculateMenuPrize()">
+            <option value="6">6 Slot</option>
+            <option value="8">8 Slot</option>
+            <option value="10">10 Slot</option>
+            <option value="12" selected>12 Slot (Chuẩn)</option>
+            <option value="16">16 Slot</option>
+            <option value="20">20 Slot</option>
+          </select>
+        </div>
+        <div class="config-field mb-3">
+          <label>Tổng Giá Trị Giải Thưởng (VNĐ) <span style="color: #f43f5e;">*</span></label>
+          <input type="number" id="newMenuPrizeValue" class="modern-input" placeholder="Ví dụ: 2500000" step="50000">
+        </div>
+        <div class="config-field mb-3">
+          <label>Mô Tả / Quà Tặng</label>
+          <input type="text" id="newMenuDescription" class="modern-input" placeholder="Ví dụ: Set Mỹ Phẩm Dior + Nước Hoa">
+        </div>
+      </div>
+      <div class="modal-bottom-actions">
+        <button class="btn-neon-gold flex-1" id="btnSaveMenu" onclick="saveMenuForm()">
+          <i class="fa-solid fa-check"></i> Lưu Menu
+        </button>
+        <button class="btn-action-dim" onclick="closeMenuModal()">Hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: CRUD CHUYẾN (THÊM / SỬA CHUYẾN TÙY Ý) ================= -->
+  <div id="roundModal" class="luxury-modal-backdrop">
+    <div class="luxury-modal-card" style="max-width: 480px;">
+      <div class="modal-top">
+        <div class="modal-top-title">
+          <i class="fa-solid fa-circle-play text-accent"></i>
+          <span id="roundModalTitle">Chỉnh Sửa Chuyến</span>
+        </div>
+        <button class="modal-close" onclick="closeRoundModal()">&times;</button>
+      </div>
+      <div class="modal-scroll-body" style="padding: 20px;">
+        <input type="hidden" id="roundModalMode" value="edit"> <!-- 'create' | 'edit' -->
+        <input type="hidden" id="roundModalTargetNumber" value="1">
+        
+        <div class="config-field mb-3">
+          <label>Tên Chuyến <span style="color: #f43f5e;">*</span></label>
+          <input type="text" id="roundModalName" class="modern-input" placeholder="Ví dụ: Menu Kèo 150K • Chuyến #1">
+        </div>
+        <div class="config-field mb-3">
+          <label>Giá Mỗi Slot (VNĐ) <span style="color: #f43f5e;">*</span></label>
+          <input type="number" id="roundModalSlotPrice" class="modern-input" placeholder="150000" step="10000" oninput="autoCalculateRoundPrize()">
+        </div>
+        <div class="config-field mb-3">
+          <label>Số Lượng Slot Của Chuyến</label>
+          <select id="roundModalTotalSlots" class="modern-select" onchange="autoCalculateRoundPrize()">
+            <option value="6">6 Slot</option>
+            <option value="8">8 Slot</option>
+            <option value="10">10 Slot</option>
+            <option value="12" selected>12 Slot (Chuẩn)</option>
+            <option value="16">16 Slot</option>
+            <option value="20">20 Slot</option>
+          </select>
+        </div>
+        <div class="config-field mb-3">
+          <label>Tổng Giá Trị Giải Thưởng (VNĐ) <span style="color: #f43f5e;">*</span></label>
+          <input type="number" id="roundModalPrizeValue" class="modern-input" placeholder="1500000" step="50000">
+        </div>
+        <div class="config-field mb-3" id="roundModalStatusField">
+          <label>Trạng Thái Chuyến</label>
+          <select id="roundModalStatus" class="modern-select">
+            <option value="open">🟢 Đang mở nhận cược (LIVE)</option>
+            <option value="finished">🏁 Đã kết thúc / Đã chốt</option>
+          </select>
+        </div>
+        <div class="config-field mb-3" id="roundModalSettleModeField">
+          <label>Chế Độ Quyết Toán Thắng Giải</label>
+          <select id="roundModalSettleMode" class="modern-select">
+            <option value="solo">🏆 Solo Win (1 Người Thắng Trọn Giải)</option>
+            <option value="split2">⚡ Chia Đôi (2 Người Thắng Chia Đều)</option>
+            <option value="split3">✨ Chia Ba (3 Người Thắng Chia Đều)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-bottom-actions">
+        <button class="btn-neon-gold flex-1" id="btnSaveRoundModal" onclick="saveRoundForm()">
+          <i class="fa-solid fa-check"></i> Lưu Chuyến
+        </button>
+        <button class="btn-action-dim" onclick="closeRoundModal()">Hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: XEM LỊCH SỬ CÁC CHUYẾN (ROUND HISTORY) ================= -->
+  <div id="roundHistoryModal" class="luxury-modal-backdrop">
+    <div class="luxury-modal-card" style="max-width: 650px;">
+      <div class="modal-top">
+        <div class="modal-top-title">
+          <i class="fa-solid fa-clock-rotate-left text-green"></i>
+          <span>Lịch Sử Các Chuyến Của Menu Này</span>
+        </div>
+        <button class="modal-close" onclick="closeRoundHistoryModal()">&times;</button>
+      </div>
+      <div class="modal-scroll-body" style="padding: 20px;">
+        <div id="roundHistoryListContainer">
+          <!-- Dynamic cards of past rounds -->
+        </div>
+      </div>
+      <div class="modal-bottom-actions">
+        <button class="btn-ghost-light" onclick="downloadRoundsDetailCsv()">
+          <i class="fa-solid fa-download"></i> Xuất Lịch Sử (CSV)
+        </button>
+        <button class="btn-action-dim" onclick="closeRoundHistoryModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="modern-toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

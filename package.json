@@ -1,0 +1,25 @@
+{
+  "name": "slot-betting-app",
+  "version": "1.0.0",
+  "description": "Hệ thống quản lý kèo slot 12 ô, chia thưởng và quyết toán hóa đơn VietQR chuẩn MVC kết nối Supabase",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "slot-game",
+    "supabase",
+    "mvc",
+    "vietqr",
+    "livestream-slot"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
