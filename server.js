@@ -28,12 +28,17 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
-// Khởi chạy server
+// Khởi chạy server nếu chạy trực tiếp (Local, VPS, Docker, Render)
 const PORT = env.port || 3000;
-app.listen(PORT, () => {
-  console.log('====================================================');
-  console.log(`🚀 LUCKY SLOT & SHOP PRO (MVC ARCHITECTURE)`);
-  console.log(`🌐 Server đang chạy tại: http://localhost:${PORT}`);
-  console.log(`📂 Trạng thái Supabase: ${env.isSupabaseConfigured() ? '✅ ĐÃ KẾT NỐI DB' : '⚠️ CHẾ ĐỘ MOCK (CHƯA ĐIỀN KEY)'}`);
-  console.log('====================================================');
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log('====================================================');
+    console.log(`🚀 LUCKY SLOT & SHOP PRO (MVC ARCHITECTURE)`);
+    console.log(`🌐 Server đang chạy tại: http://localhost:${PORT}`);
+    console.log(`📂 Trạng thái Supabase: ${env.isSupabaseConfigured() ? '✅ ĐÃ KẾT NỐI DB' : '⚠️ CHẾ ĐỘ MOCK (CHƯA ĐIỀN KEY)'}`);
+    console.log('====================================================');
+  });
+}
+
+// Export app cho môi trường Serverless (Vercel)
+module.exports = app;
