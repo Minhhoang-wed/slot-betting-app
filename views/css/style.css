@@ -1477,9 +1477,9 @@ input[type="number"] {
 }
 
 .btn-ghost-danger {
-  background: transparent;
-  border: 1px solid rgba(244, 63, 94, 0.35);
-  color: #b91c1c;
+  background: #ffffff;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: var(--accent-red);
   padding: 6px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
@@ -1489,31 +1489,67 @@ input[type="number"] {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.04);
 }
 .btn-ghost-danger:hover {
-  background: rgba(244, 63, 94, 0.15);
-  color: #ffffff;
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #991b1b;
 }
 
 .btn-ghost-primary {
-  background: transparent;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  color: #b45309;
-  padding: 6px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.btn-ghost-light {
-  background: #f3eee3;
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
-  color: #ffffff;
+  color: var(--accent-gold);
   padding: 6px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.04);
+}
+.btn-ghost-primary:hover {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.btn-ghost-light {
+  background: #ffffff;
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.04);
+}
+.btn-ghost-light:hover {
+  background: #1c1917;
+  border-color: #1c1917;
+  color: #ffffff;
+}
+.btn-ghost-light:hover i {
+  color: #fbbf24;
+}
+
+.btn-round-history {
+  background: #ffffff;
+  border: 1.5px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.btn-round-history i {
+  color: var(--accent-gold);
 }
 
 .btn-full { width: 100%; }
