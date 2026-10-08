@@ -331,12 +331,7 @@ input, select, textarea, button, optgroup, option {
 }
 
 .pill-badge {
-  background: #f5eedf;
-  font-size: 0.72rem;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  color: #92541a;
-  font-weight: 700;
+  display: none !important;
 }
 
 /* ================= MAIN CONTAINER ================= */

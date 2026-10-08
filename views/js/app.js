@@ -265,7 +265,8 @@ function changeTotalSlots(count) {
       const existing = oldSlots.find(s => s.id === i);
       gameState.slots.push({ id: i, owner: existing ? existing.owner : null });
     }
-    document.getElementById("activeSlotPillBadge").innerText = `${newCount} Ô`;
+    const slotBadge = document.getElementById("activeSlotPillBadge");
+    if (slotBadge) slotBadge.innerText = `${newCount} Ô`;
     renderSlotBoard();
     renderPlayerTable();
     renderWinnerCheckboxes();
@@ -534,7 +535,8 @@ function addSingleSlot() {
     }).catch(e => {});
   } catch(e) {}
 
-  document.getElementById("activeSlotPillBadge").innerText = `${newId} Ô`;
+  const slotBadgeAdd = document.getElementById("activeSlotPillBadge");
+  if (slotBadgeAdd) slotBadgeAdd.innerText = `${newId} Ô`;
   renderSlotBoard();
   renderPlayerTable();
   renderWinnerCheckboxes();
@@ -567,7 +569,8 @@ function removeSingleSlot() {
     }).catch(e => {});
   } catch(e) {}
 
-  document.getElementById("activeSlotPillBadge").innerText = `${gameState.totalSlots} Ô`;
+  const slotBadgeRem = document.getElementById("activeSlotPillBadge");
+  if (slotBadgeRem) slotBadgeRem.innerText = `${gameState.totalSlots} Ô`;
   renderSlotBoard();
   renderPlayerTable();
   renderWinnerCheckboxes();
