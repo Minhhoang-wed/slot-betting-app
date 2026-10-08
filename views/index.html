@@ -168,51 +168,10 @@
           </div>
         </div>
 
-        <!-- HERO JACKPOT DASHBOARD BANNER -->
-        <div class="jackpot-hero-card">
-          <div class="jackpot-left">
-            <div class="jackpot-badge-row">
-              <span class="badge-menu-active" id="heroActiveMenuTag"><i class="fa-solid fa-fire text-gold"></i> MENU KÈO 150K</span>
-              <span class="badge-round-active" id="heroActiveRoundTag"><i class="fa-solid fa-rotate text-accent"></i> CHUYẾN #1</span>
-              <span class="badge-status-pill" id="heroGameStatus">🟢 ĐANG MỞ ĐĂNG KÝ</span>
-            </div>
-            <div class="jackpot-amount-row">
-              <span class="jackpot-digits" id="heroPrizeDisplay">1.350.000</span>
-              <span class="jackpot-currency">đ</span>
-            </div>
-          </div>
-
-          <div class="jackpot-stats-bento">
-            <div class="bento-box">
-              <div class="bento-icon-box bg-gradient-blue"><i class="fa-solid fa-ticket"></i></div>
-              <div class="bento-info">
-                <span class="bento-label">Giá Mỗi Slot</span>
-                <span class="bento-value text-gold" id="heroSlotPrice">200.000 đ</span>
-              </div>
-            </div>
-
-            <div class="bento-box">
-              <div class="bento-icon-box bg-gradient-purple"><i class="fa-solid fa-users"></i></div>
-              <div class="bento-info">
-                <span class="bento-label">Đã Điền / Tổng</span>
-                <span class="bento-value text-accent" id="heroSlotRatio">8 / 12 Slot</span>
-              </div>
-            </div>
-
-            <div class="bento-box">
-              <div class="bento-icon-box bg-gradient-green"><i class="fa-solid fa-chart-pie"></i></div>
-              <div class="bento-info">
-                <span class="bento-label">Tiến Độ Lấp Đầy</span>
-                <span class="bento-value text-green" id="heroPercent">67%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- MAIN 2-COLUMN WORKSPACE -->
         <div class="workspace-grid">
 
-          <!-- LEFT COLUMN: THIẾT LẬP KÈO & SƠ ĐỒ BÀN 12 SLOT -->
+          <!-- LEFT COLUMN: THIẾT LẬP KÈO & SƠ ĐỒ BÀN 12 SLOT (ĐÃ GỘP HERO JACKPOT) -->
           <div class="surface-card">
             <div class="card-top-bar">
               <div class="top-bar-title">
@@ -223,7 +182,7 @@
                 </div>
               </div>
 
-              <div class="top-bar-actions" style="display: flex; gap: 8px; align-items: center;">
+              <div class="top-bar-actions">
                 <button class="btn-ghost-primary" onclick="addSingleSlot()" title="Thêm 1 ô slot vào bàn">
                   <i class="fa-solid fa-plus"></i> Thêm Ô
                 </button>
@@ -237,6 +196,46 @@
             </div>
 
             <div class="card-content">
+              <!-- HERO JACKPOT & THỐNG KÊ TÍCH HỢP -->
+              <div class="jackpot-hero-integrated">
+                <div class="jackpot-integrated-left">
+                  <div class="jackpot-badge-row">
+                    <span class="badge-menu-active" id="heroActiveMenuTag"><i class="fa-solid fa-fire text-gold"></i> MENU KÈO 150K</span>
+                    <span class="badge-round-active" id="heroActiveRoundTag"><i class="fa-solid fa-rotate text-accent"></i> CHUYẾN #1</span>
+                    <span class="badge-status-pill" id="heroGameStatus">🟢 ĐANG MỞ ĐĂNG KÝ</span>
+                  </div>
+                  <div class="jackpot-amount-row">
+                    <span class="jackpot-digits" id="heroPrizeDisplay">1.350.000</span>
+                    <span class="jackpot-currency">đ</span>
+                  </div>
+                </div>
+
+                <div class="jackpot-stats-bento">
+                  <div class="bento-box">
+                    <div class="bento-icon-box bg-gradient-blue"><i class="fa-solid fa-ticket"></i></div>
+                    <div class="bento-info">
+                      <span class="bento-label">Giá Mỗi Slot</span>
+                      <span class="bento-value text-gold" id="heroSlotPrice">200.000 đ</span>
+                    </div>
+                  </div>
+
+                  <div class="bento-box">
+                    <div class="bento-icon-box bg-gradient-purple"><i class="fa-solid fa-users"></i></div>
+                    <div class="bento-info">
+                      <span class="bento-label">Đã Điền / Tổng</span>
+                      <span class="bento-value text-accent" id="heroSlotRatio">8 / 12 Slot</span>
+                    </div>
+                  </div>
+
+                  <div class="bento-box">
+                    <div class="bento-icon-box bg-gradient-green"><i class="fa-solid fa-chart-pie"></i></div>
+                    <div class="bento-info">
+                      <span class="bento-label">Tiến Độ Lấp Đầy</span>
+                      <span class="bento-value text-green" id="heroPercent">67%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
               <!-- Cải tiến Layout thanh Cấu hình Kèo không bị tràn / co chữ -->
               <div class="inline-config-bar">
                 <div class="config-grid-row">

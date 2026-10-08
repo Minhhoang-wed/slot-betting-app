@@ -372,41 +372,77 @@ input[type="number"] {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ================= JACKPOT HERO DASHBOARD (CÂN CHỈNH KÍCH CỠ CHUẨN) ================= */
-.jackpot-hero-card {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: var(--radius-xl);
-  padding: 26px 32px;
+/* ================= HERO JACKPOT TÍCH HỢP TRONG BÀN KÈO ================= */
+.jackpot-hero-integrated {
+  background: linear-gradient(135deg, rgba(254, 250, 242, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+  border: 1px solid rgba(232, 225, 212, 0.9);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 16px 40px -10px rgba(28, 25, 23, 0.08), 0 0 0 1px rgba(232, 227, 218, 0.6);
+  gap: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 16px -4px rgba(28, 25, 23, 0.04);
   position: relative;
   overflow: hidden;
   flex-wrap: wrap;
 }
 
-.jackpot-hero-card::before {
+.jackpot-hero-integrated::before {
   content: "";
   position: absolute;
-  top: -50%;
+  top: -40%;
   left: -20%;
   width: 140%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 60%);
+  height: 180%;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 60%);
   pointer-events: none;
+}
+
+.jackpot-integrated-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+  position: relative;
+  z-index: 1;
 }
 
 .jackpot-badge-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.badge-menu-active {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-round-active {
+  background: #f3e8ff;
+  border: 1px solid #d8b4fe;
+  color: #6b21a8;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .badge-gold-neon {
@@ -428,28 +464,30 @@ input[type="number"] {
   padding: 4px 12px;
   border-radius: var(--radius-full);
   border: 1px solid #86efac;
+  display: inline-flex;
+  align-items: center;
 }
 
 .jackpot-amount-row {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
 }
 
 .jackpot-currency {
   font-family: var(--font-heading) !important;
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--accent-gold);
 }
 
 .jackpot-digits {
   font-family: var(--font-heading) !important;
-  font-size: 2.8rem;
-  font-weight: 700;
+  font-size: 2.4rem;
+  font-weight: 800;
   letter-spacing: -0.5px;
   color: #1c1917;
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .jackpot-subtitle {
@@ -461,34 +499,39 @@ input[type="number"] {
 
 .jackpot-stats-bento {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   flex-wrap: wrap;
+  align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .bento-box {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid var(--border-subtle);
+  background: #ffffff;
+  border: 1px solid rgba(232, 225, 212, 0.85);
   border-radius: var(--radius-md);
-  padding: 12px 18px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   box-shadow: 0 2px 6px rgba(28, 25, 23, 0.03);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  min-width: 135px;
 }
 
 .bento-box:hover {
-  transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  border-color: #d4a373;
 }
 
 .bento-icon-box {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   color: white;
   flex-shrink: 0;
 }
@@ -503,18 +546,20 @@ input[type="number"] {
 }
 
 .bento-label {
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
 .bento-value {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--text-primary);
   margin-top: 1px;
+  white-space: nowrap;
 }
 
 .text-gold { color: #b45309 !important; }
@@ -556,6 +601,14 @@ input[type="number"] {
   gap: 12px;
 }
 
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
 .top-bar-title {
   display: flex;
   align-items: center;
@@ -589,14 +642,16 @@ input[type="number"] {
 }
 
 .card-heading {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: -0.2px;
+  white-space: nowrap;
 }
 
 .card-caption {
   font-size: 0.78rem;
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .badge-counter-gold {
