@@ -88,6 +88,17 @@ input, select, textarea, button, optgroup, option {
   font-family: var(--font-main) !important;
 }
 
+/* Ẩn hoàn toàn mũi tên tăng giảm mặc định xấu xí của input number trên mọi trình duyệt */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
 /* ================= AMBIENT GLOW EFFECTS ================= */
 .ambient-glow {
   display: none !important;
@@ -606,14 +617,16 @@ input, select, textarea, button, optgroup, option {
 }
 
 /* ================= INLINE CONFIG BAR (FIX LỖI TRÀN CHỮ / CO CỤM) ================= */
+/* ================= INLINE CONFIG BAR (LUXURY CREAM GLASS) ================= */
 .inline-config-bar {
-  background: rgba(11, 15, 24, 0.75);
+  background: #fbf8f2;
   padding: 16px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   gap: 12px;
+  box-shadow: 0 2px 8px -2px rgba(28, 25, 23, 0.04);
 }
 
 .config-grid-row {
@@ -637,35 +650,95 @@ input, select, textarea, button, optgroup, option {
 .flex-2 { flex: 2; }
 
 .config-input-group label {
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-secondary);
 }
 
 .modern-input, .modern-select, .modern-textarea {
-  background: rgba(18, 24, 38, 0.95);
-  border: 1px solid var(--border-subtle);
-  color: #ffffff;
+  background: #ffffff;
+  border: 1.5px solid #ded5c8;
+  color: var(--text-primary);
   border-radius: var(--radius-sm);
   padding: 9px 12px;
   font-size: 0.9rem;
   font-family: var(--font-main);
+  font-weight: 500;
   outline: none;
   transition: all 0.2s;
   width: 100%;
 }
 
 .modern-input:focus, .modern-select:focus, .modern-textarea:focus {
-  border-color: var(--accent-purple-light);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px var(--accent-gold-glow);
+}
+
+/* ================= LUXURY STEPPER CONTROL ================= */
+.luxury-stepper-box {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #ded5c8;
+  border-radius: var(--radius-sm);
+  padding: 3px 4px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.04);
+}
+
+.luxury-stepper-box:focus-within {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px var(--accent-gold-glow);
+}
+
+.stepper-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e7ded2;
+  background: #fbf8f3;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.stepper-btn:hover {
+  background: #1c1917;
+  color: #ffffff;
+  border-color: #1c1917;
+  transform: translateY(-1px);
+}
+
+.stepper-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.stepper-input {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 8px;
+  outline: none;
 }
 
 /* ================= SLOT ARENA & 3D TICKET TILES ================= */
 .slot-arena {
-  background: rgba(10, 14, 22, 0.85);
+  background: #fbf8f2;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 18px;
+  box-shadow: 0 2px 8px -2px rgba(28, 25, 23, 0.04);
 }
 
 .arena-header {
@@ -684,6 +757,7 @@ input, select, textarea, button, optgroup, option {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--text-primary);
 }
 
 .legend-group {
@@ -705,8 +779,8 @@ input, select, textarea, button, optgroup, option {
   height: 8px;
   border-radius: 50%;
 }
-.dot-free { background: rgba(255, 255, 255, 0.2); }
-.dot-taken { background: var(--accent-purple-light); box-shadow: 0 0 8px var(--accent-purple-light); }
+.dot-free { background: #d6cfc5; }
+.dot-taken { background: #1c1917; box-shadow: 0 0 6px rgba(28, 25, 23, 0.2); }
 .dot-winner { background: var(--accent-gold); box-shadow: 0 0 8px var(--accent-gold); }
 
 /* GRID 12 TILES */
@@ -725,7 +799,7 @@ input, select, textarea, button, optgroup, option {
 
 /* TILE ITEM (CHIP 3D DESIGN) */
 .slot-tile {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
@@ -753,10 +827,10 @@ input, select, textarea, button, optgroup, option {
   font-size: 0.8rem;
   font-weight: 800;
   color: #b45309;
-  background: rgba(0, 0, 0, 0.4);
+  background: #fef3c7;
   padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  border: 1px solid #fde68a;
 }
 
 .tile-center-content {
@@ -778,13 +852,13 @@ input, select, textarea, button, optgroup, option {
   justify-content: center;
   font-size: 0.82rem;
   font-weight: 800;
-  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.4);
+  box-shadow: 0 4px 10px rgba(180, 83, 9, 0.2);
 }
 
 .tile-owner-name {
   font-size: 0.85rem;
   font-weight: 800;
-  color: #ffffff;
+  color: #181514;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -809,16 +883,16 @@ input, select, textarea, button, optgroup, option {
 
 /* Occupied State */
 .slot-tile.occupied {
-  border: 1.5px solid rgba(168, 85, 247, 0.6);
-  background: linear-gradient(165deg, rgba(38, 28, 64, 0.85) 0%, rgba(20, 24, 38, 0.95) 100%);
-  box-shadow: 0 8px 20px -6px rgba(147, 51, 234, 0.35);
+  border: 1.5px solid #1c1917;
+  background: #ffffff;
+  box-shadow: 0 6px 18px -4px rgba(28, 25, 23, 0.12);
 }
 
 /* Winner State */
 .slot-tile.winner {
   border: 2px solid var(--accent-gold) !important;
-  background: linear-gradient(165deg, rgba(66, 42, 10, 0.95) 0%, rgba(28, 20, 10, 0.95) 100%) !important;
-  box-shadow: 0 0 30px rgba(245, 158, 11, 0.7) !important;
+  background: #fffbeb !important;
+  box-shadow: 0 6px 24px rgba(180, 83, 9, 0.3) !important;
   animation: winner-pulse 0.8s infinite alternate ease-in-out;
 }
 
@@ -838,10 +912,11 @@ input, select, textarea, button, optgroup, option {
 
 /* ================= QUICK REGISTRATION DOCK ================= */
 .quick-register-dock {
-  background: rgba(14, 19, 31, 0.9);
+  background: #fbf8f2;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 16px 20px;
+  box-shadow: 0 2px 8px -2px rgba(28, 25, 23, 0.04);
 }
 
 .dock-header {
@@ -857,6 +932,7 @@ input, select, textarea, button, optgroup, option {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--text-primary);
 }
 
 .dock-tip {
@@ -972,11 +1048,11 @@ input, select, textarea, button, optgroup, option {
 
 /* ================= DECISION CENTER: XẾP DỌC RỘNG RÃI (KHÔNG BỊ CO CHỮ) ================= */
 .settle-decision-box {
-  background: linear-gradient(180deg, rgba(22, 28, 44, 0.9) 0%, rgba(14, 18, 29, 0.95) 100%);
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: #fbf8f2;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 20px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 2px 8px -2px rgba(28, 25, 23, 0.04);
 }
 
 .decision-heading {
@@ -987,7 +1063,7 @@ input, select, textarea, button, optgroup, option {
   align-items: center;
   gap: 8px;
   margin-bottom: 14px;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 /* XẾP DỌC 3 THẺ ĐỂ CÓ ĐỦ KHÔNG GIAN HIỂN THỊ CHỮ RÕ RÀNG */
@@ -1000,7 +1076,7 @@ input, select, textarea, button, optgroup, option {
 
 /* TÙY CHỌN CẤN TRỪ TIỀN CƯỢC */
 .deduct-toggle-bar {
-  background: rgba(10, 14, 22, 0.8);
+  background: #f5efe6;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 12px 14px;
@@ -1021,7 +1097,7 @@ input, select, textarea, button, optgroup, option {
 .deduct-title {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .deduct-desc {
@@ -1035,7 +1111,7 @@ input, select, textarea, button, optgroup, option {
 }
 
 .btn-deduct-toggle {
-  background: #f7f4ed;
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   padding: 6px 12px;
@@ -1050,19 +1126,19 @@ input, select, textarea, button, optgroup, option {
 }
 
 .btn-deduct-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: #fbf8f3;
+  color: var(--text-primary);
 }
 
 .btn-deduct-toggle.active {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(147, 51, 234, 0.3));
-  border-color: var(--accent-gold);
-  color: #b45309;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+  background: #1c1917;
+  border-color: #1c1917;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(28, 25, 23, 0.15);
 }
 
 .mode-card {
-  background: rgba(10, 14, 22, 0.75);
+  background: #ffffff;
   border: 1.5px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 12px 16px;
@@ -1075,21 +1151,21 @@ input, select, textarea, button, optgroup, option {
 }
 
 .mode-card:hover {
-  border-color: rgba(245, 158, 11, 0.4);
-  background: rgba(20, 26, 40, 0.9);
+  border-color: #cfc5b8;
+  background: #faf7f2;
 }
 
 .mode-card.active {
   border-color: var(--accent-gold);
-  background: linear-gradient(145deg, rgba(50, 36, 15, 0.65), rgba(20, 24, 38, 0.95));
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+  background: #fffbeb;
+  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.12);
 }
 
 .mode-icon-badge {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: #f7f4ed;
+  background: #fef3c7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1107,7 +1183,7 @@ input, select, textarea, button, optgroup, option {
 .mode-name {
   font-size: 0.92rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .mode-sub {
@@ -1125,7 +1201,7 @@ input, select, textarea, button, optgroup, option {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border: 1.5px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1137,7 +1213,7 @@ input, select, textarea, button, optgroup, option {
 .mode-card.active .mode-radio-check {
   background: var(--accent-gold);
   border-color: var(--accent-gold);
-  color: #000;
+  color: #ffffff;
 }
 
 /* Winner Selection Pills */

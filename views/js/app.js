@@ -275,6 +275,15 @@ function changeTotalSlots(count) {
   }
 }
 
+function stepNumberInput(inputId, stepDelta) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  let val = parseInt(input.value) || 0;
+  val = Math.max(0, val + stepDelta);
+  input.value = val;
+  input.dispatchEvent(new Event('change'));
+}
+
 function updateGameConfig() {
   gameState.name = document.getElementById("gameName").value.trim() || "Kèo Slot";
   gameState.slotPrice = parseInt(document.getElementById("slotPriceInput").value) || 200000;

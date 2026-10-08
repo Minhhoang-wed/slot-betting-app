@@ -261,11 +261,27 @@
                 <div class="config-grid-row mt-2">
                   <div class="config-input-group flex-1">
                     <label><i class="fa-solid fa-coins"></i> Giá Mỗi Slot (VNĐ):</label>
-                    <input type="number" id="slotPriceInput" class="modern-input" value="200000" step="10000" onchange="updateGameConfig()">
+                    <div class="luxury-stepper-box">
+                      <button type="button" class="stepper-btn stepper-btn-minus" onclick="stepNumberInput('slotPriceInput', -10000)" title="Giảm 10.000 đ">
+                        <i class="fa-solid fa-minus"></i>
+                      </button>
+                      <input type="number" id="slotPriceInput" class="stepper-input font-bold" value="200000" step="10000" onchange="updateGameConfig()">
+                      <button type="button" class="stepper-btn stepper-btn-plus" onclick="stepNumberInput('slotPriceInput', 10000)" title="Tăng 10.000 đ">
+                        <i class="fa-solid fa-plus"></i>
+                      </button>
+                    </div>
                   </div>
                   <div class="config-input-group flex-1">
                     <label><i class="fa-solid fa-trophy"></i> Tổng Giải Thưởng (VNĐ):</label>
-                    <input type="number" id="prizeValueInput" class="modern-input" value="1350000" step="50000" onchange="updateGameConfig()">
+                    <div class="luxury-stepper-box">
+                      <button type="button" class="stepper-btn stepper-btn-minus" onclick="stepNumberInput('prizeValueInput', -50000)" title="Giảm 50.000 đ">
+                        <i class="fa-solid fa-minus"></i>
+                      </button>
+                      <input type="number" id="prizeValueInput" class="stepper-input font-bold" value="1350000" step="50000" onchange="updateGameConfig()">
+                      <button type="button" class="stepper-btn stepper-btn-plus" onclick="stepNumberInput('prizeValueInput', 50000)" title="Tăng 50.000 đ">
+                        <i class="fa-solid fa-plus"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
