@@ -704,13 +704,13 @@ function updateHeroStats() {
   const statusEl = document.getElementById("heroGameStatus");
   if (gameState.winners.length > 0) {
     statusEl.innerText = "👑 ĐÃ CÓ WINNER";
-    statusEl.style.color = "#fbbf24";
+    statusEl.style.color = "#b45309";
   } else if (isFull) {
     statusEl.innerText = "🔥 ĐỦ 100% SLOT - SẴN SÀNG QUAY";
-    statusEl.style.color = "#16a34a";
+    statusEl.style.color = "#b45309";
   } else {
     statusEl.innerText = "🟢 ĐANG MỞ ĐĂNG KÝ";
-    statusEl.style.color = "#38bdf8";
+    statusEl.style.color = "#15803d";
   }
 
   // Cập nhật tag Menu và số Chuyến hiện tại
@@ -2611,7 +2611,7 @@ async function filterCustomerReports() {
         let menusBreakdownText = "";
         if (match.detailedMenus && match.detailedMenus.length > 0) {
           menusBreakdownText = match.detailedMenus.map(m => `
-            <div style="background: var(--bg-surface-elevated); padding: 8px 12px; border-radius: 8px; margin-top: 6px; border-left: 3px solid #38bdf8;">
+            <div style="background: var(--bg-surface-elevated); padding: 8px 12px; border-radius: 8px; margin-top: 6px; border-left: 3px solid #0369a1;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <b class="text-accent" style="font-size: 0.95rem;">${m.menuName}</b>
                 <span class="badge-gold-neon">${m.totalSlots} slot (${m.rounds.length} chuyến)</span>
