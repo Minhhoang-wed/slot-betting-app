@@ -4,55 +4,51 @@
    ================================================================= */
 
 :root {
-  /* Lovable Obsidian Espresso Palette */
-  --bg-app: #141211;
-  --bg-surface: #1e1b19;
-  --bg-surface-elevated: #262220;
-  --bg-surface-hover: #302b28;
-  
-  /* Lovable Subtle Border System */
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.16);
-  --border-active: #d4a373;
-  --border-gold: rgba(212, 163, 115, 0.35);
+  /* Lovable Warm Boutique Light Palette */
+  --bg-app: #fbfaf7;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f7f4ed;
+  --bg-surface-hover: #f3eee3;
 
-  /* Lovable Warm Cream Typography */
-  --text-primary: #faf8f5;
-  --text-secondary: #c5bdb4;
-  --text-muted: #8c827a;
+  --border-subtle: #e8e3da;
+  --border-hover: #d5cebf;
+  --border-active: #1c1917;
+  --border-gold: #c8874a;
 
-  /* Lovable Warm Caramel / Amber Accents */
-  --accent-gold: #d4a373;
-  --accent-gold-light: #faedcd;
-  --accent-gold-glow: rgba(212, 163, 115, 0.2);
+  --text-primary: #1c1917;
+  --text-secondary: #57514a;
+  --text-muted: #8c857b;
 
-  --accent-purple: #d4a373;
-  --accent-purple-light: #faedcd;
-  --accent-purple-glow: rgba(212, 163, 115, 0.2);
+  --accent-gold: #c8874a;
+  --accent-gold-light: #fef8ee;
+  --accent-gold-glow: rgba(200, 135, 74, 0.18);
 
-  --accent-green: #22c55e;
-  --accent-green-light: #86efac;
-  --accent-red: #ef4444;
-  --accent-blue: #38bdf8;
+  --accent-purple: #1c1917;
+  --accent-purple-light: #f5efe6;
+  --accent-purple-glow: rgba(28, 25, 23, 0.12);
 
-  /* Lovable Modern Radiuses */
+  --accent-green: #16a34a;
+  --accent-green-light: #dcfce7;
+  --accent-red: #dc2626;
+  --accent-blue: #0284c7;
+
   --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 22px;
+  --radius-xl: 20px;
   --radius-full: 9999px;
 
-  /* Giữ nguyên Font chuẩn Tiếng Việt không lỗi dấu */
+  /* Font chuẩn Lovable: Fredoka cho tiêu đề, Be Vietnam Pro & Plus Jakarta Sans cho nội dung */
+  --font-heading: 'Fredoka', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --font-main: 'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-heading: 'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
 
-  /* Lovable Soft Ambient Shadows */
-  --shadow-surface: 0 10px 30px -10px rgba(0, 0, 0, 0.65);
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(212, 163, 115, 0.15);
-  --shadow-neon-purple: 0 4px 14px rgba(212, 163, 115, 0.25);
-  --shadow-neon-gold: 0 4px 18px rgba(212, 163, 115, 0.3);
+  /* Shadows mịn phong cách Boutique */
+  --shadow-card: 0 1px 3px rgba(28, 25, 23, 0.04), 0 4px 12px -2px rgba(28, 25, 23, 0.06);
+  --shadow-surface: 0 12px 32px -8px rgba(28, 25, 23, 0.08);
+  --shadow-glow: 0 4px 20px rgba(200, 135, 74, 0.15);
+  --shadow-neon-purple: 0 4px 14px rgba(28, 25, 23, 0.15);
+  --shadow-neon-gold: 0 4px 16px rgba(200, 135, 74, 0.25);
 }
 
 * {
@@ -73,7 +69,13 @@ body {
 }
 
 /* Đồng bộ Font cho tất cả tiêu đề và form controls */
-h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading) !important;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+input, select, textarea, button, optgroup, option {
   font-family: var(--font-main) !important;
 }
 
@@ -146,23 +148,23 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(244, 63, 94, 0.15);
-  border: 1px solid rgba(244, 63, 94, 0.4);
-  color: #fb7185;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
   padding: 3px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.5px;
 }
 
 .pulse-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #f43f5e;
-  box-shadow: 0 0 10px #f43f5e;
-  animation: pulse-ping 1.5s infinite;
+  background: #dc2626;
+  box-shadow: 0 0 6px #dc2626;
+  animation: pulse-ping 1.6s infinite;
 }
 
 @keyframes pulse-ping {
@@ -182,18 +184,19 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .sound-chip {
-  background: rgba(255, 255, 255, 0.05);
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   padding: 4px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
   transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
 }
 
 .sound-chip.active {
@@ -203,13 +206,13 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .live-hud-btn {
-  background: rgba(147, 51, 234, 0.15);
-  border: 1px solid rgba(147, 51, 234, 0.35);
-  color: var(--accent-purple-light);
+  background: #f7f4ed;
+  border: 1px solid var(--border-subtle);
+  color: var(--accent-gold);
   padding: 4px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -247,16 +250,17 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .brand-avatar {
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius-md);
-  background: #24201e; border: 1px solid rgba(212, 163, 115, 0.35);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: #f7f3eb;
+  border: 1px solid #e5dfd4;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.35rem;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+  font-size: 1.25rem;
+  color: var(--accent-gold);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
 .brand-name-row {
@@ -266,21 +270,21 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .brand-title {
+  font-family: var(--font-heading) !important;
   font-size: 1.35rem;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.3px;
-  background: linear-gradient(90deg, #faf8f5, #e0a96d);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #1c1917;
 }
 
 .pro-tag {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #000;
+  background: #f5eedf;
+  color: #92541a;
+  border: 1px solid #e8dbca;
   font-size: 0.65rem;
-  font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 6px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
   letter-spacing: 0.5px;
 }
 
@@ -292,7 +296,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 /* Nav Pills Segment */
 .nav-segment {
   display: flex;
-  background: #181514;
+  background: #eee9de;
   padding: 4px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border-subtle);
@@ -315,23 +319,23 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .nav-pill:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .nav-pill.active {
-  background: var(--accent-gold);
-  color: var(--bg-app);
+  background: #ffffff;
+  color: #1c1917;
   font-weight: 700;
-  box-shadow: 0 2px 10px rgba(212, 163, 115, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .pill-badge {
-  background: rgba(0, 0, 0, 0.35);
+  background: #f5eedf;
   font-size: 0.72rem;
-  padding: 2px 7px;
-  border-radius: 999px;
-  color: var(--accent-gold-light);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  color: #92541a;
   font-weight: 700;
 }
 
@@ -421,20 +425,19 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .jackpot-currency {
+  font-family: var(--font-heading) !important;
   font-size: 1.8rem;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--accent-gold);
 }
 
 .jackpot-digits {
-  font-size: 2.7rem;
-  font-weight: 800;
+  font-family: var(--font-heading) !important;
+  font-size: 2.8rem;
+  font-weight: 700;
   letter-spacing: -0.5px;
-  background: linear-gradient(180deg, #ffffff 30%, #fde047 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #1c1917;
   line-height: 1.15;
-  text-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
 }
 
 .jackpot-subtitle {
@@ -451,16 +454,14 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .bento-box {
-  background: rgba(20, 18, 17, 0.7);
-  backdrop-filter: blur(12px);
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 160px;
-  transition: transform 0.25s, border-color 0.25s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 .bento-box:hover {
@@ -521,15 +522,12 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 
 /* ================= SURFACE CARDS ================= */
 .surface-card {
-  background: var(--bg-surface);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-surface);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  position: relative;
 }
 
 .card-top-bar {
@@ -630,7 +628,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 .modern-input, .modern-select, .modern-textarea {
   background: rgba(18, 24, 38, 0.95);
   border: 1px solid var(--border-subtle);
-  color: #fff;
+  color: #ffffff;
   border-radius: var(--radius-sm);
   padding: 9px 12px;
   font-size: 0.9rem;
@@ -710,26 +708,25 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 
 /* TILE ITEM (CHIP 3D DESIGN) */
 .slot-tile {
-  background: linear-gradient(165deg, rgba(25, 33, 50, 0.7) 0%, rgba(15, 20, 32, 0.85) 100%);
-  border: 1.5px dashed rgba(255, 255, 255, 0.12);
+  background: #ffffff;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 10px 8px;
+  padding: 14px 12px;
+  min-height: 118px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: space-between;
-  min-height: 98px;
   cursor: pointer;
   position: relative;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  user-select: none;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .slot-tile:hover {
-  border-color: var(--accent-purple-light);
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px -8px rgba(168, 85, 247, 0.3);
-  background: rgba(30, 40, 62, 0.9);
+  transform: translateY(-2px);
+  border-color: #c8874a;
+  box-shadow: 0 8px 20px -4px rgba(28, 25, 23, 0.1);
 }
 
 .tile-number-badge {
@@ -767,7 +764,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 .tile-owner-name {
   font-size: 0.85rem;
   font-weight: 800;
-  color: #fff;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -896,7 +893,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .chip-btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f7f4ed;
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   padding: 3px 10px;
@@ -909,7 +906,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 
 .chip-btn:hover {
   background: var(--accent-purple);
-  color: #fff;
+  color: #ffffff;
   border-color: var(--accent-purple);
 }
 
@@ -944,12 +941,12 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 
 .modern-table td {
   padding: 12px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--border-subtle);
   vertical-align: middle;
 }
 
 .modern-table tr:hover td {
-  background: rgba(255, 255, 255, 0.02);
+  background: #f7f4ed;
 }
 
 .text-right { text-align: right !important; }
@@ -971,7 +968,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
   align-items: center;
   gap: 8px;
   margin-bottom: 14px;
-  color: #fff;
+  color: #ffffff;
 }
 
 /* XẾP DỌC 3 THẺ ĐỂ CÓ ĐỦ KHÔNG GIAN HIỂN THỊ CHỮ RÕ RÀNG */
@@ -1005,7 +1002,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 .deduct-title {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #fff;
+  color: #ffffff;
 }
 
 .deduct-desc {
@@ -1019,7 +1016,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .btn-deduct-toggle {
-  background: rgba(255, 255, 255, 0.05);
+  background: #f7f4ed;
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   padding: 6px 12px;
@@ -1035,7 +1032,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 
 .btn-deduct-toggle:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: #ffffff;
 }
 
 .btn-deduct-toggle.active {
@@ -1073,7 +1070,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #f7f4ed;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1091,7 +1088,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 .mode-name {
   font-size: 0.92rem;
   font-weight: 800;
-  color: #fff;
+  color: #ffffff;
 }
 
 .mode-sub {
@@ -1145,7 +1142,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .winner-pill-item {
-  background: rgba(255, 255, 255, 0.04);
+  background: #f7f4ed;
   border: 1.5px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 8px 14px;
@@ -1317,14 +1314,14 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 .btn-neon-roulette:hover {
   background: var(--accent-purple);
-  color: #fff;
+  color: #ffffff;
   box-shadow: var(--shadow-neon-purple);
   transform: translateY(-2px);
 }
 
 .btn-neon-purple {
   background: #d4a373;
-  color: #fff;
+  color: #ffffff;
   font-weight: 800;
   border: none;
   padding: 10px 20px;
@@ -1344,7 +1341,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 
 .btn-neon-green {
   background: linear-gradient(135deg, #10b981, #059669);
-  color: #fff;
+  color: #ffffff;
   font-weight: 800;
   border: none;
   padding: 12px 24px;
@@ -1364,7 +1361,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 
 .btn-neon-blue {
   background: linear-gradient(135deg, #0284c7, #0369a1);
-  color: #fff;
+  color: #ffffff;
   font-weight: 700;
   border: 1px solid rgba(56, 189, 248, 0.4);
   padding: 8px 16px;
@@ -1399,7 +1396,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 .btn-ghost-danger:hover {
   background: rgba(244, 63, 94, 0.15);
-  color: #fff;
+  color: #ffffff;
 }
 
 .btn-ghost-primary {
@@ -1413,9 +1410,9 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
   cursor: pointer;
 }
 .btn-ghost-light {
-  background: rgba(255, 255, 255, 0.08);
+  background: #f3eee3;
   border: 1px solid var(--border-subtle);
-  color: #fff;
+  color: #ffffff;
   padding: 6px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
@@ -1444,7 +1441,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
   max-width: 480px;
   max-height: 92vh;
   background: #111624;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-hover);
   border-radius: var(--radius-xl);
   box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
   display: flex;
@@ -1475,7 +1472,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
   font-size: 1.6rem;
   cursor: pointer;
 }
-.modal-close:hover { color: #fff; }
+.modal-close:hover { color: #ffffff; }
 
 .modal-scroll-body {
   padding: 20px;
@@ -1519,7 +1516,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
   font-size: 0.85rem;
 }
 .btn-action-dim {
-  background: rgba(255, 255, 255, 0.08);
+  background: #f3eee3;
   color: var(--text-secondary);
   border: none;
   padding: 9px 16px;
@@ -1700,7 +1697,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 .qr-bank-details {
   font-size: 0.8rem;
   line-height: 1.4;
-  color: #334155;
+  color: #e8e3da;
 }
 
 .qr-note-tag {
@@ -1745,7 +1742,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .cosmetic-card {
-  background: rgba(255, 255, 255, 0.03);
+  background: #f7f4ed;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 12px;
@@ -1756,7 +1753,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 .cosmetic-card:hover {
   transform: translateY(-2px);
   border-color: rgba(168, 85, 247, 0.4);
-  background: rgba(255, 255, 255, 0.05);
+  background: #f7f4ed;
 }
 
 .cosmetic-img {
@@ -1771,7 +1768,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 .cosmetic-title {
   font-size: 0.85rem;
   font-weight: 800;
-  color: #fff;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1834,23 +1831,18 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: rgba(18, 24, 38, 0.95);
-  backdrop-filter: blur(14px);
-  border-left: 4px solid var(--accent-green);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-  padding: 14px 22px;
-  border-radius: var(--radius-sm);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
-  font-size: 0.9rem;
-  font-weight: 700;
+  background: #1c1917;
+  border: 1px solid #383430;
+  color: #ffffff;
+  padding: 12px 22px;
+  border-radius: var(--radius-full);
+  font-size: 0.86rem;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  display: none;
+  align-items: center;
+  gap: 10px;
   z-index: 2000;
-  opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: none;
 }
 .modern-toast.show {
   opacity: 1;
@@ -1878,7 +1870,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .btn-product-action {
-  background: rgba(255, 255, 255, 0.08);
+  background: #f3eee3;
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   border-radius: 6px;
@@ -1894,18 +1886,18 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 
 .btn-product-action:hover {
   background: var(--accent-purple);
-  color: #fff;
+  color: #ffffff;
   border-color: var(--accent-purple);
 }
 
 .btn-product-action.delete:hover {
   background: var(--accent-red);
-  color: #fff;
+  color: #ffffff;
   border-color: var(--accent-red);
 }
 
 .slot-modal-info-box {
-  background: rgba(255, 255, 255, 0.04);
+  background: #f7f4ed;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 12px;
@@ -1973,31 +1965,34 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .menu-pill-btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  font-weight: 700;
+  color: var(--text-secondary);
+  padding: 7px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .menu-pill-btn:hover {
-  background: rgba(147, 51, 234, 0.2);
-  border-color: rgba(147, 51, 234, 0.4);
-  transform: translateY(-1px);
+  background: #f7f4ed;
+  border-color: var(--border-hover);
+  color: var(--text-primary);
 }
 
 .menu-pill-btn.active {
-  background: linear-gradient(135deg, rgba(147, 51, 234, 0.4), rgba(245, 158, 11, 0.3));
-  border-color: var(--accent-gold);
-  color: #fff;
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+  background: #1c1917;
+  border-color: #1c1917;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(28, 25, 23, 0.2);
 }
 
 .menu-pill-price-badge {
@@ -2059,23 +2054,23 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .btn-neon-round-next {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #000;
-  font-weight: 800;
+  background: #1c1917;
+  color: #ffffff;
   border: none;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 0.85rem;
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  font-size: 0.84rem;
+  font-weight: 700;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
   transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(28, 25, 23, 0.15);
 }
 
 .btn-chip-edit-menu, .btn-chip-delete-menu, .btn-chip-add-round, .btn-chip-edit-round, .btn-chip-delete-round {
-  background: rgba(255, 255, 255, 0.06);
+  background: #f3eee3;
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
   padding: 5px 12px;
@@ -2123,32 +2118,35 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .round-pill-btn {
-  background: rgba(255, 255, 255, 0.04);
+  background: #ffffff;
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
   padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 700;
+  border-radius: var(--radius-full);
+  font-size: 0.84rem;
+  font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .round-pill-btn:hover {
   background: rgba(56, 189, 248, 0.15);
   border-color: rgba(56, 189, 248, 0.4);
-  color: #fff;
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
 .round-pill-btn.active {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(16, 185, 129, 0.25));
-  border-color: var(--accent-blue);
-  color: #fff;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+  background: #1c1917;
+  border-color: #1c1917;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(28, 25, 23, 0.2);
 }
 
 .round-pill-btn .tag-status {
@@ -2264,7 +2262,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .round-history-item {
-  background: rgba(255, 255, 255, 0.03);
+  background: #f7f4ed;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 14px 18px;
@@ -2277,13 +2275,13 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .round-history-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: #f3eee3;
   border-color: var(--border-active);
 }
 
 /* ================= ATTACH PRODUCT / COMBO BILL STYLES ================= */
 .attach-product-bar {
-  background: rgba(255, 255, 255, 0.03);
+  background: #f7f4ed;
   border: 1px dashed rgba(245, 158, 11, 0.4);
   border-radius: var(--radius-sm);
   padding: 14px 16px;
@@ -2319,7 +2317,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 0.78rem;
-  color: #fff;
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2337,7 +2335,7 @@ h1, h2, h3, h4, h5, h6, input, select, textarea, button, optgroup, option {
 }
 
 .ticket-section-row td {
-  background: rgba(255, 255, 255, 0.04);
+  background: #f7f4ed;
   font-weight: 800;
   font-size: 0.76rem;
   color: var(--accent-gold);

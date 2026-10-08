@@ -703,7 +703,7 @@ function updateHeroStats() {
     statusEl.style.color = "#fbbf24";
   } else if (isFull) {
     statusEl.innerText = "🔥 ĐỦ 100% SLOT - SẴN SÀNG QUAY";
-    statusEl.style.color = "#34d399";
+    statusEl.style.color = "#16a34a";
   } else {
     statusEl.innerText = "🟢 ĐANG MỞ ĐĂNG KÝ";
     statusEl.style.color = "#38bdf8";
@@ -1228,7 +1228,7 @@ function renderAttachModalItems() {
   }
 
   container.innerHTML = items.map((it, idx) => `
-    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border-subtle);">
+    <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface-elevated); padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border-subtle);">
       <div>
         <b class="text-accent">${it.name}</b>
         <div class="text-xs text-muted">Đơn giá: ${formatVND(it.price)} × SL: <b>${it.qty}</b></div>
@@ -1649,7 +1649,7 @@ function checkoutShopBill() {
   });
   if (discount > 0) {
     const trD = document.createElement("tr");
-    trD.innerHTML = `<td style="color: #34d399;">Chiết khấu / Giảm giá</td><td class="text-right font-bold text-green">-${formatVND(discount)}</td>`;
+    trD.innerHTML = `<td style="color: #16a34a;">Chiết khấu / Giảm giá</td><td class="text-right font-bold text-green">-${formatVND(discount)}</td>`;
     tbody.appendChild(trD);
   }
 
@@ -1841,9 +1841,9 @@ function applyGameData(data) {
   if (heroGameStatus) {
     if (gameState.status === 'finished') {
       heroGameStatus.innerHTML = `🏁 ĐÃ KẾT THÚC & QUYẾT TOÁN`;
-      heroGameStatus.style.background = 'rgba(16, 185, 129, 0.2)';
-      heroGameStatus.style.borderColor = 'rgba(16, 185, 129, 0.4)';
-      heroGameStatus.style.color = '#34d399';
+      heroGameStatus.style.background = '#dcfce7';
+      heroGameStatus.style.borderColor = '#bbf7d0';
+      heroGameStatus.style.color = '#16a34a';
     } else {
       heroGameStatus.innerHTML = `🟢 ĐANG MỞ ĐĂNG KÝ`;
       heroGameStatus.style.background = 'rgba(16, 185, 129, 0.15)';
@@ -2346,7 +2346,7 @@ async function openRoundHistoryModal() {
             </div>
           </div>
           <div class="text-right">
-            <span class="badge-round-tag" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 4px 8px; font-size: 0.72rem; border-radius: 6px;">ĐÃ KẾT THÚC</span>
+            <span class="badge-round-tag" style="background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; padding: 4px 8px; font-size: 0.72rem; border-radius: 6px;">ĐÃ KẾT THÚC</span>
             <div class="text-xs text-muted mt-1">${new Date(r.finishedAt || r.createdAt).toLocaleTimeString('vi-VN')}</div>
           </div>
         `;
@@ -2607,7 +2607,7 @@ async function filterCustomerReports() {
         let menusBreakdownText = "";
         if (match.detailedMenus && match.detailedMenus.length > 0) {
           menusBreakdownText = match.detailedMenus.map(m => `
-            <div style="background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 8px; margin-top: 6px; border-left: 3px solid #38bdf8;">
+            <div style="background: var(--bg-surface-elevated); padding: 8px 12px; border-radius: 8px; margin-top: 6px; border-left: 3px solid #38bdf8;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <b class="text-accent" style="font-size: 0.95rem;">${m.menuName}</b>
                 <span class="badge-gold-neon">${m.totalSlots} slot (${m.rounds.length} chuyến)</span>
@@ -2615,7 +2615,7 @@ async function filterCustomerReports() {
               <div class="text-xs text-muted" style="margin-bottom: 4px; line-height: 1.5;">
                 ${m.rounds.map(r => `<span>• <b>Chuyến #${r.roundNumber}</b>: ${r.slotCount} slot (ô #${r.slots.join('-')}) ${r.isWinner ? '<span class="text-green font-bold">🏆 Thắng ' + formatVND(r.prizeWon) + '</span>' : ''}</span>`).join('<br>')}
               </div>
-              <div class="text-xs" style="color: #cbd5e1;">
+              <div class="text-xs" style="color: var(--text-secondary);">
                 Cược: <b class="text-gold">${formatVND(m.totalBuyCost)}</b> | Thưởng: <b class="text-green">${formatVND(m.totalPrizeWon)}</b> | Net: <b class="${m.netAmount >= 0 ? 'text-green' : 'text-red'}">${m.netAmount > 0 ? '+' : ''}${formatVND(m.netAmount)}</b>
               </div>
             </div>
@@ -2628,7 +2628,7 @@ async function filterCustomerReports() {
         let attachedText = "";
         if (attachedItems.length > 0) {
           attachedText = `
-            <div style="background: rgba(168, 85, 247, 0.12); border: 1px solid rgba(168, 85, 247, 0.3); padding: 8px 12px; border-radius: 8px; margin-top: 6px;">
+            <div style="background: rgba(200, 135, 74, 0.1); border: 1px solid rgba(200, 135, 74, 0.3); padding: 8px 12px; border-radius: 8px; margin-top: 6px;">
               <div class="text-xs text-accent font-bold"><i class="fa-solid fa-bag-shopping"></i> MỸ PHẨM MUA KÈM (${attachedItems.length} MÓN):</div>
               <div class="text-xs mt-1" style="line-height: 1.5;">
                 ${attachedItems.map(it => `<span>• ${it.name} x${it.qty} = <b class="text-gold">${formatVND(it.price * it.qty)}</b></span>`).join('<br>')}
