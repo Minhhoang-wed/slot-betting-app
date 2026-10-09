@@ -1344,7 +1344,7 @@ function renderAttachModalItems() {
   container.innerHTML = items.map((it, idx) => `
     <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-surface-elevated); padding: 8px 12px; border-radius: 8px; margin-bottom: 6px; border: 1px solid var(--border-subtle);">
       <div>
-        <b class="text-accent">${it.name}</b>
+        <b style="color: #1c1917 !important; font-weight: 700;">${it.name || 'Sản phẩm'}</b>
         <div class="text-xs text-muted">Đơn giá: ${formatVND(it.price)} × SL: <b>${it.qty}</b></div>
       </div>
       <div style="display: flex; align-items: center; gap: 10px;">
@@ -1661,9 +1661,9 @@ async function deleteProductItem(id) {
 
 function addToCart(productId) {
   playSound('coin');
-  const product = products.find(p => p.id === productId);
+  const product = products.find(p => p.id == productId);
   if (!product) return;
-  const existing = cart.find(item => item.product.id === productId);
+  const existing = cart.find(item => item.product.id == productId);
   if (existing) existing.qty++;
   else cart.push({ product, qty: 1 });
   renderCart();
@@ -1681,16 +1681,26 @@ function renderCart() {
   cart.forEach((item, idx) => {
     const row = document.createElement("div");
     row.className = "cart-item-row";
+    const prod = item.product || {};
+    const imgUrl = prod.img || prod.image_url || "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=300";
+    const prodName = prod.name || "Sản phẩm";
+    const prodPrice = Number(prod.price || 0);
+
     row.innerHTML = `
-      <div style="flex: 2;">
-        <div class="font-bold text-sm" style="color: var(--text-primary);">${item.product.name}</div>
-        <div class="text-xs text-muted">${formatVND(item.product.price)} x ${item.qty}</div>
+      <div style="display: flex; align-items: center; gap: 10px; flex: 2; min-width: 0;">
+        <img src="${imgUrl}" alt="${prodName}" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #e7ded4; background: #f3eee3; flex-shrink: 0;" onerror="this.onerror=null;this.src='https://placehold.co/100x100/f3eee3/a0855b?text=SP'">
+        <div style="min-width: 0; flex: 1;">
+          <div class="font-bold text-sm" style="color: #1c1917 !important; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${prodName}">${prodName}</div>
+          <div class="text-xs" style="color: #a0855b; font-weight: 700; margin-top: 3px;">
+            ${formatVND(prodPrice)} <span style="color: #78716c; font-weight: 500;">× ${item.qty}</span>
+          </div>
+        </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="btn-ghost-light" style="padding: 2px 8px;" onclick="changeCartQty(${idx}, -1)">-</button>
-        <span class="font-bold text-gold">${item.qty}</span>
-        <button class="btn-ghost-light" style="padding: 2px 8px;" onclick="changeCartQty(${idx}, 1)">+</button>
-        <button class="btn-ghost-danger" style="padding: 2px 8px;" onclick="removeCartItem(${idx})">&times;</button>
+      <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+        <button class="btn-ghost-light" style="padding: 3px 8px; font-weight: bold; font-size: 0.85rem;" onclick="changeCartQty(${idx}, -1)" title="Giảm số lượng">-</button>
+        <span class="font-bold text-gold" style="min-width: 20px; text-align: center; font-size: 0.95rem;">${item.qty}</span>
+        <button class="btn-ghost-light" style="padding: 3px 8px; font-weight: bold; font-size: 0.85rem;" onclick="changeCartQty(${idx}, 1)" title="Tăng số lượng">+</button>
+        <button class="btn-ghost-danger" style="padding: 3px 8px; font-size: 0.85rem;" onclick="removeCartItem(${idx})" title="Xóa khỏi giỏ">&times;</button>
       </div>
     `;
     container.appendChild(row);
