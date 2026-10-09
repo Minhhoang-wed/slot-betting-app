@@ -38,6 +38,8 @@ function isolatedModels() {
     const localRequire = name => {
       if (name === 'fs') return fakeFs;
       if (name === 'path') return path;
+      if (name === 'crypto') return require('node:crypto');
+      if (name.endsWith('shop.config')) return { name:'TEST LOCAL',bankCode:'QA',accountNumber:'0000',accountOwner:'TEST' };
       if (name.endsWith('supabase.config')) return { supabase: null, isConfigured: () => false };
       if (name.startsWith('.')) return load(path.relative(root, path.resolve(path.dirname(filename), name + '.js')));
       throw new Error('Blocked external dependency in isolated replay: ' + name);
