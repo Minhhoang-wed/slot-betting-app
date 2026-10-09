@@ -2766,25 +2766,36 @@ async function loadSingleMenuReport(menuId, query = '') {
     const json = await res.json();
     if (json.success && json.data) {
       const data = json.data;
-      const menu = data.menu;
-      const summary = data.summary;
+      const menu = data.menu || {};
+      const summary = data.summary || {};
 
-      document.getElementById("reportTableTitle").innerText = `Bảng Tổng Hợp Khách Hàng - ${menu.name} (${formatVND(menu.slot_price)}/Slot)`;
-      document.getElementById("reportCustomerCountBadge").innerText = `${data.customers.length} Khách Hàng`;
+      const titleEl = document.getElementById("reportTableTitle");
+      if (titleEl) titleEl.innerText = `Bảng Tổng Hợp Khách Hàng - ${menu.name || 'Menu Kèo'} (${formatVND(menu.slot_price || 0)}/Slot)`;
 
-      document.getElementById("repStatTotalCustomers").innerText = `${summary.totalCustomers} Người`;
-      document.getElementById("repStatTotalSlots").innerText = `${summary.grandTotalSlots} Slot`;
-      document.getElementById("repStatTotalBuyCost").innerText = formatVND(summary.grandTotalBuyCost);
-      document.getElementById("repStatTotalPrizeWon").innerText = formatVND(summary.grandTotalPrizeWon);
+      const badgeEl = document.getElementById("reportCustomerCountBadge");
+      if (badgeEl) badgeEl.innerText = `${(data.customers || []).length} Khách Hàng`;
+
+      const repCustEl = document.getElementById("repStatTotalCustomers");
+      if (repCustEl) repCustEl.innerText = `${summary.totalCustomers || (data.customers || []).length} Người`;
+
+      const repSlotsEl = document.getElementById("repStatTotalSlots");
+      if (repSlotsEl) repSlotsEl.innerText = `${summary.grandTotalSlots || 0} Slot`;
+
+      const repBuyEl = document.getElementById("repStatTotalBuyCost");
+      if (repBuyEl) repBuyEl.innerText = formatVND(summary.grandTotalBuyCost || 0);
+
+      const repPrizeEl = document.getElementById("repStatTotalPrizeWon");
+      if (repPrizeEl) repPrizeEl.innerText = formatVND(summary.grandTotalPrizeWon || 0);
 
       const tbody = document.getElementById("reportCustomersTableBody");
+      if (!tbody) return;
       tbody.innerHTML = "";
 
-      let filtered = data.customers;
+      let filtered = data.customers || [];
       if (!window._allCustomersDataMap) window._allCustomersDataMap = new Map();
-      (data.customers || []).forEach(c => window._allCustomersDataMap.set((c.customerName || '').toLowerCase(), c));
+      filtered.forEach(c => window._allCustomersDataMap.set((c.customerName || '').toLowerCase(), c));
       if (query) {
-        filtered = filtered.filter(c => c.customerName.toLowerCase().includes(query));
+        filtered = filtered.filter(c => (c.customerName || '').toLowerCase().includes(query));
       }
 
       if (filtered.length === 0) {
@@ -2794,13 +2805,14 @@ async function loadSingleMenuReport(menuId, query = '') {
 
       filtered.forEach((c, idx) => {
         const tr = document.createElement("tr");
-        const roundsDetail = c.roundsDetails.map(r => `Chuyến ${r.roundNumber} (${r.slotCount} slot: #${r.slots.join('-')})`).join('; ');
+        const roundsDetail = (c.roundsDetails || []).map(r => `Chuyến ${r.roundNumber || 1} (${r.slotCount || (r.slots ? r.slots.length : 0)} slot: #${(r.slots || []).join('-')})`).join('; ') || `${c.roundsCount || 1} chuyến`;
         
         let statusBadge = "";
-        if (c.netAmount > 0) {
-          statusBadge = `<span class="net-pill-win">+${formatVND(c.netAmount)} (Shop trả)</span>`;
-        } else if (c.netAmount < 0) {
-          statusBadge = `<span class="net-pill-pay">${formatVND(Math.abs(c.netAmount))} (Khách trả)</span>`;
+        const netVal = c.netAmount !== undefined ? c.netAmount : 0;
+        if (netVal > 0) {
+          statusBadge = `<span class="net-pill-win">+${formatVND(netVal)} (Shop trả)</span>`;
+        } else if (netVal < 0) {
+          statusBadge = `<span class="net-pill-pay">${formatVND(Math.abs(netVal))} (Khách trả)</span>`;
         } else {
           statusBadge = `<span class="badge-gold-neon">Hòa tiền</span>`;
         }
@@ -2808,13 +2820,13 @@ async function loadSingleMenuReport(menuId, query = '') {
         tr.innerHTML = `
           <td>${idx + 1}</td>
           <td><span class="font-bold text-accent">${c.customerName}</span></td>
-          <td><span class="badge-gold-neon">${c.menuName}</span></td>
-          <td class="font-bold">${c.roundsCount} Chuyến</td>
-          <td><span class="font-bold text-gold" style="font-size: 1rem;">${c.totalSlots}</span> <span class="text-xs text-muted">slot</span></td>
+          <td><span class="badge-gold-neon">${c.menuName || menu.name || ''}</span></td>
+          <td class="font-bold">${c.roundsCount || (c.roundsDetails ? c.roundsDetails.length : 1)} Chuyến</td>
+          <td><span class="font-bold text-gold" style="font-size: 1rem;">${c.totalSlots || 0}</span> <span class="text-xs text-muted">slot</span></td>
           <td class="text-xs text-muted" style="max-width: 250px;">${roundsDetail}</td>
-          <td class="font-bold text-gold">${formatVND(c.totalBuyCost)}</td>
-          <td class="font-bold text-green">${formatVND(c.totalPrizeWon)}</td>
-          <td class="font-bold ${c.netAmount >= 0 ? 'text-green' : 'text-red'}">${c.netAmount > 0 ? '+' : ''}${formatVND(c.netAmount)}</td>
+          <td class="font-bold text-gold">${formatVND(c.totalBuyCost || 0)}</td>
+          <td class="font-bold text-green">${formatVND(c.totalPrizeWon || 0)}</td>
+          <td class="font-bold ${netVal >= 0 ? 'text-green' : 'text-red'}">${netVal > 0 ? '+' : ''}${formatVND(netVal)}</td>
           <td>${statusBadge}</td>
           <td class="text-right">
             <div style="display: flex; gap: 4px; justify-content: flex-end;">
@@ -2843,10 +2855,17 @@ async function loadAllMenusReport(query = '') {
       const data = json.data;
       const menus = data.menus;
 
-      document.getElementById("repStatTotalCustomers").innerText = `${data.totalCustomers} Người`;
-      document.getElementById("repStatTotalSlots").innerText = `${data.grandTotalSlots} Slot`;
-      document.getElementById("repStatTotalBuyCost").innerText = formatVND(data.grandTotalBuyCost);
-      document.getElementById("repStatTotalPrizeWon").innerText = formatVND(data.grandTotalPrizeWon);
+      const repCustEl = document.getElementById("repStatTotalCustomers");
+      if (repCustEl) repCustEl.innerText = `${data.totalCustomers || 0} Người`;
+
+      const repSlotsEl = document.getElementById("repStatTotalSlots");
+      if (repSlotsEl) repSlotsEl.innerText = `${data.grandTotalSlots || 0} Slot`;
+
+      const repBuyEl = document.getElementById("repStatTotalBuyCost");
+      if (repBuyEl) repBuyEl.innerText = formatVND(data.grandTotalBuyCost || 0);
+
+      const repPrizeEl = document.getElementById("repStatTotalPrizeWon");
+      if (repPrizeEl) repPrizeEl.innerText = formatVND(data.grandTotalPrizeWon || 0);
 
       const thead = document.getElementById("matrixTableHead");
       let headHtml = `<tr><th>STT</th><th>Khách Hàng</th>`;

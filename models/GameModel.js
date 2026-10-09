@@ -397,7 +397,20 @@ const GameModel = {
 
   getAllRounds(menuId = null) {
     if (menuId) {
-      return roundsByMenu[menuId] || [];
+      if (roundsByMenu[menuId] && roundsByMenu[menuId].length > 0) {
+        return roundsByMenu[menuId];
+      }
+      // Fallback tìm kiếm trong toàn bộ rounds theo menuId hoặc menuCode
+      let matched = [];
+      Object.values(roundsByMenu).forEach(rounds => {
+        (rounds || []).forEach(r => {
+          if (r && (r.menuId === menuId || r.menuCode === menuId || (r.menuId && String(r.menuId).toLowerCase() === String(menuId).toLowerCase()))) {
+            matched.push(r);
+          }
+        });
+      });
+      if (matched.length > 0) return matched;
+      return [];
     }
     let all = [];
     Object.values(roundsByMenu).forEach(rounds => {

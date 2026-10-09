@@ -22,7 +22,10 @@ const ReportModel = {
     // Đảm bảo ván hiện tại của menu này đã được tải/khởi tạo
     await GameModel.getCurrentGame(menu.id);
 
-    const allRounds = GameModel.getAllRounds(menu.id);
+    let allRounds = GameModel.getAllRounds(menu.id);
+    if (!allRounds || allRounds.length === 0) {
+      allRounds = GameModel.getAllRounds(menuId);
+    }
     const customerMap = {};
 
     allRounds.forEach(round => {

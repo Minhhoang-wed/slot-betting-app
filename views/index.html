@@ -17,7 +17,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
-  <link rel="stylesheet" href="css/style.css?v=2.3">
+  <link rel="stylesheet" href="css/style.css?v=2.4">
 </head>
 <body class="theme-lovable">
   <!-- Dynamic Ambient Glow Background -->
@@ -596,7 +596,10 @@
             <div class="top-bar-title">
               <span class="icon-circle icon-gold"><i class="fa-solid fa-table-list"></i></span>
               <div>
-                <h2 class="card-heading" id="reportTableTitle">Danh Sách Khách Hàng - Menu Kèo 150K</h2>
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <h2 class="card-heading" id="reportTableTitle">Danh Sách Khách Hàng - Menu Kèo 150K</h2>
+                  <span id="reportCustomerCountBadge" class="badge-gold-neon">0 Khách Hàng</span>
+                </div>
                 <p class="card-caption">Tổng hợp số slot khách đã vào qua các chuyến, tiền cược, tiền thắng và số dư ròng</p>
               </div>
             </div>
@@ -1236,6 +1239,6 @@
   <!-- Toast Notification -->
   <div id="toast" class="modern-toast"></div>
 
-  <script src="js/app.js?v=2.3"></script>
+  <script src="js/app.js?v=2.4"></script>
 </body>
 </html>
