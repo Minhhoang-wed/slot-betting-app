@@ -10,6 +10,13 @@ const BillController = require('../controllers/BillController');
 const ProductController = require('../controllers/ProductController');
 const MenuController = require('../controllers/MenuController');
 const ReportController = require('../controllers/ReportController');
+const BlindBagController = require('../controllers/BlindBagController');
+
+// Túi mù bán lẻ: independent of games, winners and settlement.
+router.get('/blind-bags', BlindBagController.list);
+router.post('/blind-bags', BlindBagController.create);
+router.post('/blind-bags/:id/checkout', BlindBagController.checkout);
+router.put('/blind-bags/:id/assignment', BlindBagController.assign);
 
 // --- MENUS KÈO (150K, 200K, 100K...) ---
 router.get('/menus', MenuController.getMenus);

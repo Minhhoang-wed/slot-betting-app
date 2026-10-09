@@ -1,0 +1,31 @@
+.blind-bag-panel { margin-top: 24px; }
+.blind-bag-panel .card-content { display: block; }
+.blind-bag-intro, .blind-bag-progress, .blind-bag-toolbar, .blind-bag-orders { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.blind-bag-intro strong { border: 1px solid #e7d2b8; background: #fff6e8; color: #a64909; padding: 8px 14px; border-radius: 24px; }
+.blind-bag-note { color: #78716c; font-size: .85rem; line-height: 1.65; margin: 14px 0; }
+#blindBagMessage { color: #a64909; margin: 10px 0; }
+.blind-bag-toolbar { margin-top: 20px; }
+.blind-bag-toolbar select { flex: 1; min-width: 180px; }
+.blind-bag-toolbar input { width: 80px; }
+.blind-bag-panel progress { width: 100%; height: 8px; accent-color: #b45309; margin: 12px 0 20px; }
+.blind-bag-progress { justify-content: space-between; margin-top: 22px; }
+.blind-bag-progress span { color: #78716c; font-size: .85rem; }
+.blind-bag-panel h3 { font-size: 1rem; margin-bottom: 12px; }
+.blind-bag-table-wrap { overflow-x: auto; }
+.blind-bag-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .88rem; }
+.blind-bag-table th, .blind-bag-table td { padding: 12px 10px; border-bottom: 1px solid #e7ded4; }
+.blind-bag-table th { background: #f9f5ef; }
+.blind-bag-table small { display: block; color: #78716c; margin-top: 4px; }
+.blind-bag-table select { min-width: 200px; }
+.blind-bag-results, .blind-bag-create { margin-top: 20px; border-top: 1px solid #e7ded4; padding-top: 16px; }
+.blind-bag-panel summary { cursor: pointer; font-weight: 600; padding-bottom: 12px; }
+.blind-bag-pool { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
+.blind-bag-pool label { font-size: .8rem; color: #78716c; }
+.blind-bag-pool select { margin-top: 5px; }
+.blind-bag-panel button:disabled, .blind-bag-panel select:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 720px) {
+  .blind-bag-pool { grid-template-columns: 1fr; }
+  .blind-bag-toolbar { align-items: stretch; }
+  .blind-bag-toolbar select { flex-basis: 100%; }
+  .blind-bag-toolbar button { width: 100%; justify-content: center; }
+}

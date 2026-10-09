@@ -18,6 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <link rel="stylesheet" href="css/style.css?v=2.4">
+  <link rel="stylesheet" href="css/blind-bags.css?v=1">
 </head>
 <body class="theme-lovable">
   <!-- Dynamic Ambient Glow Background -->
@@ -783,7 +784,7 @@
                   <span id="cartTotal" class="grand-total-amount">0 đ</span>
                 </div>
 
-                <button class="btn-neon-green btn-full mt-3" onclick="checkoutShopBill()">
+                <button id="shopCheckoutButton" class="btn-neon-green btn-full mt-3" onclick="checkoutShopBill()">
                   <i class="fa-solid fa-receipt"></i> Xuất Hóa Đơn & Tạo VietQR
                 </button>
               </div>
@@ -909,11 +910,11 @@
               <span class="t-val text-bold-purple" id="billCustomerName">---</span>
             </div>
             <div class="t-row">
-              <span class="t-label">Kèo Đấu:</span>
+              <span class="t-label" id="billContextLabel">Kèo Đấu:</span>
               <span class="t-val font-semibold" id="billGameName">Kèo 12 Slot - Mỹ Phẩm YSL</span>
             </div>
             <div class="t-row">
-              <span class="t-label">Slot Đã Chọn:</span>
+              <span class="t-label" id="billQuantityLabel">Slot Đã Chọn:</span>
               <span class="t-val font-bold text-gold" id="billSlotsList">Slot #2, Slot #5</span>
             </div>
           </div>
@@ -967,7 +968,7 @@
         <button class="btn-action-green" onclick="downloadBillImage()">
           <i class="fa-solid fa-download"></i> Tải Ảnh Bill (PNG)
         </button>
-        <button class="btn-neon-gold" onclick="downloadSingleCustomerDetailCsv(currentBillData ? (currentBillData.customerName || currentBillData.playerName) : '')" title="Xuất file Excel CSV chi tiết tất cả các chuyến">
+        <button id="billGameExport" class="btn-neon-gold" onclick="downloadSingleCustomerDetailCsv(currentBillData ? (currentBillData.customerName || currentBillData.playerName) : '')" title="Xuất file Excel CSV chi tiết tất cả các chuyến">
           <i class="fa-solid fa-file-excel"></i> Xuất File Khách
         </button>
         <button class="btn-action-dim" onclick="closeBillModal()">Đóng</button>
@@ -1240,5 +1241,6 @@
   <div id="toast" class="modern-toast"></div>
 
   <script src="js/app.js?v=2.4"></script>
+  <script src="js/blind-bags.js?v=1"></script>
 </body>
 </html>

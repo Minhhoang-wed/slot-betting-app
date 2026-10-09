@@ -240,6 +240,7 @@ function switchTab(tabId) {
   } else if (tabId === 'shop') {
     document.getElementById("tabShop").classList.add("active");
     document.getElementById("tabBtnShop").classList.add("active");
+    loadBlindBags();
   } else if (tabId === 'settings') {
     document.getElementById("tabSettings").classList.add("active");
     document.getElementById("tabBtnSettings").classList.add("active");
@@ -1113,6 +1114,11 @@ let currentBillData = null;
 
 async function openBillModal(playerName, optionalData = null) {
   if (!playerName) return;
+  document.querySelector('#billModal .attach-product-bar').style.display = '';
+  document.getElementById('billGameExport').style.display = '';
+  document.getElementById('billContextLabel').textContent = 'Kèo Đấu:';
+  document.getElementById('billQuantityLabel').textContent = 'Slot Đã Chọn:';
+  document.querySelector('#billModal .modal-top-title span').textContent = 'Chi Tiết Phiếu Quyết Toán (Combo Kèo + Mua Hàng)';
   playSound('coin');
   currentBillData = null;
 
@@ -1561,6 +1567,14 @@ function downloadBillImage() {
 function copyBillText() {
   playSound('click');
   if (!currentBillData) return;
+  if (currentBillData.retailItems) {
+    const bill = currentBillData;
+    const text = `${shopSettings.name}\nHÓA ĐƠN BÁN LẺ\nKhách hàng: ${bill.customerName}\n` +
+      bill.retailItems.map(item => `${item.product.name} × ${item.qty}: ${formatVND(item.product.price * item.qty)}`).join('\n') +
+      `\nGiảm giá: ${formatVND(bill.discount)}\nTổng thanh toán: ${formatVND(-bill.netAmount)}`;
+    navigator.clipboard.writeText(text).then(() => showToast('Đã sao chép hóa đơn.'), () => alert('Không thể sao chép. Vui lòng cho phép truy cập clipboard.'));
+    return;
+  }
   const name = currentBillData.customerName || currentBillData.playerName;
   const slots = currentBillData.slotsSummary || (currentBillData.slotsList && currentBillData.slotsList.length > 0 ? `#${currentBillData.slotsList.join(', #')} (${currentBillData.slotsList.length} slot)` : `${currentBillData.totalSlots || 0} slot`);
   const gameName = currentBillData.gameName || (gameState ? gameState.name : "Kèo Slot");
@@ -1811,6 +1825,7 @@ async function deleteProductItem(id) {
 }
 
 function addToCart(productId) {
+  if (blindBagCartLocked()) return;
   playSound('coin');
   const product = products.find(p => p.id == productId);
   if (!product) return;
@@ -1834,12 +1849,12 @@ function renderCart() {
     row.className = "cart-item-row";
     const prod = item.product || {};
     const imgUrl = prod.img || prod.image_url || "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=300";
-    const prodName = prod.name || "Sản phẩm";
+    const prodName = blindBagEscape(prod.name || "Sản phẩm");
     const prodPrice = Number(prod.price || 0);
 
     row.innerHTML = `
       <div style="display: flex; align-items: center; gap: 10px; flex: 2; min-width: 0;">
-        <img src="${imgUrl}" alt="${prodName}" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #e7ded4; background: #f3eee3; flex-shrink: 0;" onerror="this.onerror=null;this.src='https://placehold.co/100x100/f3eee3/a0855b?text=SP'">
+        ${item.blindBagRoundId ? '<span class="icon-circle icon-purple" aria-hidden="true"><i class="fa-solid fa-gift"></i></span>' : `<img src="${imgUrl}" alt="${prodName}" style="width: 44px; height: 44px; border-radius: 6px; object-fit: cover; border: 1px solid #e7ded4; background: #f3eee3; flex-shrink: 0;" onerror="this.onerror=null;this.src='https://placehold.co/100x100/f3eee3/a0855b?text=SP'">`}
         <div style="min-width: 0; flex: 1;">
           <div class="font-bold text-sm" style="color: #1c1917 !important; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${prodName}">${prodName}</div>
           <div class="text-xs" style="color: #a0855b; font-weight: 700; margin-top: 3px;">
@@ -1860,8 +1875,13 @@ function renderCart() {
 }
 
 function changeCartQty(idx, delta) {
+  if (blindBagCartLocked()) return;
   playSound('click');
   if (cart[idx]) {
+    if (cart[idx].blindBagRoundId && delta > 0) {
+      const round = blindBagRounds.find(r => r.id === cart[idx].blindBagRoundId);
+      if (!round || cart[idx].qty + delta > 15 - round.data.slots.length) return alert('Không còn đủ slot túi mù.');
+    }
     cart[idx].qty += delta;
     if (cart[idx].qty <= 0) cart.splice(idx, 1);
     renderCart();
@@ -1869,12 +1889,14 @@ function changeCartQty(idx, delta) {
 }
 
 function removeCartItem(idx) {
+  if (blindBagCartLocked()) return;
   playSound('click');
   cart.splice(idx, 1);
   renderCart();
 }
 
 function clearCart() {
+  if (blindBagCartLocked()) return;
   playSound('click');
   cart = [];
   renderCart();
@@ -1889,15 +1911,27 @@ function calculateCartTotal() {
 }
 
 function checkoutShopBill() {
+  if (blindBagPending || cart.some(item => item.blindBagRoundId)) return checkoutBlindBagCart();
   if (cart.length === 0) return alert("Giỏ hàng đang trống!");
-  playSound('coin');
   const customerName = document.getElementById("shopCustomerName").value.trim() || "Khách Hàng Lẻ";
-  const subtotal = cart.reduce((acc, item) => acc + (item.product.price * item.qty), 0);
   const discount = parseInt(document.getElementById("cartDiscount").value) || 0;
+  displayShopBill(cart, customerName, discount);
+}
+
+function displayShopBill(items, customerName, discount, order = null) {
+  playSound('coin');
+  const subtotal = items.reduce((acc, item) => acc + (item.product.price * item.qty), 0);
   const total = Math.max(0, subtotal - discount);
+  document.querySelector('#billModal .attach-product-bar').style.display = 'none';
+  document.getElementById('billGameExport').style.display = 'none';
+  document.getElementById('billContextLabel').textContent = 'Nội dung:';
+  document.getElementById('billQuantityLabel').textContent = 'Số lượng:';
+  document.querySelector('#billModal .modal-top-title span').textContent = 'Chi Tiết Hóa Đơn Bán Lẻ';
 
   currentBillData = {
     customerName,
+    retailItems: structuredClone(items),
+    discount,
     gameName: "Hóa đơn bán lẻ mỹ phẩm",
     slotsList: [],
     buyCost: total,
@@ -1909,17 +1943,17 @@ function checkoutShopBill() {
   document.getElementById("billShopName").innerText = shopSettings.name;
   document.getElementById("billShopInfo").innerText = `Hotline: ${shopSettings.phone}`;
   document.getElementById("billTitle").innerText = "HÓA ĐƠN BÁN LẺ MỸ PHẨM";
-  document.getElementById("billCode").innerText = `Mã HĐ: #BILL-${Date.now().toString().slice(-6)}`;
-  document.getElementById("billDateTime").innerText = new Date().toLocaleString('vi-VN');
+  document.getElementById("billCode").innerText = `Mã HĐ: #${order ? 'TM-' + order.id.slice(0, 8).toUpperCase() : 'BILL-' + Date.now().toString().slice(-6)}`;
+  document.getElementById("billDateTime").innerText = new Date(order ? order.createdAt : Date.now()).toLocaleString('vi-VN');
   document.getElementById("billCustomerName").innerText = customerName;
   document.getElementById("billGameName").innerText = "Mua hàng trực tiếp tại Shop";
-  document.getElementById("billSlotsList").innerText = `${cart.length} món hàng`;
+  document.getElementById("billSlotsList").innerText = `${items.length} món hàng`;
 
   const tbody = document.getElementById("billItemsBody");
   tbody.innerHTML = "";
-  cart.forEach(item => {
+  items.forEach(item => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${item.product.name} (x${item.qty})</td><td class="text-right font-bold">${formatVND(item.product.price * item.qty)}</td>`;
+    tr.innerHTML = `<td>${blindBagEscape(item.product.name)} (x${item.qty})</td><td class="text-right font-bold">${formatVND(item.product.price * item.qty)}</td>`;
     tbody.appendChild(tr);
   });
   if (discount > 0) {
@@ -3263,4 +3297,3 @@ document.addEventListener("click", function(e) {
     closeQuickMenu();
   }
 });
-

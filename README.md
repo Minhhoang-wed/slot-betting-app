@@ -1,5 +1,22 @@
 # 🎰 LUCKY SLOT & SHOP PRO V2.5 (KIẾN TRÚC MVC + SUPABASE)
 
+## Túi mù trong Mỹ phẩm bán lẻ
+
+- Mỗi đợt gồm **15 slot, 414.000đ/slot**, độc lập với bàn kèo, người thắng và quyết toán thưởng.
+- Trong tab **Mỹ Phẩm Bán Lẻ**, kéo xuống **TÚI MÙ**, mở **Tạo đợt túi mù mới** và chọn 15 đơn vị sản phẩm trong danh mục. Một loại có thể xuất hiện nhiều lần nếu có đủ hàng thực tế.
+- Thêm số slot vào giỏ cùng mỹ phẩm (hoặc mua riêng slot), nhập tên khách và xuất hóa đơn. Chỉ khi máy chủ ghi nhận thành công, slot mới được bán. Danh sách tổng hợp theo tên khách và số điện thoại; tên giống nhau nhưng khác số điện thoại là hai khách.
+- Khi đủ 15 slot, shop bốc **50 phiếu offline**. Hệ thống chỉ lưu sản phẩm nhận của từng slot, mỗi đơn vị sản phẩm được gán một lần. Có thể bỏ gán để sửa kết quả.
+- Đợt cũ và hóa đơn được giữ lại trong bộ chọn đợt. Đơn có túi mù lưu cả mỹ phẩm mua chung và giảm giá; có thể mở lại hóa đơn mà không mua thêm slot. Slot túi mù không đưa vào báo cáo kèo.
+- Đơn đang chờ phản hồi được lưu mã trong sessionStorage của tab; bấm **Kiểm tra / xuất lại hóa đơn** để gửi lại cùng mã, tránh mua trùng.
+
+### Cập nhật cơ sở dữ liệu đang sử dụng
+
+Chạy **chỉ** file `migrations/001_blind_bags.sql` trong Supabase SQL Editor để thêm bảng riêng. Migration này không xóa dữ liệu hiện có. **Không chạy lại `schema.sql` trên dữ liệu thật** vì file đó có lệnh DROP TABLE. Với cài đặt mới, chạy migration sau schema.
+
+Khi Supabase đã cấu hình mà bảng mới chưa có hoặc kết nối lỗi, Túi mù báo lỗi thay vì ghi vào bộ nhớ tạm. Nếu chưa cấu hình Supabase, tính năng chạy thử trong RAM, có thông báo trên giao diện, và mất dữ liệu khi máy chủ khởi động lại. Migration giữ mô hình quyền truy cập hiện tại của ứng dụng.
+
+Chạy `npm test` để kiểm tra giới hạn slot, mua chung mỹ phẩm, gửi trùng đơn, mua đồng thời, gán kết quả và lỗi lưu dữ liệu.
+
 Hệ thống quản lý **Kèo Livestream Đa Menu (150K, 200K, 100K, 300K VIP...)**, điều hành **Nhiều Chuyến (Rounds)** liên tục, tự động tích lũy số slot của từng khách hàng và **Xuất Báo Cáo Excel (CSV UTF-8 BOM chuẩn tiếng Việt 100%)** cho Admin chốt sổ.
 
 ---
