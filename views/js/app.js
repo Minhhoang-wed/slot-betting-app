@@ -1111,29 +1111,88 @@ function renderSettlementTableUI(settlementList, prizePerWinner = null) {
 // --- FILE BEAL / VIP BILL MODAL ---
 let currentBillData = null;
 
-function openBillModal(playerName) {
+async function openBillModal(playerName, optionalData = null) {
+  if (!playerName) return;
   playSound('coin');
-  if (!gameState.finishedResults) {
-    const p = getGroupedPlayerData().find(x => x.name === playerName);
-    if (!p) return;
-    currentBillData = {
-      customerName: p.name,
-      gameName: gameState.name,
-      slotsList: p.slots,
-      buyCost: p.totalCost,
-      prizeWon: 0,
-      netAmount: -p.totalCost,
-      isWinner: false,
-      deducted: deductSlotCost
-    };
-  } else {
-    const found = gameState.finishedResults.find(x => x.playerName === playerName);
-    if (found) {
-      currentBillData = { ...found, customerName: found.playerName, gameName: gameState.name };
+  currentBillData = null;
+
+  // 1. Dùng optionalData nếu được truyền vào
+  if (optionalData && (optionalData.customerName || optionalData.playerName)) {
+    currentBillData = createBillDataFromCustomerObj(optionalData);
+  }
+
+  // 2. Tra trong window._lastSearchedCustomerData (nếu vừa tìm kiếm khách này trong Báo Cáo)
+  if (!currentBillData && window._lastSearchedCustomerData) {
+    const sName = (window._lastSearchedCustomerData.customerName || '').toLowerCase();
+    if (sName === playerName.toLowerCase()) {
+      currentBillData = createBillDataFromCustomerObj(window._lastSearchedCustomerData);
     }
   }
 
-  if (!currentBillData) return;
+  // 3. Tra trong gameState của ván hiện tại (màn hình chính ván đấu)
+  if (!currentBillData) {
+    if (gameState && gameState.finishedResults && Array.isArray(gameState.finishedResults)) {
+      const found = gameState.finishedResults.find(x => (x.playerName || '').toLowerCase() === playerName.toLowerCase());
+      if (found) {
+        currentBillData = {
+          ...found,
+          customerName: found.playerName,
+          playerName: found.playerName,
+          gameName: gameState.name,
+          slotPrice: gameState.slotPrice
+        };
+      }
+    }
+    
+    if (!currentBillData && typeof getGroupedPlayerData === 'function') {
+      const p = getGroupedPlayerData().find(x => (x.name || '').toLowerCase() === playerName.toLowerCase());
+      if (p) {
+        currentBillData = {
+          customerName: p.name,
+          playerName: p.name,
+          gameName: gameState ? gameState.name : "Kèo Slot",
+          slotPrice: gameState ? gameState.slotPrice : 0,
+          slotsList: p.slots || [],
+          totalSlots: (p.slots || []).length,
+          buyCost: p.totalCost,
+          prizeWon: 0,
+          netAmount: -p.totalCost,
+          isWinner: false,
+          deducted: deductSlotCost
+        };
+      }
+    }
+  }
+
+  // 4. Tra trong window._allCustomersDataMap (dữ liệu báo cáo đã load trong RAM)
+  if (!currentBillData && window._allCustomersDataMap && window._allCustomersDataMap.has(playerName.toLowerCase())) {
+    const reportCust = window._allCustomersDataMap.get(playerName.toLowerCase());
+    currentBillData = createBillDataFromCustomerObj(reportCust);
+  }
+
+  // 5. Nếu vẫn chưa có, gọi API tra cứu chi tiết khách từ server
+  if (!currentBillData) {
+    try {
+      const res = await fetch(`/api/reports/customer-detail?name=${encodeURIComponent(playerName)}`);
+      const json = await res.json();
+      if (json.success && json.data) {
+        currentBillData = createBillDataFromCustomerObj(json.data);
+      } else {
+        const sRes = await fetch(`/api/reports/search?name=${encodeURIComponent(playerName)}`);
+        const sJson = await sRes.json();
+        if (sJson.success && sJson.data && sJson.data.length > 0) {
+          currentBillData = createBillDataFromCustomerObj(sJson.data[0]);
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi tải chi tiết hóa đơn từ server:", err);
+    }
+  }
+
+  if (!currentBillData) {
+    showToast(`Không tìm thấy dữ liệu hóa đơn cho khách "${playerName}"!`);
+    return;
+  }
 
   const custName = currentBillData.customerName || currentBillData.playerName;
 
@@ -1142,13 +1201,72 @@ function openBillModal(playerName) {
   document.getElementById("billCode").innerText = `Mã Bill: #SLOT-${Date.now().toString().slice(-6)}`;
   document.getElementById("billDateTime").innerText = new Date().toLocaleString('vi-VN');
   document.getElementById("billCustomerName").innerText = custName;
-  document.getElementById("billGameName").innerText = gameState.name;
-  document.getElementById("billSlotsList").innerText = `Slot #${(currentBillData.slotsList || []).join(', #')} (${(currentBillData.slotsList || []).length} slot)`;
+  document.getElementById("billGameName").innerText = currentBillData.gameName || (gameState ? gameState.name : "Kèo Slot");
+  
+  if (currentBillData.slotsSummary) {
+    document.getElementById("billSlotsList").innerText = currentBillData.slotsSummary;
+  } else if ((currentBillData.slotsList || []).length > 0) {
+    document.getElementById("billSlotsList").innerText = `Slot #${(currentBillData.slotsList || []).join(', #')} (${(currentBillData.slotsList || []).length} slot)`;
+  } else {
+    document.getElementById("billSlotsList").innerText = `${currentBillData.totalSlots || 0} slot`;
+  }
 
   updateProductSelectDropdowns();
   recalculateAndRenderBill();
 
   document.getElementById("billModal").classList.add("show");
+}
+
+function createBillDataFromCustomerObj(cust) {
+  if (!cust) return null;
+  const custName = cust.customerName || cust.playerName || "Khách";
+  const attachedItems = getCustomerAttachedProducts(custName) || (cust.attachedItems || []);
+  const attachedTotalCost = attachedItems.reduce((s, it) => s + (it.price * it.qty), 0);
+
+  let gameTitle = cust.gameName;
+  if (!gameTitle && cust.detailedMenus && cust.detailedMenus.length === 1) {
+    gameTitle = cust.detailedMenus[0].menuName;
+  } else if (!gameTitle && cust.detailedMenus && cust.detailedMenus.length > 1) {
+    gameTitle = cust.detailedMenus.map(m => m.menuName).join(', ');
+  }
+  if (!gameTitle) gameTitle = gameState ? gameState.name : "Tổng Hợp Báo Cáo";
+
+  const slotsList = cust.slotsList ? [...cust.slotsList] : [];
+  const parts = [];
+  if (cust.detailedMenus && cust.detailedMenus.length > 0) {
+    cust.detailedMenus.forEach(m => {
+      (m.rounds || []).forEach(r => {
+        if (r.slots && r.slots.length > 0) {
+          slotsList.push(...r.slots);
+          parts.push(`${m.menuName} (Chuyến #${r.roundNumber}: ô #${r.slots.join('-')})`);
+        }
+      });
+    });
+  }
+  const slotsSummaryStr = parts.length > 0 
+    ? parts.join('; ') 
+    : (slotsList.length > 0 ? `Slot #${slotsList.join(', #')} (${slotsList.length} slot)` : `${cust.totalSlots || 0} slot`);
+
+  const buyCost = cust.totalBuyCost !== undefined ? cust.totalBuyCost : (cust.buyCost || 0);
+  const prizeWon = cust.totalPrizeWon !== undefined ? cust.totalPrizeWon : (cust.prizeWon || 0);
+
+  return {
+    customerName: custName,
+    playerName: custName,
+    gameName: gameTitle,
+    slotsList: slotsList,
+    slotsSummary: slotsSummaryStr,
+    totalSlots: cust.totalSlots || slotsList.length,
+    buyCost: buyCost,
+    prizeWon: prizeWon,
+    netAmount: cust.netAmount !== undefined ? cust.netAmount : (prizeWon - buyCost),
+    isWinner: prizeWon > 0 || !!cust.isWinner,
+    deducted: cust.deducted !== undefined ? cust.deducted : true,
+    detailedMenus: cust.detailedMenus || [],
+    attachedItems: attachedItems,
+    attachedTotalCost: attachedTotalCost,
+    isReportSummary: !!(cust.detailedMenus || cust.totalSlots !== undefined)
+  };
 }
 
 function recalculateAndRenderBill() {
@@ -1193,23 +1311,50 @@ function recalculateAndRenderBill() {
 
   // Render Table Rows (Rõ ràng 2 phần: Slot và Mỹ phẩm)
   const tbody = document.getElementById("billItemsBody");
-  let rowsHtml = `
-    <tr class="ticket-section-row">
-      <td colspan="2"><i class="fa-solid fa-ticket text-gold"></i> <b>PHẦN KÈO CƯỢC SLOT</b></td>
-    </tr>
-    <tr>
-      <td>Tiền mua ${(currentBillData.slotsList || []).length} slot (${formatVND(gameState.slotPrice)}/slot)</td>
-      <td class="text-right font-bold" style="color: #f43f5e;">-${formatVND(buyCost)}</td>
-    </tr>
-  `;
+  let rowsHtml = '';
 
-  if (prizeWon > 0) {
+  if (currentBillData.detailedMenus && currentBillData.detailedMenus.length > 0) {
     rowsHtml += `
-      <tr>
-        <td><i class="fa-solid fa-crown text-gold"></i> Tiền thưởng trúng kèo</td>
-        <td class="text-right font-bold text-green">+${formatVND(prizeWon)}</td>
+      <tr class="ticket-section-row">
+        <td colspan="2"><i class="fa-solid fa-ticket text-gold"></i> <b>PHẦN KÈO CƯỢC SLOT (${currentBillData.totalSlots || 0} SLOT)</b></td>
       </tr>
     `;
+    currentBillData.detailedMenus.forEach(m => {
+      rowsHtml += `
+        <tr>
+          <td><b>${m.menuName}</b> (${m.totalSlots} slot × ${formatVND(m.slotPrice)})</td>
+          <td class="text-right font-bold" style="color: #f43f5e;">-${formatVND(m.totalBuyCost)}</td>
+        </tr>
+      `;
+      if (m.totalPrizeWon > 0) {
+        rowsHtml += `
+          <tr>
+            <td style="padding-left: 18px;"><i class="fa-solid fa-crown text-gold"></i> Thưởng trúng (${m.menuName})</td>
+            <td class="text-right font-bold text-green">+${formatVND(m.totalPrizeWon)}</td>
+          </tr>
+        `;
+      }
+    });
+  } else {
+    const slotCount = (currentBillData.slotsList || []).length || currentBillData.totalSlots || 1;
+    const pricePerSlot = currentBillData.slotPrice || (gameState ? gameState.slotPrice : 0) || Math.round(buyCost / (slotCount || 1));
+    rowsHtml += `
+      <tr class="ticket-section-row">
+        <td colspan="2"><i class="fa-solid fa-ticket text-gold"></i> <b>PHẦN KÈO CƯỢC SLOT</b></td>
+      </tr>
+      <tr>
+        <td>Tiền mua ${slotCount} slot${pricePerSlot > 0 ? ` (${formatVND(pricePerSlot)}/slot)` : ''}</td>
+        <td class="text-right font-bold" style="color: #f43f5e;">-${formatVND(buyCost)}</td>
+      </tr>
+    `;
+    if (prizeWon > 0) {
+      rowsHtml += `
+        <tr>
+          <td><i class="fa-solid fa-crown text-gold"></i> Tiền thưởng trúng kèo</td>
+          <td class="text-right font-bold text-green">+${formatVND(prizeWon)}</td>
+        </tr>
+      `;
+    }
   }
 
   if (attachedItems.length > 0) {
@@ -1400,13 +1545,16 @@ function downloadBillImage() {
   playSound('coin');
   const billEl = document.getElementById("printableBill");
   showToast("Đang tạo ảnh hóa đơn PNG...");
-  html2canvas(billEl, { scale: 2, useCORS: true }).then(canvas => {
+  html2canvas(billEl, { scale: 2, useCORS: true, allowTaint: true }).then(canvas => {
     const link = document.createElement("a");
-    const name = (currentBillData.customerName || currentBillData.playerName || "bill").replace(/\s+/g, '_');
+    const name = (currentBillData ? (currentBillData.customerName || currentBillData.playerName || "bill") : "bill").replace(/\s+/g, '_');
     link.download = `Bill_${name}_${Date.now()}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
     showToast("Đã tải ảnh hóa đơn VIP thành công!");
+  }).catch(err => {
+    console.error("Lỗi xuất ảnh bill:", err);
+    showToast("Không thể tạo ảnh, bạn có thể bấm nút Copy Text!");
   });
 }
 
@@ -1414,15 +1562,16 @@ function copyBillText() {
   playSound('click');
   if (!currentBillData) return;
   const name = currentBillData.customerName || currentBillData.playerName;
-  const slots = (currentBillData.slotsList || []).join(', #');
+  const slots = currentBillData.slotsSummary || (currentBillData.slotsList && currentBillData.slotsList.length > 0 ? `#${currentBillData.slotsList.join(', #')} (${currentBillData.slotsList.length} slot)` : `${currentBillData.totalSlots || 0} slot`);
+  const gameName = currentBillData.gameName || (gameState ? gameState.name : "Kèo Slot");
   const net = currentBillData.netAmount;
   const attached = currentBillData.attachedItems || getCustomerAttachedProducts(name);
   const attachedTotal = currentBillData.attachedTotalCost || attached.reduce((s, it) => s + (it.price * it.qty), 0);
 
   let text = `🌸 [${shopSettings.name}] - PHIẾU BÁO GIÁ & KẾT QUẢ KÈO COMBO\n`;
   text += `👤 Khách hàng: ${name}\n`;
-  text += `🎯 Kèo tham gia: ${gameState.name}\n`;
-  text += `🎟️ Slot đã chọn: #${slots} (${(currentBillData.slotsList || []).length} slot)\n`;
+  text += `🎯 Kèo tham gia: ${gameName}\n`;
+  text += `🎟️ Slot tham gia: ${slots}\n`;
   text += `💰 Tiền mua slot: -${formatVND(currentBillData.buyCost)}\n`;
   if (currentBillData.prizeWon > 0) {
     text += `👑 Tiền thưởng trúng: +${formatVND(currentBillData.prizeWon)}\n`;
@@ -1452,6 +1601,8 @@ function copyBillText() {
 
   navigator.clipboard.writeText(text).then(() => {
     showToast("Đã copy toàn bộ nội dung bill! Dán gửi Zalo/Messenger ngay.");
+  }).catch(() => {
+    alert(text);
   });
 }
 
@@ -2630,6 +2781,8 @@ async function loadSingleMenuReport(menuId, query = '') {
       tbody.innerHTML = "";
 
       let filtered = data.customers;
+      if (!window._allCustomersDataMap) window._allCustomersDataMap = new Map();
+      (data.customers || []).forEach(c => window._allCustomersDataMap.set((c.customerName || '').toLowerCase(), c));
       if (query) {
         filtered = filtered.filter(c => c.customerName.toLowerCase().includes(query));
       }
@@ -2707,6 +2860,8 @@ async function loadAllMenusReport(query = '') {
       tbody.innerHTML = "";
 
       let filtered = data.customers;
+      if (!window._allCustomersDataMap) window._allCustomersDataMap = new Map();
+      (data.customers || []).forEach(c => window._allCustomersDataMap.set((c.customerName || '').toLowerCase(), c));
       if (query) {
         filtered = filtered.filter(c => c.customerName.toLowerCase().includes(query));
       }
@@ -2791,11 +2946,26 @@ async function loadRoundsHistoryTable() {
   } catch (err) {}
 }
 
+async function clearCustomerSearch() {
+  const input = document.getElementById("reportSearchCustomerInput");
+  const clearBtn = document.getElementById("clearCustomerSearchBtn");
+  if (input) {
+    input.value = "";
+    if (clearBtn) clearBtn.style.display = "none";
+    window._lastSearchedCustomerData = null;
+    await filterCustomerReports();
+    input.focus();
+  }
+}
+
 async function filterCustomerReports() {
   const query = (document.getElementById("reportSearchCustomerInput")?.value || "").trim();
   const insightBox = document.getElementById("customerQuickInsight");
+  const clearBtn = document.getElementById("clearCustomerSearchBtn");
+  if (clearBtn) clearBtn.style.display = query ? "flex" : "none";
 
   if (!query) {
+    window._lastSearchedCustomerData = null;
     if (insightBox) insightBox.style.display = "none";
     loadReports();
     return;
@@ -2806,6 +2976,7 @@ async function filterCustomerReports() {
     const json = await res.json();
     if (json.success && json.data && json.data.length > 0) {
       const match = json.data[0];
+      window._lastSearchedCustomerData = match;
       if (insightBox) {
         insightBox.style.display = "flex";
 

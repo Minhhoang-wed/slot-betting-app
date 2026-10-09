@@ -1081,16 +1081,94 @@ input[type="number"] {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
-.input-with-icon i {
+.input-with-icon i,
+.input-with-icon .search-icon {
   position: absolute;
-  left: 14px;
-  color: var(--text-muted);
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a89f91;
+  font-size: 0.95rem;
+  pointer-events: none;
+  z-index: 2;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.input-with-icon:focus-within i,
+.input-with-icon:focus-within .search-icon {
+  color: var(--accent-gold);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.input-with-icon input,
+.input-with-icon .modern-input,
+.input-with-icon .input-dock {
+  padding-left: 44px !important;
+  padding-right: 36px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e7dfd5;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 3;
+}
+
+.search-clear-btn:hover {
+  background: #1c1917;
+  color: #ffffff;
+}
+
+/* Modern inputs & selects standard styling */
+.modern-input, .modern-select {
+  width: 100%;
+  height: 42px;
+  padding: 8px 14px;
+  background: #ffffff;
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.03);
+  box-sizing: border-box;
+}
+
+.modern-input:focus, .modern-select:focus {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15);
+  background: #ffffff;
+}
+
+.modern-input::placeholder {
+  color: #9ca3af;
+  font-size: 0.88rem;
+  font-weight: 400;
 }
 
 .input-dock {
-  padding-left: 38px !important;
+  padding-left: 44px !important;
 }
 
 .btn-dock {
@@ -2558,19 +2636,30 @@ input[type="number"] {
   flex-wrap: wrap;
 }
 
+.search-filter-grid .filter-field.flex-2 {
+  flex: 2;
+  min-width: 280px;
+}
+
+.search-filter-grid .filter-field.flex-1 {
+  flex: 1;
+  min-width: 220px;
+}
+
 .filter-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .filter-label {
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 6px;
+  letter-spacing: -0.01em;
 }
 
 .customer-insight-box {

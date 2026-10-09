@@ -17,7 +17,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
-  <link rel="stylesheet" href="css/style.css?v=2.2">
+  <link rel="stylesheet" href="css/style.css?v=2.3">
 </head>
 <body class="theme-lovable">
   <!-- Dynamic Ambient Glow Background -->
@@ -538,9 +538,10 @@
           <div class="search-filter-grid">
             <div class="filter-field flex-2">
               <label class="filter-label"><i class="fa-solid fa-user-tag text-gold"></i> Tra cứu nhanh Khách Hàng:</label>
-              <div class="input-with-icon">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="reportSearchCustomerInput" class="modern-input" placeholder="Gõ tên khách (Ví dụ: Người A, Chị Lan...) để xem ngay lịch sử..." oninput="filterCustomerReports()">
+              <div class="input-with-icon search-input-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="reportSearchCustomerInput" class="modern-input search-input" placeholder="Gõ tên khách (Ví dụ: Người A, Chị Lan...) để tra cứu ngay..." oninput="filterCustomerReports()" autocomplete="off">
+                <button type="button" id="clearCustomerSearchBtn" class="search-clear-btn" style="display: none;" onclick="clearCustomerSearch()" title="Xóa tìm kiếm">&times;</button>
               </div>
             </div>
 
@@ -1235,6 +1236,6 @@
   <!-- Toast Notification -->
   <div id="toast" class="modern-toast"></div>
 
-  <script src="js/app.js?v=2.2"></script>
+  <script src="js/app.js?v=2.3"></script>
 </body>
 </html>
