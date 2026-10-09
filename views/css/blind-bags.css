@@ -1,31 +1,1193 @@
-.blind-bag-panel { margin-top: 24px; }
-.blind-bag-panel .card-content { display: block; }
-.blind-bag-intro, .blind-bag-progress, .blind-bag-toolbar, .blind-bag-orders { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
-.blind-bag-intro strong { border: 1px solid #e7d2b8; background: #fff6e8; color: #a64909; padding: 8px 14px; border-radius: 24px; }
-.blind-bag-note { color: #78716c; font-size: .85rem; line-height: 1.65; margin: 14px 0; }
-#blindBagMessage { color: #a64909; margin: 10px 0; }
-.blind-bag-toolbar { margin-top: 20px; }
-.blind-bag-toolbar select { flex: 1; min-width: 180px; }
-.blind-bag-toolbar input { width: 80px; }
-.blind-bag-panel progress { width: 100%; height: 8px; accent-color: #b45309; margin: 12px 0 20px; }
-.blind-bag-progress { justify-content: space-between; margin-top: 22px; }
-.blind-bag-progress span { color: #78716c; font-size: .85rem; }
-.blind-bag-panel h3 { font-size: 1rem; margin-bottom: 12px; }
-.blind-bag-table-wrap { overflow-x: auto; }
-.blind-bag-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .88rem; }
-.blind-bag-table th, .blind-bag-table td { padding: 12px 10px; border-bottom: 1px solid #e7ded4; }
-.blind-bag-table th { background: #f9f5ef; }
-.blind-bag-table small { display: block; color: #78716c; margin-top: 4px; }
-.blind-bag-table select { min-width: 200px; }
-.blind-bag-results, .blind-bag-create { margin-top: 20px; border-top: 1px solid #e7ded4; padding-top: 16px; }
-.blind-bag-panel summary { cursor: pointer; font-weight: 600; padding-bottom: 12px; }
-.blind-bag-pool { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 16px 0; }
-.blind-bag-pool label { font-size: .8rem; color: #78716c; }
-.blind-bag-pool select { margin-top: 5px; }
-.blind-bag-panel button:disabled, .blind-bag-panel select:disabled { opacity: .55; cursor: not-allowed; }
-@media (max-width: 720px) {
-  .blind-bag-pool { grid-template-columns: 1fr; }
-  .blind-bag-toolbar { align-items: stretch; }
-  .blind-bag-toolbar select { flex-basis: 100%; }
-  .blind-bag-toolbar button { width: 100%; justify-content: center; }
+/* =================================================================
+   BLIND BAGS (TÚI MÙ) - MODERN LUXURY DESIGN SYSTEM
+   Phong cách ấm áp, tinh gọn, trực quan 100%, không rườm rà
+   ================================================================= */
+
+.blind-bag-panel {
+  margin-top: 24px;
+  background: var(--bg-surface-elevated, #ffffff);
+  border: 1px solid var(--border-subtle, #e2dad0);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: var(--shadow-card, 0 4px 20px -2px rgba(28, 25, 23, 0.05));
+  overflow: hidden;
+  transition: all 0.25s ease;
 }
+
+.blind-bag-panel .card-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle, #e2dad0);
+  background: linear-gradient(180deg, #ffffff 0%, #faf7f2 100%);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.blind-bag-panel .top-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.bb-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 4px 12px rgba(180, 83, 9, 0.25);
+  flex-shrink: 0;
+}
+
+.bb-heading-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bb-heading-group h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary, #181514);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.bb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.bb-chip-gold {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.bb-chip-emerald {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.bb-chip-obsidian {
+  background: #1c1917;
+  color: #fef3c7;
+}
+
+.bb-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.blind-bag-panel .card-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ================= HERO CONTROL BAR ================= */
+.bb-hero-bar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.2fr) minmax(240px, 1.8fr);
+  gap: 16px;
+  background: #faf7f2;
+  border: 1px solid var(--border-subtle, #e2dad0);
+  border-radius: 12px;
+  padding: 14px 16px;
+  align-items: center;
+}
+
+.bb-round-selector-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bb-round-selector-box label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted, #78716c);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.bb-round-selector-box select {
+  font-weight: 600;
+  font-size: 0.92rem;
+  padding: 9px 12px;
+  background: #ffffff;
+}
+
+.bb-hero-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bb-hero-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bb-status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.bb-status-open {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.bb-status-waiting {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.bb-status-done {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+
+.bb-progress-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary, #44403c);
+}
+
+.bb-progress-track {
+  width: 100%;
+  height: 10px;
+  background: #e7ded4;
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bb-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
+  border-radius: 9999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ================= QUICK SELL STATION ================= */
+.bb-quick-sell {
+  background: #ffffff;
+  border: 1.5px solid #e7ded4;
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.bb-quick-sell-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-primary, #181514);
+}
+
+.bb-sell-form-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) minmax(140px, 1.2fr) minmax(160px, 1.5fr) minmax(220px, 2fr);
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.bb-input-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bb-input-field label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted, #78716c);
+}
+
+.bb-qty-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bb-qty-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle, #e2dad0);
+  background: #f9f5ef;
+  color: var(--text-primary, #181514);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.bb-qty-btn:hover:not(:disabled) {
+  background: #1c1917;
+  color: #ffffff;
+  border-color: #1c1917;
+}
+
+.bb-qty-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bb-qty-input {
+  width: 55px;
+  height: 38px;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 0;
+}
+
+.bb-quick-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.bb-quick-chip-btn {
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #e7ded4;
+  background: #f9f5ef;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary, #44403c);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bb-quick-chip-btn:hover {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.bb-sell-actions-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bb-sell-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.bb-btn-checkout {
+  flex: 1.5;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.bb-btn-checkout:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+  filter: brightness(1.05);
+}
+
+.bb-btn-add-cart {
+  flex: 1;
+  background: #ffffff;
+  color: var(--text-primary, #181514);
+  border: 1.5px solid var(--border-subtle, #e2dad0);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.bb-btn-add-cart:hover:not(:disabled) {
+  background: #f5efe6;
+  border-color: #1c1917;
+}
+
+.bb-btn-checkout:disabled,
+.bb-btn-add-cart:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Banner khi đã đủ 15 slot */
+.bb-round-full-banner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%);
+  border: 1.5px dashed #f59e0b;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bb-round-full-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.bb-round-full-banner-left i {
+  font-size: 1.4rem;
+  color: #d97706;
+}
+
+/* ================= TABS NAVIGATION ================= */
+.bb-tabs-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 2px solid #e7ded4;
+  padding-bottom: 4px;
+}
+
+.bb-tab-pill {
+  padding: 8px 16px;
+  border-radius: 8px 8px 0 0;
+  border: none;
+  background: transparent;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-muted, #78716c);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.bb-tab-pill:hover {
+  color: var(--text-primary, #181514);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.bb-tab-pill.active {
+  color: #b45309;
+  background: #ffffff;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.bb-tab-pill.active::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #b45309;
+  border-radius: 3px 3px 0 0;
+}
+
+.bb-tab-count {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  background: #f5efe6;
+  color: var(--text-secondary, #44403c);
+}
+
+.bb-tab-pill.active .bb-tab-count {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* ================= 15-SLOT VISUAL BOARD ================= */
+.bb-board-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bb-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.bb-slot-card {
+  background: #ffffff;
+  border: 1.5px solid #e7ded4;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+  min-height: 145px;
+}
+
+.bb-slot-card:hover {
+  border-color: #cfc5b8;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.bb-slot-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bb-slot-number-badge {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #181514;
+  background: #f9f5ef;
+  border: 1px solid #e7ded4;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: -0.02em;
+}
+
+.bb-slot-card.bb-slot-taken .bb-slot-number-badge {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.bb-slot-status-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.bb-status-pill-empty {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.bb-status-pill-sold {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+/* Nội dung ô trống */
+.bb-slot-empty-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 6px;
+  text-align: center;
+  cursor: pointer;
+  padding: 8px 0;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.bb-slot-empty-body:hover {
+  background: #fdfaf6;
+}
+
+.bb-slot-mystery-icon {
+  font-size: 1.8rem;
+  color: #d1c7bc;
+  transition: all 0.2s ease;
+}
+
+.bb-slot-card:hover .bb-slot-mystery-icon {
+  color: #f59e0b;
+  transform: scale(1.12);
+}
+
+.bb-slot-empty-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #9ca3af;
+}
+
+.bb-slot-quick-pick-btn {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #e7ded4;
+  background: #ffffff;
+  color: var(--text-secondary, #44403c);
+  cursor: pointer;
+}
+
+.bb-slot-quick-pick-btn:hover {
+  background: #1c1917;
+  color: #ffffff;
+  border-color: #1c1917;
+}
+
+/* Nội dung ô đã bán */
+.bb-slot-taken-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.bb-slot-buyer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bb-slot-buyer-name {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-primary, #181514);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-slot-buyer-name i {
+  color: #b45309;
+  font-size: 0.78rem;
+}
+
+.bb-slot-buyer-phone {
+  font-size: 0.72rem;
+  color: var(--text-muted, #78716c);
+}
+
+/* Quà tặng kết quả */
+.bb-slot-reward-box {
+  margin-top: 4px;
+}
+
+.bb-reward-pending {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #9ca3af;
+  background: #f9fafb;
+  padding: 4px 6px;
+  border-radius: 6px;
+  text-align: center;
+  border: 1px dashed #e5e7eb;
+}
+
+.bb-reward-select {
+  font-size: 0.75rem;
+  padding: 4px 6px;
+  width: 100%;
+  border-color: #f59e0b;
+  background: #fffbeb;
+  font-weight: 600;
+  color: #92400e;
+  border-radius: 6px;
+}
+
+.bb-reward-won {
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%);
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  padding: 5px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.bb-reward-won-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.bb-reward-won-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #047857;
+  text-transform: uppercase;
+}
+
+.bb-reward-won-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #065f46;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-reward-edit-btn {
+  background: transparent;
+  border: none;
+  color: #059669;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+.bb-reward-edit-btn:hover {
+  background: #dcfce7;
+}
+
+/* ================= BUYERS & INVOICES TAB ================= */
+.bb-buyers-view {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bb-data-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle, #e2dad0);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bb-data-card-header {
+  padding: 12px 16px;
+  background: #faf7f2;
+  border-bottom: 1px solid var(--border-subtle, #e2dad0);
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--text-primary, #181514);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bb-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.bb-table th {
+  background: #faf7f2;
+  padding: 10px 14px;
+  font-weight: 700;
+  color: var(--text-muted, #78716c);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-subtle, #e2dad0);
+}
+
+.bb-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f2ede4;
+  color: var(--text-primary, #181514);
+  font-size: 0.88rem;
+}
+
+.bb-table tr:last-child td {
+  border-bottom: none;
+}
+
+.bb-slots-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.bb-slot-tag {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.bb-orders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  padding: 14px;
+}
+
+.bb-order-btn-card {
+  background: #ffffff;
+  border: 1.5px solid #e7ded4;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.bb-order-btn-card:hover {
+  border-color: #1c1917;
+  background: #fbf9f6;
+  transform: translateY(-1px);
+}
+
+.bb-order-btn-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bb-order-btn-customer {
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--text-primary, #181514);
+}
+
+.bb-order-btn-slots {
+  font-size: 0.75rem;
+  color: var(--text-muted, #78716c);
+}
+
+.bb-order-btn-amount {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #b45309;
+}
+
+/* ================= 15 GIFTS POOL TAB ================= */
+.bb-pool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.bb-pool-item {
+  background: #ffffff;
+  border: 1px solid #e7ded4;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bb-pool-item-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #f9f5ef;
+  border: 1px solid #e7ded4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #181514;
+  flex-shrink: 0;
+}
+
+.bb-pool-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+}
+
+.bb-pool-item-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary, #181514);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bb-pool-item-status {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* ================= MODAL TẠO ĐỢT MỚI ================= */
+.bb-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(24, 21, 20, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.bb-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bb-modal-dialog {
+  background: #ffffff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 820px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  transform: scale(0.96);
+  transition: transform 0.2s ease;
+}
+
+.bb-modal-overlay.active .bb-modal-dialog {
+  transform: scale(1);
+}
+
+.bb-modal-header {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border-subtle, #e2dad0);
+  background: #faf7f2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bb-modal-header h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #181514);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.bb-modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted, #78716c);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+
+.bb-modal-close-btn:hover {
+  background: #e7ded4;
+  color: #181514;
+}
+
+.bb-modal-body {
+  padding: 20px 22px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bb-modal-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0eae1;
+}
+
+.bb-modal-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bb-btn-tool {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e2dad0;
+  background: #f9f5ef;
+  color: var(--text-primary, #181514);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+
+.bb-btn-tool:hover {
+  background: #1c1917;
+  color: #ffffff;
+  border-color: #1c1917;
+}
+
+.bb-modal-grid-15 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.bb-modal-slot-picker {
+  background: #faf7f2;
+  border: 1px solid #e7ded4;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bb-modal-slot-picker label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bb-modal-slot-picker select {
+  font-size: 0.82rem;
+  padding: 6px 8px;
+  background: #ffffff;
+}
+
+.bb-modal-footer {
+  padding: 14px 22px;
+  border-top: 1px solid var(--border-subtle, #e2dad0);
+  background: #faf7f2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ================= EMPTY STATE ================= */
+.bb-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.bb-empty-state i {
+  font-size: 3rem;
+  color: #d1c7bc;
+}
+
+.bb-empty-state h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #181514);
+  margin: 0;
+}
+
+/* ================= RESPONSIVE BLIND BAGS ================= */
+@media (max-width: 1024px) {
+  .bb-hero-bar {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .bb-sell-form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .bb-slot-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .bb-modal-grid-15 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .blind-bag-panel {
+    margin-top: 16px;
+    border-radius: 14px;
+  }
+  .blind-bag-panel .card-top-bar {
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .bb-heading-group h2 {
+    font-size: 1.1rem;
+  }
+  .bb-top-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .bb-hero-bar {
+    padding: 12px;
+  }
+  .bb-quick-sell {
+    padding: 12px;
+  }
+  .bb-sell-form-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .bb-sell-actions-wrap {
+    width: 100%;
+  }
+  .bb-sell-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  .bb-btn-checkout, .bb-btn-add-cart {
+    width: 100%;
+    height: 42px;
+    justify-content: center;
+  }
+  .bb-tabs-nav {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+    gap: 4px;
+  }
+  .bb-tab-pill {
+    white-space: nowrap;
+    font-size: 0.78rem;
+    padding: 6px 10px;
+  }
+  .bb-slot-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .bb-slot-card {
+    min-height: 130px;
+    padding: 10px;
+  }
+  .bb-modal-dialog {
+    max-width: 95vw;
+    max-height: 94vh;
+    margin: 8px;
+  }
+  .bb-modal-header {
+    padding: 12px 16px;
+  }
+  .bb-modal-body {
+    padding: 14px 16px;
+  }
+  .bb-modal-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .bb-modal-quick-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .bb-btn-tool {
+    width: 100%;
+    justify-content: center;
+  }
+  .bb-modal-grid-15 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .bb-modal-footer {
+    padding: 10px 16px;
+    flex-direction: column-reverse;
+  }
+  .bb-modal-footer button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .bb-slot-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .bb-slot-card {
+    min-height: 122px;
+    padding: 8px;
+  }
+  .bb-slot-number-badge {
+    font-size: 0.85rem;
+    padding: 1px 6px;
+  }
+  .bb-slot-buyer-name {
+    font-size: 0.82rem;
+  }
+  .bb-pool-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

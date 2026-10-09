@@ -104,8 +104,9 @@ const GameController = {
   // Chốt chuyến hiện tại & Sang chuyến mới (Lưu lịch sử chuyến)
   async nextRound(req, res) {
     try {
-      const { menuId, settlementResults, winners, settleMode, slots } = req.body;
-      const result = await GameModel.finishAndStartNextRound(menuId, settlementResults, winners, settleMode, slots);
+      const { menuId, roundNumber, settlementResults, winners, settleMode, slots, deductSlotCost, customerAttachedProducts } = req.body;
+      if (!menuId || !Number.isInteger(Number(roundNumber)) || Number(roundNumber) < 1) throw new Error("Thiếu ID menu hoặc số chuyến");
+      const result = await GameModel.finishAndStartNextRound(menuId, settlementResults, winners, settleMode, slots, roundNumber, { deductSlotCost, customerAttachedProducts });
       const roundsList = GameModel.getRoundsList(result.nextRound.menuId);
       res.json({
         success: true,
@@ -134,8 +135,8 @@ const GameController = {
   // Gán hoặc thay đổi người chơi cho 1 ô slot
   async updateSlot(req, res) {
     try {
-      const { gameId, slotNumber, playerName, menuId, roundNumber } = req.body;
-      const updated = await SlotModel.assignSlot(gameId, slotNumber, playerName || null, menuId, roundNumber);
+      const { gameId, slotNumber, playerName, menuId, roundNumber, shares } = req.body;
+      const updated = await SlotModel.assignSlot(gameId, slotNumber, playerName || null, menuId, roundNumber, shares);
       res.json({ success: true, data: updated });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -170,8 +171,9 @@ const GameController = {
   // Thêm 1 slot vào bàn cược
   async addSlot(req, res) {
     try {
-      const { gameId } = req.body;
-      const newSlot = await SlotModel.addSlot(gameId);
+      const { gameId, menuId, roundNumber } = req.body;
+      const target = gameId || (await GameModel.getCurrentGame(menuId, roundNumber)).id;
+      const newSlot = await SlotModel.addSlot(target);
       res.json({ success: true, message: 'Đã thêm 1 ô slot thành công', data: newSlot });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -181,8 +183,9 @@ const GameController = {
   // Bớt 1 slot khỏi bàn cược
   async removeSlot(req, res) {
     try {
-      const { gameId } = req.body;
-      const result = await SlotModel.removeLastSlot(gameId);
+      const { gameId, menuId, roundNumber } = req.body;
+      const target = gameId || (await GameModel.getCurrentGame(menuId, roundNumber)).id;
+      const result = await SlotModel.removeLastSlot(target);
       res.json({ success: true, message: 'Đã xóa bớt 1 ô slot', data: result });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -192,8 +195,10 @@ const GameController = {
   // Đồng bộ kết quả chốt ván cược từ Client lên Server
   async finalizeGame(req, res) {
     try {
-      const { menuId, winners, settleMode, deductSlotCost, finishedResults, customerAttachedProducts, slots } = req.body;
+      const { menuId, roundNumber, winners, settleMode, deductSlotCost, finishedResults, customerAttachedProducts, slots } = req.body;
+      if (!menuId || !Number.isInteger(Number(roundNumber)) || Number(roundNumber) < 1) throw new Error("Thiếu ID menu hoặc số chuyến");
       const game = await GameModel.finalizeGame(menuId, {
+        roundNumber,
         winners,
         settleMode,
         deductSlotCost,

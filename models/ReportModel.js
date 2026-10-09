@@ -1,3 +1,4 @@
+const { key, allocate, groups } = require('../views/js/settlement-core');
 /**
  * MODEL LAYER: Thống Kê Dữ Liệu & Xuất Báo Cáo File Excel (CSV Chuẩn UTF-8 BOM)
  * Phục vụ nghiệp vụ:
@@ -20,7 +21,7 @@ const ReportModel = {
     if (!menu) throw new Error('Menu không tồn tại!');
 
     // Đảm bảo ván hiện tại của menu này đã được tải/khởi tạo
-    await GameModel.getCurrentGame(menu.id);
+
 
     let allRounds = await GameModel.getAllRounds(menu.id);
     if (!allRounds || allRounds.length === 0) {
@@ -33,8 +34,8 @@ const ReportModel = {
       if (round.finishedResults && Array.isArray(round.finishedResults) && round.finishedResults.length > 0) {
         round.finishedResults.forEach(res => {
           const name = res.playerName ? res.playerName.trim() : 'Khách';
-          if (!customerMap[name]) {
-            customerMap[name] = {
+          if (!customerMap[key(name)]) {
+            customerMap[key(name)] = {
               customerName: name,
               menuId: menu.id,
               menuName: menu.name,
@@ -60,18 +61,20 @@ const ReportModel = {
             (res.isWinner ? (res.deducted ? (prizeWon - buyCost) : prizeWon) : -buyCost) - attachedCost
           );
 
-          customerMap[name].totalSlots += slotCount;
-          customerMap[name].totalBuyCost += buyCost;
-          customerMap[name].totalPrizeWon += prizeWon;
-          customerMap[name].totalAttachedCost += attachedCost;
+          customerMap[key(name)].totalSlots += slotCount;
+          customerMap[key(name)].totalBuyCost += buyCost;
+          customerMap[key(name)].totalPrizeWon += prizeWon;
+          customerMap[key(name)].totalAttachedCost += attachedCost;
           if (res.attachedItems && res.attachedItems.length > 0) {
-            customerMap[name].attachedItems.push(...res.attachedItems);
+            customerMap[key(name)].attachedItems.push(...res.attachedItems);
           }
-          customerMap[name].netAmount += net;
-          customerMap[name].roundsCount += 1;
-          customerMap[name].roundsDetails.push({
+          customerMap[key(name)].netAmount += net;
+          customerMap[key(name)].roundsCount += 1;
+          customerMap[key(name)].roundsDetails.push({
             roundNumber: round.roundNumber,
             roundName: round.name,
+          slotPrice:round.slotPrice,
+            slotPrice:round.slotPrice,
             slots: res.slotsList || [],
             slotCount,
             buyCost,
@@ -87,20 +90,14 @@ const ReportModel = {
       }
 
       // Ưu tiên 2: Round chưa chốt hoặc lưu dạng slots thô
-      const roundPlayers = {};
-      (round.slots || []).forEach(s => {
-        if (s.player_name && s.player_name.trim()) {
-          const pName = s.player_name.trim();
-          if (!roundPlayers[pName]) roundPlayers[pName] = [];
-          roundPlayers[pName].push(s.slot_number);
-        }
-      });
+      const roundPlayers = groups(round);
 
-      const roundWinners = (round.winners || []).map(w => (w || '').trim().toLowerCase());
+      const roundWinners = (round.winners || []).map(key);
 
-      Object.entries(roundPlayers).forEach(([name, slotNums]) => {
-        if (!customerMap[name]) {
-          customerMap[name] = {
+      [...roundPlayers].forEach(([id, participant]) => {
+        const name=participant.name,slotNums=participant.slots;
+        if (!customerMap[key(name)]) {
+          customerMap[key(name)] = {
             customerName: name,
             menuId: menu.id,
             menuName: menu.name,
@@ -116,11 +113,11 @@ const ReportModel = {
           };
         }
 
-        const buyCost = slotNums.length * (round.slotPrice || menu.slot_price);
+        const buyCost = participant.totalCost;
         const isWinner = roundWinners.includes(name.toLowerCase());
         let prizeWon = 0;
         if (isWinner && roundWinners.length > 0) {
-          prizeWon = Math.round(round.prizeValue / roundWinners.length);
+          prizeWon = allocate(Number(round.prizeValue), roundWinners)[key(name)] || 0;
         }
 
         // Lấy mỹ phẩm đính kèm nếu có trong round
@@ -136,20 +133,20 @@ const ReportModel = {
         }
         net -= attachedCost;
 
-        customerMap[name].totalSlots += slotNums.length;
-        customerMap[name].totalBuyCost += buyCost;
-        customerMap[name].totalPrizeWon += prizeWon;
-        customerMap[name].totalAttachedCost += attachedCost;
+        customerMap[key(name)].totalSlots += participant.slotCount;
+        customerMap[key(name)].totalBuyCost += buyCost;
+        customerMap[key(name)].totalPrizeWon += prizeWon;
+        customerMap[key(name)].totalAttachedCost += attachedCost;
         if (attached.length > 0) {
-          customerMap[name].attachedItems.push(...attached);
+          customerMap[key(name)].attachedItems.push(...attached);
         }
-        customerMap[name].netAmount += net;
-        customerMap[name].roundsCount += 1;
-        customerMap[name].roundsDetails.push({
+        customerMap[key(name)].netAmount += net;
+        customerMap[key(name)].roundsCount += 1;
+        customerMap[key(name)].roundsDetails.push({
           roundNumber: round.roundNumber,
           roundName: round.name,
           slots: slotNums,
-          slotCount: slotNums.length,
+          slotCount: participant.slotCount,
           buyCost,
           isWinner,
           prizeWon,
@@ -207,8 +204,8 @@ const ReportModel = {
     for (const menu of menus) {
       const { customers } = await this.getCustomerStatsByMenu(menu.id);
       customers.forEach(c => {
-        if (!globalCustomerMap[c.customerName]) {
-          globalCustomerMap[c.customerName] = {
+        if (!globalCustomerMap[key(c.customerName)]) {
+          globalCustomerMap[key(c.customerName)] = {
             customerName: c.customerName,
             menuBreakdown: {}, // { [menuId]: { menuName, slotCount, buyCost, prizeWon, attachedCost, net } }
             totalSlots: 0,
@@ -220,7 +217,7 @@ const ReportModel = {
           };
         }
 
-        const entry = globalCustomerMap[c.customerName];
+        const entry = globalCustomerMap[key(c.customerName)];
         entry.menuBreakdown[menu.id] = {
           menuId: menu.id,
           menuName: menu.name,
@@ -264,16 +261,16 @@ const ReportModel = {
    */
   async searchCustomer(customerName) {
     if (!customerName) return null;
-    const query = customerName.toLowerCase().trim();
+    const query = key(customerName);
     const allSummary = await this.getAllCustomersSummary();
-    const matched = allSummary.customers.filter(c => c.customerName.toLowerCase().includes(query));
+    const matched = allSummary.customers.filter(c => key(c.customerName).includes(query));
 
     // Lấy chi tiết từng chuyến của khách này
     const results = await Promise.all(matched.map(async c => {
       const detailedMenus = [];
       for (const menu of allSummary.menus) {
         const menuStats = await this.getCustomerStatsByMenu(menu.id);
-        const thisCust = menuStats.customers.find(x => x.customerName.toLowerCase() === c.customerName.toLowerCase());
+        const thisCust = menuStats.customers.find(x => key(x.customerName) === key(c.customerName));
         if (thisCust) {
           detailedMenus.push({
             menuId: menu.id,
@@ -426,7 +423,7 @@ const ReportModel = {
 
     rounds.forEach(r => {
       (r.slots || []).forEach(s => {
-        const isWinner = s.player_name && (r.winners || []).includes(s.player_name);
+        const isWinner = s.player_name && (r.winners || []).map(key).includes(key(s.player_name));
         csv += `${r.roundNumber},"${r.menuCode || r.menuId}","${r.name}","${r.status === 'finished' ? 'Đã kết thúc' : 'Đang mở'}",${s.slot_number},"${s.player_name || '(Trống)'}","${isWinner ? 'WINNER (TRÚNG GIẢI)' : ''}",${r.slotPrice},"${new Date(r.createdAt).toLocaleString('vi-VN')}"\n`;
       });
     });
@@ -441,7 +438,7 @@ const ReportModel = {
   async exportCustomerDetailCsv(customerName, attachedProducts = []) {
     if (!customerName) throw new Error('Vui lòng chỉ định tên khách hàng!');
     const searchResults = await this.searchCustomer(customerName);
-    const customerData = (searchResults && searchResults.length > 0) ? searchResults[0] : null;
+    const customerData = (searchResults || []).find(c => key(c.customerName) === key(customerName));
 
     let csv = '';
     csv += `BÁO CÁO QUYẾT TOÁN CHI TIẾT KHÁCH HÀNG - [${customerName.toUpperCase()}]\n`;
@@ -465,8 +462,8 @@ const ReportModel = {
           totalPrizeWon += r.prizeWon;
 
           const slotsText = r.slots.map(s => '#' + s).join('; ');
-          const resultText = r.isWinner ? `Trúng giải (+${Number(r.prizeWon).toLocaleString('vi-VN')} đ)` : 'Không trúng (0 đ)';
-          csv += `${stt++},"${m.menuName}",Chuyến #${r.roundNumber},${r.slotCount},"${slotsText}",${m.slotPrice},${r.buyCost},${r.prizeWon},"${resultText}"\n`;
+          const resultText = r.status !== 'finished' ? 'Chưa chốt' : r.isWinner ? `Trúng giải (+${Number(r.prizeWon).toLocaleString('vi-VN')} đ)` : 'Không trúng (0 đ)';
+          csv += `${stt++},"${m.menuName}",Chuyến #${r.roundNumber},${r.slotCount},"${slotsText}",${r.slotPrice ?? m.slotPrice},${r.buyCost},${r.prizeWon},"${resultText}"\n`;
         });
       });
     }
@@ -496,7 +493,7 @@ const ReportModel = {
     csv += `TỔNG TIỀN MỸ PHẨM,,,,${totalProductCost}\n\n`;
 
     // PHẦN 3: ĐỐI SOÁT TỔNG HỢP CUỐI CÙNG
-    const finalNet = (totalPrizeWon - totalSlotCost) - totalProductCost;
+    const finalNet = customerData ? customerData.netAmount + (customerData.totalAttachedCost || 0) - totalProductCost : -totalProductCost;
     const finalStatus = finalNet > 0 
       ? `SHOP CẦN CHUYỂN KHOẢN TRẢ KHÁCH (+${Number(finalNet).toLocaleString('vi-VN')} đ)`
       : finalNet < 0 

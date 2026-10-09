@@ -1,7 +1,7 @@
 /**
  * MODEL LAYER: Quản lý danh mục sản phẩm Mỹ Phẩm
  */
-const { supabase, isConfigured } = require('../config/supabase.config');
+const { supabase, isConfigured } = require('../services/durableDatabase');
 
 let inMemoryProducts = [
   { id: 1, name: "Son YSL Rouge Pur Couture #01", price: 850000, image_url: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=300" },
@@ -16,7 +16,7 @@ const ProductModel = {
   async getAll() {
     if (isConfigured() && supabase) {
       const { data } = await supabase.from('products').select('*').order('id');
-      if (data && data.length > 0) return data;
+      if (data) return data;
     }
     return inMemoryProducts;
   },

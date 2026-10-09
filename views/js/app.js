@@ -1,3 +1,35 @@
+let roundConfigQueue = Promise.resolve();
+function saveRoundConfig(options) {
+ const menuId=currentActiveMenuId,roundNumber=currentRoundNumber;
+ roundConfigQueue=roundConfigQueue.then(async()=>{
+  try {const json=await apiJson('/api/game/round',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({menuId,roundNumber,...options})});
+   if(currentActiveMenuId===menuId&&currentRoundNumber===roundNumber)applyGameData(json.data);showToast('Đã lưu cấu hình');
+  } catch(e){alert('Chưa lưu được cấu hình: '+e.message);await reloadCurrentRound();}
+ });return roundConfigQueue;
+}
+async function reloadCurrentRound() {
+ try {const menuId=currentActiveMenuId,roundNumber=currentRoundNumber;const json=await apiJson('/api/game?menuId='+encodeURIComponent(menuId)+'&roundNumber='+roundNumber);
+ if(currentActiveMenuId===menuId&&currentRoundNumber===roundNumber)applyGameData(json.data);}catch(e){showToast('Không tải được dữ liệu. Hãy thử lại.');}
+}
+let slotMutationPending = false;
+async function mutateSlots(url, payload) {
+ if (slotMutationPending) return false;
+ slotMutationPending = true;
+ const menuId = currentActiveMenuId, roundNumber = currentRoundNumber;
+ try {
+  await apiJson(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ...payload, gameId:gameState.id,menuId,roundNumber }) });
+  const json = await apiJson('/api/game?menuId='+encodeURIComponent(menuId)+'&roundNumber='+roundNumber);
+  if (currentActiveMenuId === menuId && currentRoundNumber === roundNumber) applyGameData(json.data);
+  showToast('Đã lưu thay đổi'); return true;
+ } catch(e) { alert('Chưa hoàn tất: '+e.message); return false; }
+ finally { slotMutationPending = false; }
+}
+async function apiJson(url, options) {
+  const response = await fetch(url, { cache: 'no-store', ...options });
+  const json = await response.json();
+  if (!response.ok || !json.success) throw new Error(json.error || ('HTTP ' + response.status));
+  return json;
+}
 /**
  * LUCKY SLOT PRO - UI/UX 2.0 LOGIC & AUDIO SYNTHESIZER
  * GameShow Livestream Management • 12 Slot Board • Split 2/3 • VietQR
@@ -34,14 +66,7 @@ let shopSettings = {
   billFooter: "Cảm ơn quý khách đã tham gia và ủng hộ Shop! Vui lòng chuyển khoản đúng nội dung."
 };
 
-let products = [
-  { id: 1, name: "Son YSL Rouge Pur Couture #01", price: 850000, img: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=300" },
-  { id: 2, name: "Serum Phục Hồi La Roche-Posay B5", price: 420000, img: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=300" },
-  { id: 3, name: "Nước Hoa Chanel Coco Mademoiselle 50ml", price: 2950000, img: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=300" },
-  { id: 4, name: "Kem Chống Nắng Anessa Perfect UV 60ml", price: 460000, img: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=300" },
-  { id: 5, name: "Phấn Phủ Bột Kiềm Dầu Laura Mercier", price: 920000, img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=300" },
-  { id: 6, name: "Nước Tẩy Trang Bioderma Hồng 500ml", price: 380000, img: "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=300" }
-];
+let products = [];
 
 let cart = [];
 let customerAttachedProducts = {}; // Map: playerName => Array<{ id, name, price, qty }>
@@ -51,7 +76,7 @@ let audioCtx = null;
 // --- ATTACHED PRODUCTS STATE HELPERS ---
 function getCustomerAttachedProducts(customerName) {
   if (!customerName) return [];
-  const key = customerName.trim();
+  const key = SettlementCore.key(customerName);
   if (!customerAttachedProducts[key]) {
     customerAttachedProducts[key] = [];
   }
@@ -255,25 +280,10 @@ function initSlots(count) {
   }
 }
 
-function changeTotalSlots(count) {
-  const newCount = parseInt(count);
-  if (confirm(`Bạn có chắc muốn đổi số slot sang ${newCount}? Dữ liệu các slot thừa sẽ được làm mới.`)) {
-    playSound('coin');
-    gameState.totalSlots = newCount;
-    const oldSlots = gameState.slots;
-    gameState.slots = [];
-    for (let i = 1; i <= newCount; i++) {
-      const existing = oldSlots.find(s => s.id === i);
-      gameState.slots.push({ id: i, owner: existing ? existing.owner : null });
-    }
-    const slotBadge = document.getElementById("activeSlotPillBadge");
-    if (slotBadge) slotBadge.innerText = `${newCount} Ô`;
-    renderSlotBoard();
-    renderPlayerTable();
-    renderWinnerCheckboxes();
-    updateHeroStats();
-    showToast(`Đã chuyển sang kèo ${newCount} Slot!`);
-  }
+async function changeTotalSlots(count) {
+ const old = gameState.totalSlots;
+ if (!confirm('Đổi số ghế sang ' + count + '? Các ghế vượt số này sẽ bị bỏ.')) { document.getElementById('totalSlotsSelect').value=old; return; }
+ await saveRoundConfig({ totalSlots:Number(count) });
 }
 
 function stepNumberInput(inputId, stepDelta) {
@@ -285,21 +295,8 @@ function stepNumberInput(inputId, stepDelta) {
   input.dispatchEvent(new Event('change'));
 }
 
-function updateGameConfig() {
-  gameState.name = document.getElementById("gameName").value.trim() || "Kèo Slot";
-  gameState.slotPrice = parseInt(document.getElementById("slotPriceInput").value) || 200000;
-  gameState.prizeValue = parseInt(document.getElementById("prizeValueInput").value) || 1350000;
-
-  const heroGameTitle = document.getElementById("heroGameTitle");
-  if (heroGameTitle) heroGameTitle.innerText = gameState.name;
-  const liveTicker = document.getElementById("liveTickerText");
-  if (liveTicker) liveTicker.innerText = `🔥 KÈO HOT ${gameState.totalSlots} SLOT: ${gameState.name} • Giá ${formatVND(gameState.slotPrice)}/Slot • Giải thưởng ${formatVND(gameState.prizeValue)}`;
-
-  updateHeroStats();
-  updateSplitAmounts();
-  renderSlotBoard();
-  renderPlayerTable();
-  showToast("Đã cập nhật cấu hình kèo!");
+async function updateGameConfig() {
+ await saveRoundConfig({ name:document.getElementById('gameName').value.trim(),slotPrice:Number(document.getElementById('slotPriceInput').value),prizeValue:Number(document.getElementById('prizeValueInput').value) });
 }
 
 function updateSplitAmounts() {
@@ -312,34 +309,12 @@ function updateSplitAmounts() {
   document.getElementById("split3AmountText").innerText = `Mỗi người nhận: ${split3}`;
 }
 
-function resetCurrentGame() {
-  if (confirm("Bạn có chắc muốn tạo ván kèo mới?")) {
-    playSound('click');
-    initSlots(gameState.totalSlots);
-    gameState.slots.forEach(s => s.owner = null);
-    gameState.winners = [];
-    gameState.status = "open";
-    gameState.finishedResults = null;
-
-    document.getElementById("finalSettlementTableBody").innerHTML = `
-      <tr>
-        <td colspan="7" class="text-center text-muted py-5">
-          <i class="fa-solid fa-hourglass-start text-xl mb-2 text-muted"></i>
-          <p>Vui lòng bấm <b>"Tính Kết Quả & Xuất Báo Cáo"</b> ở trên để xem bảng quyết toán chi tiết.</p>
-        </td>
-      </tr>
-    `;
-    document.getElementById("summaryMetaBar").innerHTML = "";
-
-    renderSlotBoard();
-    renderPlayerTable();
-    renderWinnerCheckboxes();
-    updateHeroStats();
-    showToast("Đã tạo kèo mới thành công!");
-  }
+async function resetCurrentGame() {
+ if (!confirm('Mở chuyến mới và giữ dữ liệu chuyến hiện tại?')) return;
+ try { const json=await apiJson('/api/game/create-round',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({menuId:currentActiveMenuId})});applyGameData(json.data);showToast('Đã mở chuyến mới'); }
+ catch(e){alert(e.message);}
 }
 
-// Render 12 Slot 3D Ticket Board
 function renderSlotBoard() {
   const grid = document.getElementById("slotGrid");
   grid.innerHTML = "";
@@ -396,12 +371,7 @@ function renderQuickSlotSuggestions() {
         return;
       }
       playSound('coin');
-      s.owner = name;
-      renderSlotBoard();
-      renderPlayerTable();
-      renderWinnerCheckboxes();
-      updateHeroStats();
-      showToast(`Đã gán Slot #${s.id} cho ${name}`);
+      mutateSlots('/api/game/slot', { slotNumber:s.id, playerName:name, shares:[] });
     };
     container.appendChild(btn);
   });
@@ -440,6 +410,7 @@ function handleSlotClick(slot) {
     btnRelease.style.display = "none";
   }
 
+  document.getElementById('slotModalShares').value=(slot.shares || []).map(p=>p.name+'='+p.percent).join('; ');
   // Gợi ý chọn nhanh khách đang có trên bàn
   const quickBox = document.getElementById("slotModalQuickPlayers");
   const currentPlayers = getGroupedPlayerData();
@@ -468,197 +439,38 @@ function closeSlotModal() {
   if (modal) modal.classList.remove("show");
 }
 
-function saveSlotModal() {
-  const slotId = parseInt(document.getElementById("currentActionSlotId").value);
-  const playerName = document.getElementById("slotModalPlayerName").value.trim();
-  if (!playerName) {
-    alert("Vui lòng nhập tên khách hàng hoặc bấm 'Trả Về Trống'!");
-    return;
-  }
-
-  const slot = gameState.slots.find(s => s.id === slotId);
-  if (slot) {
-    slot.owner = playerName;
-    try {
-      fetch('/api/game/slot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          slotNumber: slotId, 
-          playerName, 
-          menuId: currentActiveMenuId, 
-          roundNumber: currentRoundNumber 
-        })
-      }).catch(err => console.log('Sync slot backend:', err));
-    } catch(e) {}
-  }
-
-  playSound('coin');
-  renderSlotBoard();
-  renderPlayerTable();
-  renderWinnerCheckboxes();
-  updateHeroStats();
-  closeSlotModal();
-  showToast(`Đã gán Slot #${slotId} cho ${playerName}`);
-
-  if (gameState.winners && gameState.winners.length > 0) {
-    autoCalculateSettlement(true);
-  }
+async function saveSlotModal() {
+ const slotNumber=Number(document.getElementById('currentActionSlotId').value);
+ const playerName=document.getElementById('slotModalPlayerName').value.trim();
+ if(!playerName)return alert('Nhập tên khách');
+ let shares;
+ try {const text=document.getElementById('slotModalShares').value.trim();shares=text?text.split(';').map(part=>{const [name,percent]=part.split('=');return {name:name.trim(),percent:Number(percent)};}):[];
+  SettlementCore.groups({slotPrice:gameState.slotPrice,slots:[{id:slotNumber,owner:playerName,shares}]});
+ }catch(e){return alert(e.message);}
+ if(await mutateSlots('/api/game/slot',{slotNumber,playerName,shares}))closeSlotModal();
+}
+async function releaseCurrentSlot() {
+ const slotNumber=Number(document.getElementById('currentActionSlotId').value);
+ if(await mutateSlots('/api/game/slot',{slotNumber,playerName:null}))closeSlotModal();
 }
 
-function releaseCurrentSlot() {
-  const slotId = parseInt(document.getElementById("currentActionSlotId").value);
-  const slot = gameState.slots.find(s => s.id === slotId);
-  if (slot) {
-    slot.owner = null;
-    try {
-      fetch('/api/game/slot', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          slotNumber: slotId, 
-          playerName: null, 
-          menuId: currentActiveMenuId, 
-          roundNumber: currentRoundNumber 
-        })
-      }).catch(err => console.log('Sync slot backend:', err));
-    } catch(e) {}
-  }
+async function addSingleSlot() { await mutateSlots('/api/game/slot/add', {}); }
 
-  playSound('click');
-  renderSlotBoard();
-  renderPlayerTable();
-  renderWinnerCheckboxes();
-  updateHeroStats();
-  closeSlotModal();
-  showToast(`Đã giải phóng Slot #${slotId} về trống`);
-
-  if (gameState.winners && gameState.winners.length > 0) {
-    autoCalculateSettlement(true);
-  }
+async function removeSingleSlot() {
+ if (gameState.slots.length <= 1) return alert('Bàn cần ít nhất một ghế');
+ if (gameState.slots.at(-1).owner && !confirm('Ghế cuối có khách. Xóa ghế này?')) return;
+ await mutateSlots('/api/game/slot/remove', {});
 }
 
-function addSingleSlot() {
-  playSound('coin');
-  const newId = gameState.slots.length + 1;
-  gameState.slots.push({ id: newId, owner: null });
-  gameState.totalSlots = newId;
-
-  const select = document.getElementById("totalSlotsSelect");
-  if (select) {
-    let opt = Array.from(select.options).find(o => parseInt(o.value) === newId);
-    if (!opt) {
-      opt = document.createElement("option");
-      opt.value = newId;
-      opt.innerText = `${newId} Slot`;
-      select.appendChild(opt);
-    }
-    select.value = newId;
-  }
-
-  try {
-    fetch('/api/game/slot/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
-    }).catch(e => {});
-  } catch(e) {}
-
-  const slotBadgeAdd = document.getElementById("activeSlotPillBadge");
-  if (slotBadgeAdd) slotBadgeAdd.innerText = `${newId} Ô`;
-  renderSlotBoard();
-  renderPlayerTable();
-  renderWinnerCheckboxes();
-  updateHeroStats();
-  showToast(`Đã thêm thành công Ô Slot #${newId}!`);
-}
-
-function removeSingleSlot() {
-  if (gameState.slots.length <= 1) {
-    alert("Bàn cược cần có ít nhất 1 slot!");
-    return;
-  }
-  const last = gameState.slots[gameState.slots.length - 1];
-  if (last.owner && !confirm(`Ô Slot #${last.id} đang có người chơi [${last.owner}]. Bạn có chắc muốn xóa ô này?`)) {
-    return;
-  }
-
-  playSound('click');
-  gameState.slots.pop();
-  gameState.totalSlots = gameState.slots.length;
-
-  const select = document.getElementById("totalSlotsSelect");
-  if (select) select.value = gameState.totalSlots;
-
-  try {
-    fetch('/api/game/slot/remove', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({})
-    }).catch(e => {});
-  } catch(e) {}
-
-  const slotBadgeRem = document.getElementById("activeSlotPillBadge");
-  if (slotBadgeRem) slotBadgeRem.innerText = `${gameState.totalSlots} Ô`;
-  renderSlotBoard();
-  renderPlayerTable();
-  renderWinnerCheckboxes();
-  updateHeroStats();
-  showToast(`Đã bớt 1 ô slot (Còn lại ${gameState.totalSlots} ô)`);
-}
-
-function quickRegisterSlots() {
-  const name = document.getElementById("regPlayerName").value.trim();
-  const count = parseInt(document.getElementById("regSlotCount").value) || 1;
-
-  if (!name) {
-    alert("Vui lòng nhập tên khách hàng!");
-    return;
-  }
-
-  const freeSlots = gameState.slots.filter(s => s.owner === null);
-  if (freeSlots.length === 0) return alert("Bàn đã đủ 100% slot!");
-  if (count > freeSlots.length) return alert(`Chỉ còn ${freeSlots.length} slot trống, không đủ lấy ${count} slot!`);
-
-  playSound('coin');
-  for (let i = 0; i < count; i++) {
-    freeSlots[i].owner = name;
-  }
-
-  renderSlotBoard();
-  renderPlayerTable();
-  renderWinnerCheckboxes();
-  updateHeroStats();
-  showToast(`Đã đăng ký ${count} slot cho ${name}!`);
-  document.getElementById("regPlayerName").value = "";
-
-  // Đồng bộ ngay lên Server
-  fetch('/api/game/quick-register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      playerName: name,
-      slotCount: count,
-      menuId: currentActiveMenuId,
-      roundNumber: gameState.roundNumber
-    })
-  }).catch(e => console.error("Lỗi đồng bộ quick-register:", e));
+async function quickRegisterSlots() {
+ const playerName = document.getElementById('regPlayerName').value.trim();
+ const slotCount = Number(document.getElementById('regSlotCount').value);
+ if (!playerName || !Number.isInteger(slotCount) || slotCount < 1) return alert('Nhập tên và số ghế hợp lệ');
+ if (await mutateSlots('/api/game/quick-register', { playerName, slotCount })) document.getElementById('regPlayerName').value = '';
 }
 
 function getGroupedPlayerData() {
-  const map = {};
-  gameState.slots.forEach(s => {
-    const rawOwner = (s.owner || s.player_name || '').trim();
-    if (rawOwner) {
-      const key = rawOwner.toLowerCase();
-      if (!map[key]) {
-        map[key] = { name: rawOwner, slots: [], totalCost: 0 };
-      }
-      map[key].slots.push(s.id || s.slot_number);
-      map[key].totalCost += Number(gameState.slotPrice);
-    }
-  });
-  return Object.values(map);
+ return [...SettlementCore.groups(gameState).values()];
 }
 
 function renderPlayerTable() {
@@ -719,30 +531,8 @@ function renderPlayerTable() {
   });
 }
 
-function removePlayer(name) {
-  if (confirm(`Bạn có chắc muốn hủy tất cả slot của [${name}]?`)) {
-    playSound('click');
-    gameState.slots.forEach(s => {
-      if (s.owner === name) s.owner = null;
-    });
-    gameState.winners = gameState.winners.filter(w => w !== name);
-    renderSlotBoard();
-    renderPlayerTable();
-    renderWinnerCheckboxes();
-    updateHeroStats();
-    showToast(`Đã hủy toàn bộ slot của ${name}`);
-
-    // Đồng bộ ngay lên Server
-    fetch('/api/game/remove-player', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        playerName: name,
-        menuId: currentActiveMenuId,
-        roundNumber: gameState.roundNumber
-      })
-    }).catch(e => console.error("Lỗi đồng bộ remove-player:", e));
-  }
+async function removePlayer(playerName) {
+ if (confirm('Hủy toàn bộ ghế của ' + playerName + '?')) await mutateSlots('/api/game/remove-player', { playerName });
 }
 
 function updateHeroStats() {
@@ -963,63 +753,36 @@ function autoCalculateSettlement(silent = true) {
     return;
   }
 
-  const prizePerWinner = Math.round(gameState.prizeValue / gameState.winners.length);
-
-  const settlementList = players.map(p => {
-    const isWinner = gameState.winners.map(w => w.trim().toLowerCase()).includes(p.name.trim().toLowerCase());
-    const prizeWon = isWinner ? prizePerWinner : 0;
-    const attached = getCustomerAttachedProducts(p.name);
-    const attachedTotal = attached.reduce((s, it) => s + (it.price * it.qty), 0);
-
-    let netAmount = 0;
-    if (isWinner) {
-      netAmount = deductSlotCost ? (prizeWon - p.totalCost) : prizeWon;
-    } else {
-      netAmount = -p.totalCost;
-    }
-    netAmount -= attachedTotal;
-
-    return {
-      playerName: p.name,
-      slotCount: p.slots.length,
-      slotsList: p.slots,
-      buyCost: p.totalCost,
-      prizeWon,
-      attachedItems: attached,
-      attachedTotalCost: attachedTotal,
-      netAmount,
-      isWinner,
-      deducted: isWinner && deductSlotCost
-    };
-  });
-
+  let settlementList;
+  try { settlementList = SettlementCore.calculate(gameState, gameState.settleMode, gameState.winners, deductSlotCost, customerAttachedProducts); }
+  catch (error) { if (!silent) alert(error.message); return false; }
+  const prizePerWinner = Math.floor(gameState.prizeValue / gameState.winners.length);
   gameState.finishedResults = settlementList;
-  gameState.status = "finished";
-  updateHeroStats();
-
   renderSettlementTableUI(settlementList, prizePerWinner);
-  if (!silent) {
-    showToast("Đã quyết toán kết quả ván cược!");
-  }
+  if (silent) return true; // Preview only; explicit confirmation persists results.
+  return saveSettlement();
+}
 
-  // Đồng bộ toàn bộ kết quả quyết toán lên Server
-  fetch('/api/game/finalize', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      menuId: currentActiveMenuId,
-      winners: gameState.winners,
-      settleMode: gameState.settleMode,
-      deductSlotCost: deductSlotCost,
-      finishedResults: settlementList,
-      customerAttachedProducts: customerAttachedProducts,
-      slots: gameState.slots
-    })
-  }).catch(e => console.warn("Lỗi đồng bộ finalize game:", e));
+let settlementSavePending = null;
+function saveSettlement() {
+  if (settlementSavePending) return settlementSavePending;
+  const menuId = currentActiveMenuId, roundNumber = currentRoundNumber;
+  settlementSavePending = apiJson('/api/game/finalize', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ menuId, roundNumber, winners: gameState.winners, settleMode: gameState.settleMode,
+      deductSlotCost, customerAttachedProducts })
+  }).then(json => {
+    if (currentActiveMenuId === menuId && currentRoundNumber === roundNumber) applyGameData(json.data);
+    showToast('Đã lưu kết quả vào DB');
+    updateRoundHistoryBadge();
+    return true;
+  }).catch(error => { alert('Chưa lưu được kết quả: ' + error.message); return false; })
+    .finally(() => { settlementSavePending = null; });
+  return settlementSavePending;
 }
 
 // Finalize Results & Net Settlement thủ công khi bấm nút
-function finalizeGameResults() {
+async function finalizeGameResults() {
   const players = getGroupedPlayerData();
   if (players.length === 0) return alert("Chưa có người chơi nào!");
   if (!gameState.winners || gameState.winners.length === 0) return alert("Vui lòng chọn người thắng hoặc người nhận giải trước!");
@@ -1027,7 +790,7 @@ function finalizeGameResults() {
   playSound('win');
   triggerConfetti();
 
-  autoCalculateSettlement(false);
+  if (!await autoCalculateSettlement(false)) return;
   document.getElementById("finalResultCard").scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -1181,6 +944,7 @@ async function openBillModal(playerName, optionalData = null) {
     try {
       const res = await fetch(`/api/reports/customer-detail?name=${encodeURIComponent(playerName)}`);
       const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
       if (json.success && json.data) {
         currentBillData = createBillDataFromCustomerObj(json.data);
       } else {
@@ -1646,7 +1410,8 @@ async function fetchProductsFromAPI() {
   try {
     const res = await fetch('/api/products');
     const json = await res.json();
-    if (json.success && json.data && json.data.length > 0) {
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
+    if (json.success && Array.isArray(json.data)) {
       products = json.data.map(p => ({
         id: p.id,
         name: p.name,
@@ -1656,7 +1421,8 @@ async function fetchProductsFromAPI() {
       renderShopProducts();
     }
   } catch (err) {
-    console.warn("Dùng danh sách sản phẩm cục bộ:", err);
+    products=[];renderShopProducts();
+    showToast("Không tải được danh mục sản phẩm. Hãy thử lại.");
   }
 }
 
@@ -1759,73 +1525,20 @@ async function saveProductForm() {
     img = sampleImgs.son;
   }
 
-  playSound('coin');
-  if (id) {
-    // UPDATE
-    const p = products.find(x => x.id == id);
-    if (p) {
-      p.name = name;
-      p.price = price;
-      p.img = img;
-    }
-    // Cập nhật trong giỏ hàng nếu đang có
-    const inCart = cart.find(c => c.product.id == id);
-    if (inCart) {
-      inCart.product.name = name;
-      inCart.product.price = price;
-      renderCart();
-    }
-    try {
-      fetch(`/api/products/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, price, image_url: img })
-      }).catch(e => {});
-    } catch(e) {}
-    showToast(`Đã cập nhật sản phẩm [${name}]!`);
-  } else {
-    // CREATE
-    const newId = Date.now();
-    const newProd = { id: newId, name, price, img };
-    products.unshift(newProd);
-    try {
-      fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, price, image_url: img })
-      }).then(r => r.json()).then(data => {
-        if (data.data && data.data.id) newProd.id = data.data.id;
-      }).catch(e => {});
-    } catch(e) {}
-    showToast(`Đã thêm sản phẩm mới [${name}] thành công!`);
-  }
-
-  closeProductModal();
-  renderShopProducts();
+  try {
+    await apiJson(id ? '/api/products/'+id : '/api/products',{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,price,image_url:img})});
+    await fetchProductsFromAPI();closeProductModal();showToast('Đã lưu sản phẩm');
+  } catch(e){alert('Chưa lưu được sản phẩm: '+e.message);}
 }
 
 async function deleteProductItem(id) {
-  const p = products.find(x => x.id == id);
-  if (!p) return;
-  if (!confirm(`Bạn có chắc muốn xóa sản phẩm [${p.name}]?`)) return;
-
-  playSound('click');
-  products = products.filter(x => x.id != id);
-  cart = cart.filter(c => c.product.id != id);
-  renderCart();
-
-  try {
-    fetch(`/api/products/${id}`, {
-      method: 'DELETE'
-    }).catch(e => {});
-  } catch(e) {}
-
-  renderShopProducts();
-  showToast(`Đã xóa sản phẩm [${p.name}]!`);
+ const product=products.find(p=>p.id==id);if(!product||!confirm('Xóa sản phẩm '+product.name+'?'))return;
+ try {await apiJson('/api/products/'+id,{method:'DELETE'});cart=cart.filter(item=>item.product.id!=id);renderCart();await fetchProductsFromAPI();showToast('Đã xóa sản phẩm');}
+ catch(e){alert('Chưa xóa được: '+e.message);}
 }
 
 function addToCart(productId) {
-  if (blindBagCartLocked()) return;
+  if (retailCheckoutPending || blindBagCartLocked()) return;
   playSound('coin');
   const product = products.find(p => p.id == productId);
   if (!product) return;
@@ -1910,12 +1623,24 @@ function calculateCartTotal() {
   document.getElementById("cartTotal").innerText = formatVND(total);
 }
 
-function checkoutShopBill() {
-  if (blindBagPending || cart.some(item => item.blindBagRoundId)) return checkoutBlindBagCart();
-  if (cart.length === 0) return alert("Giỏ hàng đang trống!");
-  const customerName = document.getElementById("shopCustomerName").value.trim() || "Khách Hàng Lẻ";
-  const discount = parseInt(document.getElementById("cartDiscount").value) || 0;
-  displayShopBill(cart, customerName, discount);
+let retailCheckoutPending=false, retailCheckoutRequest=null;
+async function checkoutShopBill() {
+ if (retailCheckoutPending) return;
+ if (blindBagPending || cart.some(item=>item.blindBagRoundId)) return checkoutBlindBagCart();
+ if(!cart.length)return alert('Giỏ hàng đang trống');
+ const customerName=document.getElementById('shopCustomerName').value.trim()||'Khách Hàng Lẻ';
+ const discount=Number(document.getElementById('cartDiscount').value)||0;
+ const payload={type:'retail',customerName,discount,items:cart.map(item=>({productId:item.product.id,quantity:item.qty}))};
+ const fingerprint=JSON.stringify(payload);
+ if(!retailCheckoutRequest||retailCheckoutRequest.fingerprint!==fingerprint)retailCheckoutRequest={fingerprint,id:crypto.randomUUID()};
+ retailCheckoutPending=true;
+ try {
+  const json=await apiJson('/api/bills',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,requestId:retailCheckoutRequest.id})});
+  const bill=json.data;
+  displayShopBill(bill.attached_products.map(p=>({product:{id:p.productId,name:p.name,price:p.price},qty:p.qty})),customerName,discount);
+  showToast('Đã lưu hóa đơn');retailCheckoutRequest=null;
+ }catch(e){alert('Chưa lưu được hóa đơn: '+e.message);}
+ finally{retailCheckoutPending=false;}
 }
 
 function displayShopBill(items, customerName, discount, order = null) {
@@ -2029,6 +1754,7 @@ async function fetchMenus() {
   try {
     const res = await fetch('/api/menus');
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data) {
       menusList = json.data;
       renderMenuPills();
@@ -2090,7 +1816,9 @@ async function selectMenu(menuId) {
       body: JSON.stringify({ menuId })
     });
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data) {
+      if (currentActiveMenuId !== menuId) return;
       applyGameData(json.data);
       showToast(`Đã chuyển sang ${json.data.name}`);
     }
@@ -2106,6 +1834,7 @@ function applyGameData(data) {
     currentRoundsList = data.roundsList;
   }
 
+  gameState.id = data.id;
   gameState.menuId = currentActiveMenuId;
   gameState.roundNumber = currentRoundNumber;
   gameState.name = data.name;
@@ -2115,11 +1844,15 @@ function applyGameData(data) {
   gameState.status = data.status || 'open';
   gameState.settleMode = data.settleMode || 'solo';
   gameState.winners = data.winners || [];
-  gameState.finishedResults = data.finishedResults || null;
+  gameState.finishedResults = data.finishedResults?.length ? data.finishedResults : null;
+  customerAttachedProducts = Object.fromEntries((gameState.finishedResults || []).map(r=>[SettlementCore.key(r.playerName),r.attachedItems || []]));
+  const savedWinner=(gameState.finishedResults || []).find(r=>r.isWinner);
+  deductSlotCost=savedWinner ? savedWinner.deducted !== false : true;
 
   gameState.slots = (data.slots || []).map(s => ({
     id: s.slot_number,
-    owner: s.player_name || null
+    owner: s.player_name || null,
+    shares: s.shares || []
   }));
 
   const nameInput = document.getElementById("gameName");
@@ -2253,6 +1986,7 @@ async function switchRound(roundNumber) {
       })
     });
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data) {
       applyGameData(json.data);
       showToast(`Đã chuyển sang Chuyến #${roundNumber} của ${gameState.name}`);
@@ -2356,6 +2090,7 @@ async function saveRoundForm() {
         })
       });
       const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
       if (json.success && json.data) {
         applyGameData(json.data);
         closeRoundModal();
@@ -2380,6 +2115,7 @@ async function saveRoundForm() {
         })
       });
       const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
       if (json.success && json.data) {
         applyGameData(json.data);
         closeRoundModal();
@@ -2409,6 +2145,7 @@ async function deleteActiveRound() {
       })
     });
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data) {
       applyGameData(json.data);
       showToast(json.message || `Đã xóa chuyến thành công!`);
@@ -2430,11 +2167,12 @@ async function initAppMenusAndGame() {
   try {
     const res = await fetch(`/api/game?menuId=${currentActiveMenuId}`);
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data) {
       applyGameData(json.data);
     }
   } catch (e) {
-    console.warn("Lỗi fetch game khởi đầu, dùng in-memory:", e);
+    showToast("Không tải được chuyến. Hãy thử tải lại trang.");
     initSlots(gameState.totalSlots);
     renderSlotBoard();
     renderPlayerTable();
@@ -2462,6 +2200,9 @@ async function triggerNextRound() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         menuId: currentActiveMenuId,
+        roundNumber: currentRoundNumber,
+        deductSlotCost,
+        customerAttachedProducts,
         settlementResults: gameState.finishedResults,
         winners: gameState.winners,
         settleMode: gameState.settleMode,
@@ -2469,6 +2210,7 @@ async function triggerNextRound() {
       })
     });
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data) {
       // Backup completed round vào localStorage trình duyệt (đảm bảo không bao giờ mất sau 2 phút)
       try {
@@ -2495,6 +2237,7 @@ async function updateRoundHistoryBadge() {
   try {
     const res = await fetch(`/api/game/history?menuId=${currentActiveMenuId}`);
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data && json.data.length > 0) {
       count = json.data.length;
     }
@@ -2590,6 +2333,7 @@ async function saveMenuForm() {
         body: JSON.stringify({ name, slotPrice, totalSlots, prizeValue, description })
       });
       const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
       if (json.success) {
         showToast(`Đã cập nhật Menu [${name}] thành công!`);
         closeMenuModal();
@@ -2606,6 +2350,7 @@ async function saveMenuForm() {
         body: JSON.stringify({ name, slotPrice, totalSlots, prizeValue, description })
       });
       const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
       if (json.success && json.data) {
         showToast(`Đã tạo Menu [${json.data.name}] thành công!`);
         closeMenuModal();
@@ -2639,6 +2384,7 @@ async function deleteActiveMenu() {
       method: 'DELETE'
     });
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success) {
       showToast(`Đã xóa [${menuName}] thành công!`);
       await fetchMenus();
@@ -2666,6 +2412,7 @@ async function openRoundHistoryModal() {
   try {
     const res = await fetch(`/api/game/history?menuId=${currentActiveMenuId}`);
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     let historyList = (json.success && Array.isArray(json.data)) ? json.data : [];
 
     // Phục hồi từ localStorage nếu server bị restart/cold boot
@@ -2798,6 +2545,7 @@ async function loadSingleMenuReport(menuId, query = '') {
   try {
     const res = await fetch(`/api/reports/menu/${menuId}`);
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data) {
       const data = json.data;
       const menu = data.menu || {};
@@ -2833,7 +2581,7 @@ async function loadSingleMenuReport(menuId, query = '') {
       }
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-5">Không có dữ liệu khách hàng nào cho Menu này.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-5">${query ? "Không có khách khớp bộ lọc. Xóa tên tìm kiếm để xem toàn menu." : "Chưa có khách trong menu này."}</td></tr>`;
         return;
       }
 
@@ -2885,6 +2633,7 @@ async function loadAllMenusReport(query = '') {
   try {
     const res = await fetch('/api/reports/all-menus');
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data) {
       const data = json.data;
       const menus = data.menus;
@@ -2920,7 +2669,7 @@ async function loadAllMenusReport(query = '') {
       }
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="${menus.length + 8}" class="text-center text-muted py-5">Chưa có người chơi nào tham gia các Menu.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${menus.length + 8}" class="text-center text-muted py-5">${query ? "Không có khách khớp bộ lọc. Xóa tên tìm kiếm để xem tất cả." : "Chưa có người chơi nào tham gia các Menu."}</td></tr>`;
         return;
       }
 
@@ -2972,6 +2721,7 @@ async function loadRoundsHistoryTable() {
   try {
     const res = await fetch('/api/game/history');
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     const tbody = document.getElementById("roundsHistoryTableBody");
     if (!tbody) return;
     tbody.innerHTML = "";
@@ -2994,9 +2744,12 @@ async function loadRoundsHistoryTable() {
         tbody.appendChild(tr);
       });
     } else {
-      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Chưa có chuyến nào được lưu lại.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Chưa có chuyến nào đã chốt. Chuyến đang mở vẫn được lưu ở Bàn Kèo Slot.</td></tr>`;
     }
-  } catch (err) {}
+  } catch (err) {
+    const body = document.getElementById("roundsHistoryTableBody");
+    if (body) body.innerHTML = '<tr><td colspan="8">Không tải được lịch sử. Hãy thử lại.</td></tr>';
+  }
 }
 
 async function clearCustomerSearch() {
@@ -3027,6 +2780,7 @@ async function filterCustomerReports() {
   try {
     const res = await fetch(`/api/reports/search?name=${encodeURIComponent(query)}`);
     const json = await res.json();
+    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data && json.data.length > 0) {
       const match = json.data[0];
       window._lastSearchedCustomerData = match;

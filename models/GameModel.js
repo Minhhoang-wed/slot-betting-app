@@ -5,11 +5,11 @@
  */
 const fs = require('fs');
 const path = require('path');
-const { supabase, isConfigured } = require('../config/supabase.config');
+const { supabase, isConfigured } = require('../services/durableDatabase');
 const MenuModel = require('./MenuModel');
 
 // Quản lý trạng thái Menu đang chọn trong bộ nhớ
-let currentActiveMenuId = 'menu-150k';
+let currentActiveMenuId = null;
 
 // Map lưu danh sách tất cả các chuyến theo từng menu: { [menuId]: Array<roundGameObj> }
 const roundsByMenu = {};
@@ -25,11 +25,12 @@ function ensureStorageDir() {
   if (!fs.existsSync(STORAGE_DIR)) {
     try {
       fs.mkdirSync(STORAGE_DIR, { recursive: true });
-    } catch (e) {}
+    } catch (e) { if (isConfigured()) throw e;}
   }
 }
 
 function saveStorage() {
+  if (isConfigured()) return;
   try {
     ensureStorageDir();
     const payload = {
@@ -39,7 +40,7 @@ function saveStorage() {
       savedAt: new Date().toISOString()
     };
     fs.writeFileSync(STORAGE_FILE, JSON.stringify(payload, null, 2), 'utf8');
-  } catch (e) {
+  } catch (e) { if (isConfigured()) throw e;
     console.warn("Lỗi lưu storage:", e.message);
   }
 }
@@ -66,13 +67,13 @@ function loadStorage() {
         }
       }
     }
-  } catch (e) {
+  } catch (e) { if (isConfigured()) throw e;
     console.warn("Lỗi đọc storage:", e.message);
   }
 }
 
 // Đọc storage dự phòng ban đầu
-loadStorage();
+if (!isConfigured()) loadStorage();
 
 /**
  * Helper định dạng game object từ Supabase row
@@ -91,6 +92,7 @@ function mapGameRowToRound(g, menu) {
     slots.push({
       id: s ? s.id : null,
       slot_number: i,
+      shares: s?.shares || [],
       player_name: (s && s.player_name) ? s.player_name.trim() : null
     });
   }
@@ -121,11 +123,11 @@ const loadedFromDb = {};
 /**
  * Tải danh sách Chuyến cho Menu từ Supabase (có cache trong memory)
  */
-async function loadOrInitRoundsForMenu(menu) {
+async function loadOrInitRoundsForMenu(menu, initialize = true) {
   if (!menu) return [];
 
   // Nếu đã được load từ Supabase và có trong bộ nhớ -> Trả về siêu tốc < 1ms
-  if (loadedFromDb[menu.id] && roundsByMenu[menu.id] && roundsByMenu[menu.id].length > 0) {
+  if (!isConfigured() && loadedFromDb[menu.id] && roundsByMenu[menu.id] && roundsByMenu[menu.id].length > 0) {
     return roundsByMenu[menu.id];
   }
 
@@ -153,9 +155,19 @@ async function loadOrInitRoundsForMenu(menu) {
         saveStorage();
         return roundsByMenu[menu.id];
       }
-    } catch (e) {
+    } catch (e) { if (isConfigured()) throw e;
       console.warn(`Lỗi tải games từ Supabase cho menu [${menu.name}]:`, e.message);
     }
+  }
+
+  if (!initialize) { roundsByMenu[menu.id] = []; return []; }
+  if (isConfigured() && supabase) {
+    const { data: gameId } = await supabase.rpc('create_slot_round', { p_menu_id: menu.id, p_options: {} });
+    const { data } = await supabase.from('games').select('*, slots(*)').eq('id', gameId).single();
+    if (!data) throw new Error('Không tải được chuyến vừa tạo');
+    const round = mapGameRowToRound(data, menu);
+    roundsByMenu[menu.id] = [round]; activeRoundNumberByMenu[menu.id] = round.roundNumber;
+    return [round];
   }
 
   // 2. Nếu DB chưa có chuyến nào cho menu này, tự động khởi tạo Chuyến #1 trên Supabase
@@ -203,7 +215,7 @@ async function loadOrInitRoundsForMenu(menu) {
           }));
         }
       }
-    } catch (e) {
+    } catch (e) { if (isConfigured()) throw e;
       console.warn("Lỗi tạo Chuyến #1 trên Supabase:", e.message);
     }
   }
@@ -260,13 +272,12 @@ const GameModel = {
     }
 
     let game = rounds.find(r => r.roundNumber === targetRoundNum);
+    if (!game && roundNumber !== null) throw new Error('Không tìm thấy chuyến');
     if (!game) {
       game = rounds[rounds.length - 1];
       activeRoundNumberByMenu[menu.id] = game.roundNumber;
     }
 
-    game.slotPrice = Number(menu.slot_price);
-    game.prizeValue = Number(menu.prize_value);
     game.menuCode = menu.code;
 
     return game;
@@ -285,6 +296,12 @@ const GameModel = {
   async createNewRound(menuId, options = {}) {
     const targetMenuId = menuId || currentActiveMenuId;
     const menu = await MenuModel.getMenuById(targetMenuId);
+    if (isConfigured() && supabase) {
+      const { data: id } = await supabase.rpc('create_slot_round', { p_menu_id: menu.id, p_options: options });
+      const round = await this.getGameById(id);
+      activeRoundNumberByMenu[menu.id] = round.roundNumber;
+      return round;
+    }
     const rounds = await loadOrInitRoundsForMenu(menu);
 
     const maxRoundNumber = rounds.reduce((max, r) => Math.max(max, r.roundNumber), 0);
@@ -334,7 +351,7 @@ const GameModel = {
             }));
           }
         }
-      } catch (e) {
+      } catch (e) { if (isConfigured()) throw e;
         console.warn("Lỗi lưu Chuyến mới vào Supabase:", e.message);
       }
     }
@@ -368,6 +385,10 @@ const GameModel = {
     const targetMenuId = menuId || currentActiveMenuId;
     const game = await this.getCurrentGame(targetMenuId, roundNumber);
     if (!game) throw new Error('Không tìm thấy chuyến cần chỉnh sửa!');
+    if (isConfigured() && supabase) {
+      await supabase.rpc('mutate_slot_round', { p_game_id: game.id, p_action: 'config', p_payload: options });
+      return this.getGameById(game.id);
+    }
 
     if (options.name) game.name = options.name;
     if (options.slotPrice !== undefined) game.slotPrice = Number(options.slotPrice);
@@ -384,16 +405,16 @@ const GameModel = {
           game.slots.push({ id: null, slot_number: i, player_name: null });
           if (isConfigured() && supabase && game.id) {
             try {
-              supabase.from('slots').insert({ game_id: game.id, slot_number: i, player_name: null }).then();
-            } catch (e) {}
+              await supabase.from('slots').insert({ game_id: game.id, slot_number: i, player_name: null });
+            } catch (e) { if (isConfigured()) throw e;}
           }
         }
       } else if (newTotal < oldTotal) {
         game.slots = game.slots.filter(s => s.slot_number <= newTotal);
         if (isConfigured() && supabase && game.id) {
           try {
-            supabase.from('slots').delete().eq('game_id', game.id).gt('slot_number', newTotal).then();
-          } catch (e) {}
+            await supabase.from('slots').delete().eq('game_id', game.id).gt('slot_number', newTotal);
+          } catch (e) { if (isConfigured()) throw e;}
         }
       }
     }
@@ -411,7 +432,7 @@ const GameModel = {
           total_slots: game.totalSlots,
           updated_at: game.updatedAt
         }).eq('id', game.id);
-      } catch (e) {
+      } catch (e) { if (isConfigured()) throw e;
         console.warn('Lỗi updateRound Supabase:', e.message);
       }
     }
@@ -435,7 +456,7 @@ const GameModel = {
     if (isConfigured() && supabase && roundToDelete.id) {
       try {
         await supabase.from('games').delete().eq('id', roundToDelete.id);
-      } catch (e) {
+      } catch (e) { if (isConfigured()) throw e;
         console.warn('Lỗi xóa chuyến trên Supabase:', e.message);
       }
     }
@@ -476,7 +497,7 @@ const GameModel = {
   },
 
   async getGameById(gameId) {
-    for (const rounds of Object.values(roundsByMenu)) {
+    for (const rounds of (isConfigured() ? [] : Object.values(roundsByMenu))) {
       const found = (rounds || []).find(r => r.id === gameId);
       if (found) return found;
     }
@@ -492,10 +513,10 @@ const GameModel = {
             if (found) return found;
           }
         }
-      } catch (e) {}
+      } catch (e) { if (isConfigured()) throw e;}
     }
 
-    return this.getCurrentGame();
+    throw new Error('Không tìm thấy chuyến');
   },
 
   async updateGameConfig({ name, totalSlots, slotPrice, prizeValue, menuId, roundNumber }) {
@@ -507,6 +528,10 @@ const GameModel = {
     const menu = await MenuModel.getMenuById(targetMenuId);
     const currentGame = await this.getCurrentGame(targetMenuId, roundNumber);
 
+    if (isConfigured() && supabase) {
+      await supabase.rpc('mutate_slot_round', { p_game_id: currentGame.id, p_action: 'reset', p_payload: { name, totalSlots, slotPrice, prizeValue } });
+      return this.getGameById(currentGame.id);
+    }
     const count = totalSlots || currentGame.totalSlots || menu.total_slots || 12;
 
     const newSlots = [];
@@ -541,7 +566,7 @@ const GameModel = {
           player_name: null,
           updated_at: new Date()
         }).eq('game_id', currentGame.id);
-      } catch (e) {
+      } catch (e) { if (isConfigured()) throw e;
         console.warn('Lỗi resetGame Supabase:', e.message);
       }
     }
@@ -550,125 +575,38 @@ const GameModel = {
     return currentGame;
   },
 
-  async finishAndStartNextRound(menuId = null, settlementResults = null, winners = null, settleMode = null, slots = null) {
-    const targetMenuId = menuId || currentActiveMenuId;
-    const currentGame = await this.getCurrentGame(targetMenuId);
-
-    currentGame.status = 'finished';
-    currentGame.finishedAt = new Date();
-
-    if (winners && Array.isArray(winners) && winners.length > 0) {
-      currentGame.winners = winners;
-    } else if (settlementResults && settlementResults.winners) {
-      currentGame.winners = settlementResults.winners;
-    }
-
-    if (settleMode) {
-      currentGame.settleMode = settleMode;
-    } else if (settlementResults && settlementResults.settleMode) {
-      currentGame.settleMode = settlementResults.settleMode;
-    }
-
-    if (settlementResults) {
-      if (Array.isArray(settlementResults)) {
-        currentGame.finishedResults = settlementResults;
-      } else if (settlementResults.finishedResults) {
-        currentGame.finishedResults = settlementResults.finishedResults;
-      }
-    }
-
-    if (slots && Array.isArray(slots)) {
-      currentGame.slots = slots.map(s => ({
-        id: s.db_id || s.id,
-        slot_number: s.slot_number || s.id,
-        player_name: (s.owner || s.player_name || '').trim() || null
-      }));
-    }
-    currentGame.updatedAt = new Date();
-
-    // 1. Lưu ván vừa chốt vào Supabase
-    if (isConfigured() && supabase && currentGame.id) {
-      try {
-        await supabase.from('games').update({
-          status: 'finished',
-          settle_mode: currentGame.settleMode,
-          winners: currentGame.winners,
-          finished_results: currentGame.finishedResults,
-          finished_at: currentGame.finishedAt,
-          updated_at: currentGame.updatedAt
-        }).eq('id', currentGame.id);
-
-        if (currentGame.slots && currentGame.slots.length > 0) {
-          for (const s of currentGame.slots) {
-            await supabase.from('slots').update({
-              player_name: s.player_name,
-              updated_at: new Date()
-            }).eq('game_id', currentGame.id).eq('slot_number', s.slot_number);
-          }
-        }
-      } catch (e) {
-        console.warn('Lỗi chốt chuyến trên Supabase:', e.message);
-      }
-    }
-
-    saveStorage();
-
-    // 2. Tự động mở chuyến tiếp theo (sẽ tự động tạo trên Supabase)
-    const nextGame = await this.createNewRound(targetMenuId);
-    saveStorage();
-
-    return {
-      completedRound: currentGame,
-      nextRound: nextGame
-    };
+  async finishAndStartNextRound(menuId, settlementResults, winners, settleMode, slots, roundNumber, options = {}) {
+    return this.persistSettlement(menuId, { ...options, roundNumber, winners, settleMode }, true);
   },
 
   async finalizeGame(menuId, data = {}) {
-    const targetMenuId = menuId || currentActiveMenuId;
-    const currentGame = await this.getCurrentGame(targetMenuId);
+    return (await this.persistSettlement(menuId, data, false)).completedRound;
+  },
 
-    currentGame.status = 'finished';
-    currentGame.finishedAt = new Date();
-    if (data.winners && Array.isArray(data.winners)) currentGame.winners = data.winners;
-    if (data.settleMode) currentGame.settleMode = data.settleMode;
-    if (data.finishedResults) currentGame.finishedResults = data.finishedResults;
-    if (data.customerAttachedProducts) currentGame.attachedProducts = data.customerAttachedProducts;
-    if (data.deductSlotCost !== undefined) currentGame.deductSlotCost = data.deductSlotCost;
-    if (data.slots && Array.isArray(data.slots)) {
-      currentGame.slots = data.slots.map(s => ({
-        id: s.db_id || s.id,
-        slot_number: s.slot_number || s.id,
-        player_name: (s.owner || s.player_name || '').trim() || null
-      }));
+  async persistSettlement(menuId, data, openNext) {
+    const game = await this.getCurrentGame(menuId, data.roundNumber ?? null);
+    const core = require('../views/js/settlement-core');
+    const winners = data.winners || game.winners || [];
+    const settleMode = data.settleMode || game.settleMode;
+    const attached = data.customerAttachedProducts ?? Object.fromEntries((game.finishedResults || []).map(r=>[r.playerName,r.attachedItems || []]));
+    const deduct = data.deductSlotCost ?? (game.finishedResults || []).find(r=>r.isWinner)?.deducted ?? true;
+    const results = winners.length ? core.calculate(game, settleMode, winners, deduct, attached) : [];
+    if (!winners.length && !openNext) throw new Error('Chưa chọn người nhận giải');
+    if (isConfigured() && supabase) {
+      const { data: saved } = await supabase.rpc('finish_slot_round', {
+        p_game_id: game.id, p_menu_id: game.menuId, p_expected_updated_at: game.updatedAt,
+        p_winners: winners, p_mode: settleMode, p_results: results, p_open_next: openNext
+      });
+      const completedRound = await this.getGameById(saved.completedId);
+      const nextRound = saved.nextId ? await this.getGameById(saved.nextId) : null;
+      return { completedRound, nextRound };
     }
-    currentGame.updatedAt = new Date();
-
-    if (isConfigured() && supabase && currentGame.id) {
-      try {
-        await supabase.from('games').update({
-          status: 'finished',
-          settle_mode: currentGame.settleMode,
-          winners: currentGame.winners,
-          finished_results: currentGame.finishedResults,
-          finished_at: currentGame.finishedAt,
-          updated_at: currentGame.updatedAt
-        }).eq('id', currentGame.id);
-
-        if (currentGame.slots && currentGame.slots.length > 0) {
-          for (const s of currentGame.slots) {
-            await supabase.from('slots').update({
-              player_name: s.player_name,
-              updated_at: new Date()
-            }).eq('game_id', currentGame.id).eq('slot_number', s.slot_number);
-          }
-        }
-      } catch (e) {
-        console.warn('Lỗi finalizeGame Supabase:', e.message);
-      }
-    }
-
+    game.status = 'finished'; game.winners = winners; game.settleMode = settleMode;
+    game.finishedResults = results; game.finishedAt = new Date(); game.updatedAt = new Date();
     saveStorage();
-    return currentGame;
+    let nextRound = game.nextRoundId ? await this.getGameById(game.nextRoundId) : null;
+    if (openNext && !nextRound) { nextRound = await this.createNewRound(game.menuId); game.nextRoundId = nextRound.id; saveStorage(); }
+    return { completedRound: game, nextRound };
   },
 
   async getRoundHistory(menuId = null) {
@@ -680,7 +618,7 @@ const GameModel = {
     if (menuId) {
       const menu = await MenuModel.getMenuById(menuId);
       if (menu) {
-        return await loadOrInitRoundsForMenu(menu);
+        return await loadOrInitRoundsForMenu(menu, false);
       }
       return roundsByMenu[menuId] || [];
     }
@@ -688,7 +626,7 @@ const GameModel = {
     const menus = await MenuModel.getAllMenus();
     let all = [];
     for (const m of menus) {
-      const rList = await loadOrInitRoundsForMenu(m);
+      const rList = await loadOrInitRoundsForMenu(m, false);
       all = all.concat(rList);
     }
     return all;

@@ -21,7 +21,7 @@ app.use(express.static(path.join(__dirname, 'views', 'css')));
 app.use(express.static(path.join(__dirname, 'views', 'js')));
 
 // Gắn API Routes
-app.use('/api', apiRoutes);
+app.use('/api', (req,res,next)=>{res.set('Cache-Control','no-store');next();}, apiRoutes);
 
 // Phục vụ trang chủ Web (index.html)
 app.get('*', (req, res) => {

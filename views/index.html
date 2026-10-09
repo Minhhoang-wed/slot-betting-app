@@ -17,8 +17,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
-  <link rel="stylesheet" href="css/style.css?v=2.4">
-  <link rel="stylesheet" href="css/blind-bags.css?v=1">
+  <link rel="stylesheet" href="css/style.css?v=2.5">
+  <link rel="stylesheet" href="css/blind-bags.css?v=2.0">
 </head>
 <body class="theme-lovable">
   <!-- Dynamic Ambient Glow Background -->
@@ -1084,6 +1084,9 @@
         <div class="config-field mb-3">
           <label>Tên Khách Hàng Gán Vào Slot:</label>
           <input type="text" id="slotModalPlayerName" class="modern-input" placeholder="Nhập tên khách hàng...">
+          <label for="slotModalShares" class="text-sm">Ghế chung — tên và tỷ lệ % (tùy chọn)</label>
+          <input id="slotModalShares" class="modern-input" placeholder="Ngọc=50; bàn tay yellow=50">
+          <p class="text-xs text-muted">Nhập đủ 100% để phân tiền ghế cho từng người. Để trống thì giữ một khách/nhóm. Số slot trong báo cáo tính theo tỷ lệ sở hữu.</p>
         </div>
         <div class="quick-sample-players mt-1">
           <span class="text-xs text-muted" style="display: block; margin-bottom: 6px;">Chọn nhanh khách đang có trên bàn:</span>
@@ -1240,7 +1243,8 @@
   <!-- Toast Notification -->
   <div id="toast" class="modern-toast"></div>
 
-  <script src="js/app.js?v=2.4"></script>
+  <script src="/js/settlement-core.js"></script>
+<script src="js/app.js?v=2.6"></script>
   <script src="js/blind-bags.js?v=1"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
  * MODEL LAYER: Quản lý danh mục các Menu Kèo (150K, 200K, 100K, 300K...)
  * Hỗ trợ lưu trữ Supabase với cơ chế fallback In-Memory an toàn tuyệt đối.
  */
-const { supabase, isConfigured } = require('../config/supabase.config');
+const { supabase, isConfigured } = require('../services/durableDatabase');
 
 // Danh sách Menu mặc định
 let inMemoryMenus = [
@@ -55,7 +55,7 @@ const MenuModel = {
    * Lấy danh sách tất cả các Menu (Có Cache tối ưu siêu tốc < 1ms)
    */
   async getAllMenus(forceRefresh = false) {
-    if (!forceRefresh && menusCache && menusCache.length > 0) {
+    if (!isConfigured() && !forceRefresh && menusCache && menusCache.length > 0) {
       return menusCache;
     }
 
@@ -66,7 +66,7 @@ const MenuModel = {
           .select('*')
           .order('slot_price', { ascending: true });
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           menusCache = data.map(m => ({
             id: m.id,
             code: m.code,
@@ -79,7 +79,7 @@ const MenuModel = {
           }));
           return menusCache;
         }
-      } catch (err) {
+      } catch (err) { if (isConfigured()) throw err;
         // Fallback in-memory nếu chưa tạo bảng menus trên Supabase
       }
     }
@@ -92,14 +92,16 @@ const MenuModel = {
    */
   async getMenuById(idOrCode) {
     const menus = await this.getAllMenus();
-    return menus.find(m => m.id === idOrCode || m.code === idOrCode) || menus[0];
+    const menu = idOrCode ? menus.find(m => m.id === idOrCode || m.code === idOrCode) : menus[0];
+    if (!menu) throw new Error('Không tìm thấy Menu');
+    return menu;
   },
 
   /**
    * Tạo Menu Kèo mới
    */
   async createMenu({ name, slotPrice, totalSlots, prizeValue, description }) {
-    const code = 'MENU_' + String(slotPrice || 150000).replace(/\D/g, '');
+    const code = 'MENU_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     const newMenu = {
       id: 'menu-' + Date.now(),
       code,
@@ -139,7 +141,7 @@ const MenuModel = {
             created_at: data.created_at
           };
         }
-      } catch (err) {
+      } catch (err) { if (isConfigured()) throw err;
         // Fallback
       }
     }
@@ -170,7 +172,7 @@ const MenuModel = {
           .single();
 
         if (!error && data) return data;
-      } catch (err) {}
+      } catch (err) { if (isConfigured()) throw err;}
     }
 
     const menu = inMemoryMenus.find(m => m.id === id);
@@ -197,7 +199,7 @@ const MenuModel = {
     if (isConfigured() && supabase) {
       try {
         await supabase.from('menus').delete().eq('id', id);
-      } catch (err) {}
+      } catch (err) { if (isConfigured()) throw err;}
     }
 
     inMemoryMenus = inMemoryMenus.filter(m => m.id !== id);

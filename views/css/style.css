@@ -2914,4 +2914,480 @@ input[type="number"] {
   margin: 4px 6px;
 }
 
+/* =================================================================
+   SYSTEM-WIDE RESPONSIVE DESIGN SYSTEM (MOBILE, IPAD & DESKTOP)
+   Tối ưu hóa hiển thị 100% trên điện thoại, tablet (iPad) và PC
+   ================================================================= */
+
+/* --- 1. MÀN HÌNH MÁY TÍNH VỪA & IPAD PRO LANDSCAPE (max-width: 1200px) --- */
+@media (max-width: 1200px) {
+  .app-main {
+    padding: 20px 16px;
+  }
+  .workspace-grid {
+    gap: 18px;
+  }
+  .slot-tiles-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .reports-stats-bento {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+/* --- 2. IPAD AIR / TABLET / IPAD MINI (max-width: 1024px) --- */
+@media (max-width: 1024px) {
+  .app-navbar {
+    padding: 10px 16px;
+  }
+  .navbar-container {
+    gap: 12px;
+  }
+  .brand-title {
+    font-size: 1.2rem;
+  }
+  .nav-pill {
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    gap: 6px;
+  }
+  .workspace-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .cosmetics-catalog-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    max-height: 480px;
+  }
+  .slot-tiles-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .jackpot-hero-integrated {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 14px 18px;
+  }
+  .jackpot-integrated-left {
+    width: 100%;
+  }
+  .jackpot-stats-bento {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .menu-switcher-dock,
+  .rounds-switcher-dock {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .reports-header-card {
+    padding: 20px;
+    gap: 14px;
+  }
+}
+
+/* --- 3. ĐIỆN THOẠI & IPAD PORTRAIT (max-width: 768px) --- */
+@media (max-width: 768px) {
+  /* NAVBAR MOBILE */
+  .app-navbar {
+    padding: 8px 12px;
+    position: sticky;
+    top: 0;
+  }
+  .navbar-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .navbar-container > .brand-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .brand-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 1.05rem;
+  }
+  .brand-title {
+    font-size: 1.15rem;
+  }
+  .navbar-actions {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+  }
+  .btn-quick-menu-toggle {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    gap: 5px;
+  }
+  .btn-quick-menu-toggle span {
+    display: none; /* Chỉ hiện icon trên mobile để tiết kiệm diện tích */
+  }
+  .btn-quick-menu-toggle::after {
+    content: "Cài đặt";
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .quick-menu-dropdown-panel {
+    width: calc(100vw - 24px);
+    max-width: 310px;
+    right: 0;
+  }
+
+  /* NAV SEGMENT TABS */
+  .nav-segment {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 3px;
+    gap: 3px;
+    background: #e7dfd5;
+  }
+  .nav-pill {
+    flex: 1;
+    justify-content: center;
+    padding: 8px 4px;
+    font-size: 0.76rem;
+    gap: 5px;
+    text-align: center;
+    white-space: nowrap;
+    border-radius: var(--radius-full);
+  }
+  .nav-pill .pill-icon {
+    font-size: 0.82rem;
+  }
+
+  /* MAIN CONTAINER */
+  .app-main {
+    padding: 10px;
+  }
+
+  /* SURFACE CARDS */
+  .surface-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+  .card-top-bar {
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .card-top-bar .top-bar-title {
+    justify-content: flex-start;
+    gap: 10px;
+  }
+  .card-top-bar .top-bar-actions {
+    justify-content: flex-start;
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .card-heading {
+    font-size: 0.95rem;
+  }
+  .card-caption {
+    font-size: 0.72rem;
+  }
+  .card-content {
+    padding: 14px 10px;
+    gap: 14px;
+  }
+
+  /* DOCKS (MENU & ROUNDS) */
+  .menu-switcher-dock,
+  .rounds-switcher-dock {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .menu-dock-left,
+  .rounds-dock-left {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    flex-wrap: nowrap;
+  }
+  .menu-pills-scroll,
+  .rounds-pills-scroll {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+  }
+  .menu-pill-btn,
+  .round-pill-btn {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .menu-dock-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .round-indicator-badge {
+    padding: 4px 10px;
+    font-size: 0.78rem;
+  }
+
+  /* HERO JACKPOT */
+  .jackpot-hero-integrated {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+  .jackpot-digits {
+    font-size: 1.75rem;
+  }
+  .jackpot-currency {
+    font-size: 1.25rem;
+  }
+  .jackpot-subtitle {
+    font-size: 0.8rem;
+  }
+  .jackpot-stats-bento {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    width: 100%;
+    gap: 6px;
+  }
+  .bento-box {
+    min-width: 0;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .bento-icon-box {
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+  .bento-label {
+    font-size: 0.65rem;
+  }
+  .bento-value {
+    font-size: 0.95rem;
+  }
+
+  /* INLINE CONFIG BAR */
+  .inline-config-bar {
+    padding: 12px;
+  }
+  .config-grid-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .luxury-stepper-box {
+    height: 42px;
+  }
+  .stepper-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* SLOT ARENA GRID (3 CỘT TRÊN TABLET/MOBILE VỪA) */
+  .slot-arena {
+    padding: 12px;
+  }
+  .arena-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .legend-group {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .slot-tiles-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .slot-tile {
+    min-height: 105px;
+    padding: 10px 8px;
+  }
+
+  /* DANH MỤC MỸ PHẨM */
+  .cosmetics-catalog-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    max-height: 440px;
+  }
+  .cosmetic-card {
+    padding: 10px;
+  }
+  .cosmetic-img {
+    height: 100px;
+  }
+  .customer-info-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* THỐNG KÊ & XUẤT FILE */
+  .reports-header-card {
+    padding: 14px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .reports-title {
+    font-size: 1.2rem;
+  }
+  .reports-quick-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .reports-quick-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+  .search-filter-grid {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .search-filter-grid .filter-field.flex-2,
+  .search-filter-grid .filter-field.flex-1 {
+    min-width: 0;
+    width: 100%;
+  }
+  .reports-stats-bento {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  /* BẢNG BIỂU CUỘN NGANG */
+  .modern-table-wrap,
+  .players-list-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modern-table th,
+  .modern-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  /* LUXURY MODALS */
+  .luxury-modal-card {
+    max-width: 95vw !important;
+    max-height: 92vh;
+    border-radius: 16px;
+    margin: 8px;
+  }
+  .modal-top {
+    padding: 12px 16px;
+  }
+  .modal-scroll-body {
+    padding: 14px 16px;
+  }
+  .modal-bottom-actions {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .modal-bottom-actions button {
+    flex: 1;
+    min-width: 110px;
+    justify-content: center;
+  }
+
+  /* HÓA ĐƠN VIP TICKET */
+  .vip-receipt-ticket {
+    padding: 16px 12px;
+  }
+  .ticket-shop-name {
+    font-size: 1.1rem;
+  }
+  .ticket-type-title {
+    font-size: 0.95rem;
+  }
+  .net-main-amount {
+    font-size: 1.5rem;
+  }
+  .ticket-qr-block {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+    padding: 10px;
+  }
+  .qr-frame {
+    width: 130px;
+    height: 130px;
+    margin: 0 auto;
+  }
+  .qr-bank-details {
+    width: 100%;
+    text-align: center;
+  }
+  .attach-inputs-row {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  .attach-inputs-row > div {
+    width: 100% !important;
+  }
+  .attach-inputs-row button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* --- 4. ĐIỆN THOẠI MÀN HÌNH NHỎ (max-width: 480px) --- */
+@media (max-width: 480px) {
+  .nav-pill {
+    padding: 7px 2px;
+    font-size: 0.72rem;
+    gap: 3px;
+  }
+  .nav-pill .pill-title {
+    font-size: 0.72rem;
+  }
+  .slot-tiles-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+  .slot-tile {
+    min-height: 98px;
+    padding: 8px 6px;
+  }
+  .reports-quick-actions {
+    grid-template-columns: 1fr;
+  }
+  .modal-bottom-actions {
+    flex-direction: column;
+  }
+  .modal-bottom-actions button {
+    width: 100%;
+  }
+  .jackpot-digits {
+    font-size: 1.5rem;
+  }
+}
+
+/* --- 5. ĐIỆN THOẠI SIÊU NHỎ (max-width: 360px) --- */
+@media (max-width: 360px) {
+  .nav-pill {
+    font-size: 0.68rem;
+    padding: 6px 1px;
+  }
+  .brand-title {
+    font-size: 1.05rem;
+  }
+  .cosmetics-catalog-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
 
