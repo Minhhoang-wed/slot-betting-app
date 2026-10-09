@@ -131,6 +131,8 @@ async function main() {
   await check('Round price retained after reload',async()=>{
     const db=database();await instance(db).Game.updateRound('m1',1,{slotPrice:250,prizeValue:750});
     const g=await instance(db).Game.getCurrentGame('m1',1);assert.equal(g.slotPrice,250,'getCurrentGame replaces round price with menu price');
+    await instance(db).Game.updateRound('m1',1,{slotPrice:0,prizeValue:0});
+    const zero=await instance(db).Game.getCurrentGame('m1',1);assert.equal(zero.slotPrice,0);assert.equal(zero.prizeValue,0);
   });
   await check('Selected older round is finalized across server instances',async()=>{
     const db=database();db.games.push({...db.games[0],id:'g2',round_number:2,name:'QA round 2'});

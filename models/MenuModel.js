@@ -1,6 +1,6 @@
 /**
  * MODEL LAYER: Quản lý danh mục các Menu Kèo (150K, 200K, 100K, 300K...)
- * Hỗ trợ lưu trữ Supabase với cơ chế fallback In-Memory an toàn tuyệt đối.
+ * Dùng Supabase khi đã cấu hình; bộ nhớ cục bộ chỉ dùng cho thử nghiệm.
  */
 const { supabase, isConfigured } = require('../services/durableDatabase');
 
@@ -155,18 +155,25 @@ const MenuModel = {
    * Cập nhật thông số Menu
    */
   async updateMenu(id, { name, slotPrice, totalSlots, prizeValue, description }) {
+    const current = await this.getMenuById(id);
+    const changes = {
+      name: name === undefined ? current.name : name,
+      slot_price: slotPrice === undefined ? current.slot_price : Number(slotPrice),
+      total_slots: totalSlots === undefined ? current.total_slots : Number(totalSlots),
+      prize_value: prizeValue === undefined ? current.prize_value : Number(prizeValue),
+      description: description === undefined ? current.description : description
+    };
+    if (!Number.isSafeInteger(changes.slot_price) || changes.slot_price < 0 ||
+        !Number.isSafeInteger(changes.prize_value) || changes.prize_value < 0 ||
+        !Number.isInteger(changes.total_slots) || changes.total_slots < 1 || changes.total_slots > 100) {
+      throw new Error('Giá hoặc số ghế không hợp lệ');
+    }
     menusCache = null;
     if (isConfigured() && supabase) {
       try {
         const { data, error } = await supabase
           .from('menus')
-          .update({
-            name,
-            slot_price: Number(slotPrice),
-            total_slots: Number(totalSlots),
-            prize_value: Number(prizeValue),
-            description
-          })
+          .update(changes)
           .eq('id', id)
           .select()
           .single();
@@ -177,11 +184,7 @@ const MenuModel = {
 
     const menu = inMemoryMenus.find(m => m.id === id);
     if (menu) {
-      if (name) menu.name = name;
-      if (slotPrice) menu.slot_price = Number(slotPrice);
-      if (totalSlots) menu.total_slots = Number(totalSlots);
-      if (prizeValue) menu.prize_value = Number(prizeValue);
-      if (description !== undefined) menu.description = description;
+      Object.assign(menu, changes);
       return menu;
     }
     throw new Error('Không tìm thấy Menu');
@@ -191,7 +194,8 @@ const MenuModel = {
    * Xóa Menu
    */
   async deleteMenu(id) {
-    if (inMemoryMenus.length <= 1) {
+    const menus = await this.getAllMenus();
+    if (menus.length <= 1) {
       throw new Error('Hệ thống phải có ít nhất 1 Menu kèo!');
     }
 

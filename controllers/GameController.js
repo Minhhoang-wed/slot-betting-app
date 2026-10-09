@@ -150,7 +150,7 @@ const GameController = {
       if (!playerName) {
         return res.status(400).json({ success: false, error: 'Thiếu tên người chơi' });
       }
-      const slotsAssigned = await SlotModel.quickRegister(gameId, playerName, Number(slotCount) || 1, menuId, roundNumber);
+      const slotsAssigned = await SlotModel.quickRegister(gameId, playerName, Number(slotCount), menuId, roundNumber);
       res.json({ success: true, message: `Đã đăng ký ${slotCount} slot cho ${playerName}`, slots: slotsAssigned });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });

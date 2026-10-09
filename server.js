@@ -21,7 +21,13 @@ app.use(express.static(path.join(__dirname, 'views', 'css')));
 app.use(express.static(path.join(__dirname, 'views', 'js')));
 
 // Gắn API Routes
-app.use('/api', (req,res,next)=>{res.set('Cache-Control','no-store');next();}, apiRoutes);
+app.use('/api', (req,res,next)=>{
+  res.set('Cache-Control','no-store');
+  if (process.env.VERCEL && !env.isSupabaseConfigured()) {
+    return res.status(503).json({success:false,message:'Chưa cấu hình Supabase trên Vercel. Không thể lưu giao dịch an toàn.'});
+  }
+  next();
+}, apiRoutes);
 
 // Phục vụ trang chủ Web (index.html)
 app.get('*', (req, res) => {

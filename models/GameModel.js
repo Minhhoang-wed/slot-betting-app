@@ -1,7 +1,7 @@
 /**
  * MODEL LAYER: Quản lý Dữ liệu Kèo Slot theo Từng Menu & Từng Chuyến (Rounds)
  * Hỗ trợ lưu trữ bền vững vĩnh viễn trên Supabase Database
- * Cơ chế Hybrid In-Memory Caching siêu tốc (< 1ms) + Fallback Disk an toàn 100%.
+ * Đọc DB ở mỗi yêu cầu khi đã cấu hình; bộ nhớ và file chỉ dùng để thử cục bộ.
  */
 const fs = require('fs');
 const path = require('path');
@@ -104,8 +104,8 @@ function mapGameRowToRound(g, menu) {
     name: g.name,
     roundNumber: Number(g.round_number),
     totalSlots: totalSlots,
-    slotPrice: Number(g.slot_price || menu.slot_price),
-    prizeValue: Number(g.prize_value || menu.prize_value),
+    slotPrice: Number(g.slot_price ?? menu.slot_price),
+    prizeValue: Number(g.prize_value ?? menu.prize_value),
     status: g.status || 'open',
     settleMode: g.settle_mode || 'solo',
     winners: Array.isArray(g.winners) ? g.winners : [],
