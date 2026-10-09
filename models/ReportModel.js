@@ -1,9 +1,10 @@
 /**
  * MODEL LAYER: Thống Kê Dữ Liệu & Xuất Báo Cáo File Excel (CSV Chuẩn UTF-8 BOM)
  * Phục vụ nghiệp vụ:
- * 1. Tính tổng số slot của Người A (hoặc bất kỳ khách nào) đã vô ở từng Menu (vd Menu 150K)
- * 2. Xuất file riêng cho từng Menu (vd: File Báo Cáo Menu 150K)
- * 3. Xuất file tổng hợp toàn bộ các Menu trong ngày/buổi livestream cho Admin
+ * 1. Thống kê chi tiết & xuất file cho từng Menu (150K, 200K...) chuẩn format hóa đơn kế toán
+ * 2. Xuất file tổng hợp toàn bộ các Menu livestream
+ * 3. Xuất file chi tiết từng khách hàng (gồm kèo cược & mỹ phẩm mua kèm)
+ * 4. Tính toán Net chính xác 100%: cấn trừ vốn, thưởng trúng và toàn bộ mỹ phẩm đính kèm
  */
 const MenuModel = require('./MenuModel');
 const GameModel = require('./GameModel');
@@ -11,6 +12,7 @@ const GameModel = require('./GameModel');
 const ReportModel = {
   /**
    * Thống kê chi tiết từng khách hàng theo một Menu cụ thể (vd: Menu 150K)
+   * Đồng bộ chính xác cả từ finishedResults, slots, winners, deductSlotCost và mỹ phẩm
    * @param {string} menuId 
    */
   async getCustomerStatsByMenu(menuId) {
@@ -24,44 +26,120 @@ const ReportModel = {
     const customerMap = {};
 
     allRounds.forEach(round => {
-      // Nhóm slot theo người chơi trong chuyến này
+      // Ưu tiên 1: Nếu round đã được chốt với finishedResults
+      if (round.finishedResults && Array.isArray(round.finishedResults) && round.finishedResults.length > 0) {
+        round.finishedResults.forEach(res => {
+          const name = res.playerName ? res.playerName.trim() : 'Khách';
+          if (!customerMap[name]) {
+            customerMap[name] = {
+              customerName: name,
+              menuId: menu.id,
+              menuName: menu.name,
+              slotPrice: round.slotPrice || menu.slot_price,
+              totalSlots: 0,
+              totalBuyCost: 0,
+              totalPrizeWon: 0,
+              totalAttachedCost: 0,
+              attachedItems: [],
+              netAmount: 0,
+              roundsCount: 0,
+              roundsDetails: []
+            };
+          }
+
+          const slotCount = res.slotCount || (res.slotsList ? res.slotsList.length : 0);
+          const buyCost = res.buyCost || (slotCount * (round.slotPrice || menu.slot_price));
+          const prizeWon = res.prizeWon || 0;
+          const attachedCost = res.attachedTotalCost !== undefined ? res.attachedTotalCost : (
+            (res.attachedItems || []).reduce((sum, item) => sum + (Number(item.price) * Number(item.qty || 1)), 0)
+          );
+          const net = res.netAmount !== undefined ? res.netAmount : (
+            (res.isWinner ? (res.deducted ? (prizeWon - buyCost) : prizeWon) : -buyCost) - attachedCost
+          );
+
+          customerMap[name].totalSlots += slotCount;
+          customerMap[name].totalBuyCost += buyCost;
+          customerMap[name].totalPrizeWon += prizeWon;
+          customerMap[name].totalAttachedCost += attachedCost;
+          if (res.attachedItems && res.attachedItems.length > 0) {
+            customerMap[name].attachedItems.push(...res.attachedItems);
+          }
+          customerMap[name].netAmount += net;
+          customerMap[name].roundsCount += 1;
+          customerMap[name].roundsDetails.push({
+            roundNumber: round.roundNumber,
+            roundName: round.name,
+            slots: res.slotsList || [],
+            slotCount,
+            buyCost,
+            isWinner: !!res.isWinner,
+            prizeWon,
+            attachedItems: res.attachedItems || [],
+            attachedCost,
+            net,
+            status: round.status
+          });
+        });
+        return;
+      }
+
+      // Ưu tiên 2: Round chưa chốt hoặc lưu dạng slots thô
       const roundPlayers = {};
-      round.slots.forEach(s => {
-        if (s.player_name) {
+      (round.slots || []).forEach(s => {
+        if (s.player_name && s.player_name.trim()) {
           const pName = s.player_name.trim();
           if (!roundPlayers[pName]) roundPlayers[pName] = [];
           roundPlayers[pName].push(s.slot_number);
         }
       });
 
-      // Cộng dồn vào customerMap
+      const roundWinners = (round.winners || []).map(w => (w || '').trim().toLowerCase());
+
       Object.entries(roundPlayers).forEach(([name, slotNums]) => {
         if (!customerMap[name]) {
           customerMap[name] = {
             customerName: name,
             menuId: menu.id,
             menuName: menu.name,
-            slotPrice: menu.slot_price,
+            slotPrice: round.slotPrice || menu.slot_price,
             totalSlots: 0,
             totalBuyCost: 0,
             totalPrizeWon: 0,
+            totalAttachedCost: 0,
+            attachedItems: [],
             netAmount: 0,
             roundsCount: 0,
             roundsDetails: []
           };
         }
 
-        const buyCost = slotNums.length * round.slotPrice;
-        const isWinner = (round.winners || []).includes(name);
+        const buyCost = slotNums.length * (round.slotPrice || menu.slot_price);
+        const isWinner = roundWinners.includes(name.toLowerCase());
         let prizeWon = 0;
-        if (isWinner && round.winners.length > 0) {
-          prizeWon = Math.round(round.prizeValue / round.winners.length);
+        if (isWinner && roundWinners.length > 0) {
+          prizeWon = Math.round(round.prizeValue / roundWinners.length);
         }
-        const net = prizeWon - buyCost;
+
+        // Lấy mỹ phẩm đính kèm nếu có trong round
+        const attached = (round.attachedProducts && round.attachedProducts[name]) || [];
+        const attachedCost = attached.reduce((sum, item) => sum + (Number(item.price) * Number(item.qty || 1)), 0);
+        const deduct = round.deductSlotCost !== undefined ? round.deductSlotCost : true;
+
+        let net = 0;
+        if (isWinner) {
+          net = deduct ? (prizeWon - buyCost) : prizeWon;
+        } else {
+          net = -buyCost;
+        }
+        net -= attachedCost;
 
         customerMap[name].totalSlots += slotNums.length;
         customerMap[name].totalBuyCost += buyCost;
         customerMap[name].totalPrizeWon += prizeWon;
+        customerMap[name].totalAttachedCost += attachedCost;
+        if (attached.length > 0) {
+          customerMap[name].attachedItems.push(...attached);
+        }
         customerMap[name].netAmount += net;
         customerMap[name].roundsCount += 1;
         customerMap[name].roundsDetails.push({
@@ -72,6 +150,8 @@ const ReportModel = {
           buyCost,
           isWinner,
           prizeWon,
+          attachedItems: attached,
+          attachedCost,
           net,
           status: round.status
         });
@@ -85,12 +165,14 @@ const ReportModel = {
       menuId: menu.id,
       menuName: menu.name,
       slotPrice: menu.slot_price,
+      prizeValue: menu.prize_value,
       totalRounds: allRounds.length,
       completedRounds: allRounds.filter(r => r.status === 'finished').length,
       totalCustomers: customers.length,
       grandTotalSlots: customers.reduce((sum, c) => sum + c.totalSlots, 0),
       grandTotalBuyCost: customers.reduce((sum, c) => sum + c.totalBuyCost, 0),
       grandTotalPrizeWon: customers.reduce((sum, c) => sum + c.totalPrizeWon, 0),
+      grandTotalAttachedCost: customers.reduce((sum, c) => sum + (c.totalAttachedCost || 0), 0),
       grandNetAmount: customers.reduce((sum, c) => sum + c.netAmount, 0)
     };
 
@@ -104,7 +186,7 @@ const ReportModel = {
         name: r.name,
         status: r.status,
         totalSlots: r.totalSlots,
-        occupiedSlots: r.slots.filter(s => s.player_name).length,
+        occupiedSlots: (r.slots || []).filter(s => s.player_name).length,
         winners: r.winners || [],
         prizeValue: r.prizeValue,
         createdAt: r.createdAt
@@ -125,10 +207,12 @@ const ReportModel = {
         if (!globalCustomerMap[c.customerName]) {
           globalCustomerMap[c.customerName] = {
             customerName: c.customerName,
-            menuBreakdown: {}, // { [menuId]: { menuName, slotCount, buyCost, prizeWon, net } }
+            menuBreakdown: {}, // { [menuId]: { menuName, slotCount, buyCost, prizeWon, attachedCost, net } }
             totalSlots: 0,
             totalBuyCost: 0,
             totalPrizeWon: 0,
+            totalAttachedCost: 0,
+            attachedItems: [],
             netAmount: 0
           };
         }
@@ -141,6 +225,7 @@ const ReportModel = {
           slotCount: c.totalSlots,
           buyCost: c.totalBuyCost,
           prizeWon: c.totalPrizeWon,
+          attachedCost: c.totalAttachedCost || 0,
           net: c.netAmount,
           roundsCount: c.roundsCount
         };
@@ -148,6 +233,10 @@ const ReportModel = {
         entry.totalSlots += c.totalSlots;
         entry.totalBuyCost += c.totalBuyCost;
         entry.totalPrizeWon += c.totalPrizeWon;
+        entry.totalAttachedCost += (c.totalAttachedCost || 0);
+        if (c.attachedItems && c.attachedItems.length > 0) {
+          entry.attachedItems.push(...c.attachedItems);
+        }
         entry.netAmount += c.netAmount;
       });
     }
@@ -160,6 +249,7 @@ const ReportModel = {
       grandTotalSlots: customersList.reduce((sum, c) => sum + c.totalSlots, 0),
       grandTotalBuyCost: customersList.reduce((sum, c) => sum + c.totalBuyCost, 0),
       grandTotalPrizeWon: customersList.reduce((sum, c) => sum + c.totalPrizeWon, 0),
+      grandTotalAttachedCost: customersList.reduce((sum, c) => sum + c.totalAttachedCost, 0),
       grandNetAmount: customersList.reduce((sum, c) => sum + c.netAmount, 0),
       customers: customersList
     };
@@ -189,6 +279,8 @@ const ReportModel = {
             totalSlots: thisCust.totalSlots,
             totalBuyCost: thisCust.totalBuyCost,
             totalPrizeWon: thisCust.totalPrizeWon,
+            totalAttachedCost: thisCust.totalAttachedCost || 0,
+            attachedItems: thisCust.attachedItems || [],
             netAmount: thisCust.netAmount,
             rounds: thisCust.roundsDetails
           });
@@ -205,7 +297,7 @@ const ReportModel = {
 
   /**
    * Tạo chuỗi CSV UTF-8 (có BOM \uFEFF) cho 1 Menu cụ thể
-   * Mở bằng Excel tiếng Việt hoàn hảo 100% không bị vỡ font!
+   * Thiết kế 1 bảng thống nhất chuẩn kế toán: STT, Khách, Slots, Tiền Cược, Thưởng, Mỹ Phẩm, Net, Quyết Toán
    */
   async exportMenuReportCsv(menuId) {
     const data = await this.getCustomerStatsByMenu(menuId);
@@ -213,38 +305,47 @@ const ReportModel = {
     const summary = data.summary;
 
     let csv = '';
-    // Tiêu đề báo cáo
-    csv += `BÁO CÁO TỔNG KẾT KÈO THEO MENU - ${menu.name.toUpperCase()}\n`;
-    csv += `Thời gian xuất: ${new Date().toLocaleString('vi-VN')}\n`;
-    csv += `Giá mỗi slot: ${menu.slot_price.toLocaleString('vi-VN')} đ | Tổng giải thưởng: ${menu.prize_value.toLocaleString('vi-VN')} đ\n`;
-    csv += `Tổng số chuyến đã chạy: ${summary.totalRounds} | Tổng slot đã bán: ${summary.grandTotalSlots} | Tổng tiền cược: ${summary.grandTotalBuyCost.toLocaleString('vi-VN')} đ\n`;
-    csv += `\n`;
+    // Header báo cáo
+    csv += `BÁO CÁO QUYẾT TOÁN TÀI CHÍNH KÈO - ${menu.name.toUpperCase()}\n`;
+    csv += `Thời Gian Xuất: ${new Date().toLocaleString('vi-VN')}\n`;
+    csv += `Đơn Giá Mỗi Slot: ${Number(menu.slot_price).toLocaleString('vi-VN')} đ | Trị Giá Giải Thưởng: ${Number(menu.prize_value).toLocaleString('vi-VN')} đ\n`;
+    csv += `Tổng Chuyến: ${summary.totalRounds} (Đã chốt: ${summary.completedRounds}) | Tổng Khách Hàng: ${summary.totalCustomers}\n\n`;
 
-    // BẢNG 1: TỔNG HỢP THEO TỪNG KHÁCH HÀNG
-    csv += `=== BẢNG 1: TỔNG HỢP THEO KHÁCH HÀNG (MENU ${menu.name}) ===\n`;
-    csv += `STT,Khách Hàng,Tổng Số Slot Đã Vào,Chi Tiết Các Chuyến,Tổng Tiền Cược (VNĐ),Tổng Tiền Thưởng (VNĐ),Net Thực Tế (VNĐ),Trạng Thái Quyết Toán\n`;
+    // TIÊU ĐỀ CỘT CHUẨN
+    csv += `STT,Khách Hàng,Số Lượng Slot,Chi Tiết Slot Đã Mua,Đơn Giá Slot (VNĐ),Tổng Tiền Cược (VNĐ) [A],Tiền Thưởng Trúng Kèo (VNĐ) [B],Mỹ Phẩm Mua Kèm,Tiền Mỹ Phẩm (VNĐ) [C],Net Thực Tế (VNĐ) [B - A - C],Trạng Thái Quyết Toán,Ghi Chú Chuyển Khoản\n`;
 
     data.customers.forEach((c, idx) => {
       const roundsSummary = c.roundsDetails.map(r => `Chuyến ${r.roundNumber} (${r.slotCount} slot: #${r.slots.join('-')})`).join('; ');
+
+      // Gom danh sách mỹ phẩm mua kèm
+      let cosmeticsSummary = '(Không có)';
+      if (c.attachedItems && c.attachedItems.length > 0) {
+        cosmeticsSummary = c.attachedItems.map(item => `${item.name} (x${item.qty || 1})`).join('; ');
+      }
+
       const statusText = c.netAmount > 0 
-        ? `Shop chuyển khoản trả khách (+${c.netAmount.toLocaleString('vi-VN')} đ)` 
+        ? `Shop trả khách (+${Number(c.netAmount).toLocaleString('vi-VN')} đ)` 
         : c.netAmount < 0 
-        ? `Khách cần chuyển shop (${Math.abs(c.netAmount).toLocaleString('vi-VN')} đ)`
+        ? `Khách trả shop (${Number(Math.abs(c.netAmount)).toLocaleString('vi-VN')} đ)`
         : `Hòa vốn (0 đ)`;
 
-      csv += `${idx + 1},"${c.customerName}",${c.totalSlots},"${roundsSummary}",${c.totalBuyCost},${c.totalPrizeWon},${c.netAmount},"${statusText}"\n`;
+      const transferNote = `[KEO ${menu.name.toUpperCase()}] ${c.customerName} quyet toan`;
+
+      csv += `${idx + 1},"${c.customerName}",${c.totalSlots},"${roundsSummary}",${c.slotPrice},${c.totalBuyCost},${c.totalPrizeWon},"${cosmeticsSummary}",${c.totalAttachedCost || 0},${c.netAmount},"${statusText}","${transferNote}"\n`;
     });
 
-    csv += `TỔNG CỘNG,,${summary.grandTotalSlots},,${summary.grandTotalBuyCost},${summary.grandTotalPrizeWon},${summary.grandNetAmount},\n\n`;
+    // Dòng TỔNG CỘNG của bảng
+    csv += `TỔNG CỘNG,,${summary.grandTotalSlots},,,${summary.grandTotalBuyCost},${summary.grandTotalPrizeWon},,${summary.grandTotalAttachedCost},${summary.grandNetAmount},,\n\n`;
 
-    // BẢNG 2: CHI TIẾT TỪNG CHUYẾN
-    csv += `=== BẢNG 2: CHI TIẾT TỪNG CHUYẾN CỦA MENU ===\n`;
-    csv += `Chuyến Số,Tên Chuyến,Trạng Thái,Số Slot Đã Điền,Người Thắng Cuộc,Tổng Giá Trị Giải (VNĐ),Thời Gian\n`;
-
-    data.rounds.forEach(r => {
-      const winnersText = (r.winners || []).join(', ') || 'Chưa chốt';
-      csv += `${r.roundNumber},"${r.name}","${r.status === 'finished' ? 'Đã kết thúc' : 'Đang mở'}",${r.occupiedSlots}/${r.totalSlots},"${winnersText}",${r.prizeValue},"${new Date(r.createdAt).toLocaleString('vi-VN')}"\n`;
-    });
+    // KHUNG TỔNG KẾT TÀI CHÍNH
+    const spread = summary.grandTotalBuyCost - summary.grandTotalPrizeWon;
+    csv += `BẢNG TỔNG KẾT TÀI CHÍNH MENU - ${menu.name.toUpperCase()}\n`;
+    csv += `Chỉ Số Tài Chính,Số Tiền (VNĐ)\n`;
+    csv += `Tổng Doanh Thu Slot (A),${summary.grandTotalBuyCost}\n`;
+    csv += `Tổng Tiền Thưởng Phát Ra (B),${summary.grandTotalPrizeWon}\n`;
+    csv += `Tổng Doanh Thu Mỹ Phẩm (C),${summary.grandTotalAttachedCost}\n`;
+    csv += `Chênh Lệch Kèo Cược (A - B),${spread}\n`;
+    csv += `Tổng Quyết Toán Net Toàn Menu,${summary.grandNetAmount}\n`;
 
     return '\uFEFF' + csv;
   },
@@ -258,16 +359,15 @@ const ReportModel = {
 
     let csv = '';
     csv += `BÁO CÁO TỔNG HỢP TOÀN BỘ CÁC MENU LIVESTREAM\n`;
-    csv += `Thời gian xuất: ${new Date().toLocaleString('vi-VN')}\n`;
-    csv += `Tổng khách hàng: ${data.totalCustomers} | Tổng slot toàn bộ: ${data.grandTotalSlots} | Tổng cược: ${data.grandTotalBuyCost.toLocaleString('vi-VN')} đ | Net toàn bộ: ${data.grandNetAmount.toLocaleString('vi-VN')} đ\n`;
-    csv += `\n`;
+    csv += `Thời Gian Xuất: ${new Date().toLocaleString('vi-VN')}\n`;
+    csv += `Tổng Khách Hàng: ${data.totalCustomers} | Tổng Slot Toàn Bộ: ${data.grandTotalSlots} | Tổng Tiền Cược: ${data.grandTotalBuyCost.toLocaleString('vi-VN')} đ | Tổng Mỹ Phẩm: ${data.grandTotalAttachedCost.toLocaleString('vi-VN')} đ | Net Ròng Toàn Bộ: ${data.grandNetAmount.toLocaleString('vi-VN')} đ\n\n`;
 
-    // Dòng tiêu đề cột: STT, Khách Hàng, [Menu 150K Slots], [Menu 200K Slots]..., Tổng Slot, Tổng Cược, Tổng Thưởng, Net Ròng, Quyết Toán
+    // Cột tiêu đề
     let header = `STT,Khách Hàng`;
     menus.forEach(m => {
       header += `,"${m.name} (Số Slot)"`;
     });
-    header += `,Tổng Slot Toàn Bộ,Tổng Tiền Cược (VNĐ),Tổng Tiền Thưởng (VNĐ),Net Ròng Thực Tế (VNĐ),Quyết Toán Cuối Cùng\n`;
+    header += `,Tổng Slot Toàn Bộ,Tổng Tiền Cược (VNĐ) [A],Tổng Tiền Thưởng (VNĐ) [B],Tổng Tiền Mỹ Phẩm (VNĐ) [C],Net Ròng Thực Tế (VNĐ) [B - A - C],Quyết Toán Cuối Cùng\n`;
     csv += header;
 
     data.customers.forEach((c, idx) => {
@@ -279,12 +379,12 @@ const ReportModel = {
       });
 
       const finalStatus = c.netAmount > 0 
-        ? `Shop trả khách (+${c.netAmount.toLocaleString('vi-VN')} đ)` 
+        ? `Shop trả khách (+${Number(c.netAmount).toLocaleString('vi-VN')} đ)` 
         : c.netAmount < 0 
-        ? `Khách trả shop (${Math.abs(c.netAmount).toLocaleString('vi-VN')} đ)` 
-        : `Hòa vốn`;
+        ? `Khách trả shop (${Number(Math.abs(c.netAmount)).toLocaleString('vi-VN')} đ)` 
+        : `Hòa vốn (0 đ)`;
 
-      row += `,${c.totalSlots},${c.totalBuyCost},${c.totalPrizeWon},${c.netAmount},"${finalStatus}"\n`;
+      row += `,${c.totalSlots},${c.totalBuyCost},${c.totalPrizeWon},${c.totalAttachedCost || 0},${c.netAmount},"${finalStatus}"\n`;
       csv += row;
     });
 
@@ -294,8 +394,18 @@ const ReportModel = {
       const menuSlotTotal = data.customers.reduce((sum, c) => sum + (c.menuBreakdown[m.id]?.slotCount || 0), 0);
       footer += `,${menuSlotTotal}`;
     });
-    footer += `,${data.grandTotalSlots},${data.grandTotalBuyCost},${data.grandTotalPrizeWon},${data.grandNetAmount},\n`;
+    footer += `,${data.grandTotalSlots},${data.grandTotalBuyCost},${data.grandTotalPrizeWon},${data.grandTotalAttachedCost},${data.grandNetAmount},\n\n`;
     csv += footer;
+
+    // Khung tài chính
+    const spread = data.grandTotalBuyCost - data.grandTotalPrizeWon;
+    csv += `=== BẢNG TỔNG KẾT TÀI CHÍNH TOÀN BỘ LIVESTREAM ===\n`;
+    csv += `Hạng Mục,Số Tiền (VNĐ),Diễn Giải Chi Tiết\n`;
+    csv += `1. Tổng Doanh Thu Slot (A),${data.grandTotalBuyCost},"Tổng tiền cược thu từ ${data.grandTotalSlots} slot"\n`;
+    csv += `2. Tổng Tiền Thưởng Phát Ra (B),${data.grandTotalPrizeWon},"Tổng giải thưởng trao qua tất cả các menu"\n`;
+    csv += `3. Tổng Doanh Thu Mỹ Phẩm (C),${data.grandTotalAttachedCost},"Tổng tiền mỹ phẩm bán kèm cho khách"\n`;
+    csv += `4. Chênh Lệch Kèo (A - B),${spread},"${spread >= 0 ? 'Shop thặng dư cược' : 'Shop bù giải thưởng'}"\n`;
+    csv += `5. Tổng Net Ròng Toàn Buổi,${data.grandNetAmount},"${data.grandNetAmount > 0 ? 'Shop chi trả ròng cho khách' : 'Shop thực thu ròng từ khách'}"\n`;
 
     return '\uFEFF' + csv;
   },
@@ -308,13 +418,13 @@ const ReportModel = {
 
     let csv = '';
     csv += `LỊCH SỬ CHI TIẾT TẤT CẢ CÁC CHUYẾN KÈO\n`;
-    csv += `Thời gian xuất: ${new Date().toLocaleString('vi-VN')}\n\n`;
-    csv += `Chuyến Số,Menu,Tên Chuyến,Trạng Thái,Slot Số,Khách Giữ Slot,Người Thắng?,Tiền Slot (VNĐ)\n`;
+    csv += `Thời Gian Xuất: ${new Date().toLocaleString('vi-VN')}\n\n`;
+    csv += `Chuyến Số,Menu,Tên Chuyến,Trạng Thái,Slot Số,Khách Giữ Slot,Người Thắng Kèo?,Đơn Giá Slot (VNĐ),Thời Gian\n`;
 
     rounds.forEach(r => {
-      r.slots.forEach(s => {
+      (r.slots || []).forEach(s => {
         const isWinner = s.player_name && (r.winners || []).includes(s.player_name);
-        csv += `${r.roundNumber},"${r.menuCode || r.menuId}","${r.name}","${r.status}",${s.slot_number},"${s.player_name || '(Trống)'}","${isWinner ? 'WINNER' : ''}",${r.slotPrice}\n`;
+        csv += `${r.roundNumber},"${r.menuCode || r.menuId}","${r.name}","${r.status === 'finished' ? 'Đã kết thúc' : 'Đang mở'}",${s.slot_number},"${s.player_name || '(Trống)'}","${isWinner ? 'WINNER (TRÚNG GIẢI)' : ''}",${r.slotPrice},"${new Date(r.createdAt).toLocaleString('vi-VN')}"\n`;
       });
     });
 
@@ -332,12 +442,12 @@ const ReportModel = {
 
     let csv = '';
     csv += `BÁO CÁO QUYẾT TOÁN CHI TIẾT KHÁCH HÀNG - [${customerName.toUpperCase()}]\n`;
-    csv += `Thời gian xuất: ${new Date().toLocaleString('vi-VN')}\n`;
-    csv += `Trạng thái: Quyết toán đa menu, đa chuyến & mỹ phẩm mua kèm\n\n`;
+    csv += `Thời Gian Xuất: ${new Date().toLocaleString('vi-VN')}\n`;
+    csv += `Hình thức: Đối soát đa menu, đa chuyến & mỹ phẩm mua kèm\n\n`;
 
     // PHẦN 1: KÈO CƯỢC SLOT
     csv += `=== PHẦN 1: CHI TIẾT KÈO SLOT THEO TỪNG MENU & TỪNG CHUYẾN ===\n`;
-    csv += `STT,Menu Kèo,Chuyến Tham Gia,Số Slot Đã Vào,Chi Tiết Slot,Tiền Mua Slot (VNĐ),Tiền Thưởng (VNĐ),Net Kèo (VNĐ),Kết Quả Chuyến\n`;
+    csv += `STT,Menu Kèo,Chuyến Tham Gia,Số Slot Đã Vào,Chi Tiết Slot,Đơn Giá Slot (VNĐ),Tiền Cược (VNĐ) [A],Tiền Thưởng (VNĐ) [B],Kết Quả Chuyến\n`;
 
     let totalSlotCount = 0;
     let totalSlotCost = 0;
@@ -352,22 +462,27 @@ const ReportModel = {
           totalPrizeWon += r.prizeWon;
 
           const slotsText = r.slots.map(s => '#' + s).join('; ');
-          const resultText = r.isWinner ? `Thắng (+${r.prizeWon.toLocaleString('vi-VN')} đ)` : 'Không trúng (0 đ)';
-          csv += `${stt++},"${m.menuName}",Chuyến #${r.roundNumber},${r.slotCount},"${slotsText}",${r.buyCost},${r.prizeWon},${r.net},"${resultText}"\n`;
+          const resultText = r.isWinner ? `Trúng giải (+${Number(r.prizeWon).toLocaleString('vi-VN')} đ)` : 'Không trúng (0 đ)';
+          csv += `${stt++},"${m.menuName}",Chuyến #${r.roundNumber},${r.slotCount},"${slotsText}",${m.slotPrice},${r.buyCost},${r.prizeWon},"${resultText}"\n`;
         });
       });
     }
 
     const netSlot = totalPrizeWon - totalSlotCost;
-    csv += `TỔNG CỘNG KÈO SLOT,,,${totalSlotCount},,${totalSlotCost},${totalPrizeWon},${netSlot},\n\n`;
+    csv += `TỔNG CỘNG KÈO SLOT,,,${totalSlotCount},,,${totalSlotCost},${totalPrizeWon},\n\n`;
 
     // PHẦN 2: SẢN PHẨM MỸ PHẨM MUA KÈM
     csv += `=== PHẦN 2: SẢN PHẨM MỸ PHẨM MUA KÈM ===\n`;
     csv += `STT,Tên Sản Phẩm,Số Lượng,Đơn Giá (VNĐ),Thành Tiền (VNĐ)\n`;
 
     let totalProductCost = 0;
-    if (attachedProducts && attachedProducts.length > 0) {
-      attachedProducts.forEach((p, idx) => {
+    // Ưu tiên danh sách mỹ phẩm truyền vào hoặc lấy từ lịch sử khách hàng
+    const allAttached = (attachedProducts && attachedProducts.length > 0) 
+      ? attachedProducts 
+      : (customerData?.attachedItems || []);
+
+    if (allAttached && allAttached.length > 0) {
+      allAttached.forEach((p, idx) => {
         const itemTotal = Number(p.price) * Number(p.qty || 1);
         totalProductCost += itemTotal;
         csv += `${idx + 1},"${p.name}",${p.qty || 1},${p.price},${itemTotal}\n`;
@@ -380,17 +495,17 @@ const ReportModel = {
     // PHẦN 3: ĐỐI SOÁT TỔNG HỢP CUỐI CÙNG
     const finalNet = (totalPrizeWon - totalSlotCost) - totalProductCost;
     const finalStatus = finalNet > 0 
-      ? `SHOP CẦN CHUYỂN KHOẢN TRẢ KHÁCH (+${finalNet.toLocaleString('vi-VN')} đ)`
+      ? `SHOP CẦN CHUYỂN KHOẢN TRẢ KHÁCH (+${Number(finalNet).toLocaleString('vi-VN')} đ)`
       : finalNet < 0 
-      ? `KHÁCH CẦN CHUYỂN SHOP (${Math.abs(finalNet).toLocaleString('vi-VN')} đ)`
+      ? `KHÁCH CẦN CHUYỂN SHOP (${Number(Math.abs(finalNet)).toLocaleString('vi-VN')} đ)`
       : `HÒA TIỀN CÔNG NỢ (0 đ)`;
 
     csv += `=== PHẦN 3: ĐỐI SOÁT TỔNG HỢP TÀI CHÍNH CUỐI CÙNG ===\n`;
-    csv += `Hạng Mục,Số Tiền (VNĐ),Ghi Chú Đối Soát\n`;
-    csv += `Tổng tiền cược mua slot,-${totalSlotCost},"Tổng cộng ${totalSlotCount} slot qua các chuyến"\n`;
-    csv += `Tổng tiền thưởng trúng kèo,+${totalPrizeWon},"Đã cộng dồn tất cả các giải thắng"\n`;
-    csv += `Tổng tiền mỹ phẩm mua kèm,-${totalProductCost},"Tổng cộng ${attachedProducts.length} sản phẩm"\n`;
-    csv += `SỐ DƯ RÒNG CUỐI CÙNG (NET),${finalNet > 0 ? '+' : ''}${finalNet},"${finalStatus}"\n`;
+    csv += `Hạng Mục Tài Chính,Số Tiền (VNĐ),Ghi Chú Đối Soát\n`;
+    csv += `1. Tổng tiền mua slot (A),-${totalSlotCost},"Tổng cộng ${totalSlotCount} slot qua tất cả các chuyến"\n`;
+    csv += `2. Tổng tiền thưởng trúng kèo (B),+${totalPrizeWon},"Đã cộng dồn tất cả các giải thắng"\n`;
+    csv += `3. Tổng tiền mỹ phẩm mua kèm (C),-${totalProductCost},"Tổng cộng ${allAttached.length} món hàng"\n`;
+    csv += `SỐ DƯ RÒNG CUỐI CÙNG (NET = B - A - C),${finalNet > 0 ? '+' : ''}${finalNet},"${finalStatus}"\n`;
 
     return '\uFEFF' + csv;
   }

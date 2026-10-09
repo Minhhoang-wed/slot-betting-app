@@ -8,15 +8,21 @@ const SlotModel = {
   /**
    * Gán hoặc cập nhật người chơi vào 1 slot
    */
-  async assignSlot(gameId, slotNumber, playerName) {
-    const game = gameId ? await GameModel.getGameById(gameId) : await GameModel.getCurrentGame();
+  async assignSlot(gameId, slotNumber, playerName, menuId = null, roundNumber = null) {
+    const trimmedName = playerName ? playerName.trim() : null;
+    let game;
+    if (gameId) {
+      game = await GameModel.getGameById(gameId);
+    } else {
+      game = await GameModel.getCurrentGame(menuId, roundNumber);
+    }
 
     if (isConfigured() && supabase) {
       try {
         const { data, error } = await supabase
           .from('slots')
           .update({
-            player_name: playerName,
+            player_name: trimmedName,
             updated_at: new Date()
           })
           .eq('game_id', game.id)
@@ -30,17 +36,24 @@ const SlotModel = {
 
     const slot = game.slots.find(s => s.slot_number === slotNumber);
     if (slot) {
-      slot.player_name = playerName;
+      slot.player_name = trimmedName;
     }
     game.updatedAt = new Date();
+    GameModel.saveCurrentStorage();
     return slot;
   },
 
   /**
    * Đăng ký nhanh N slot cho khách
    */
-  async quickRegister(gameId, playerName, slotCount) {
-    const game = gameId ? await GameModel.getGameById(gameId) : await GameModel.getCurrentGame();
+  async quickRegister(gameId, playerName, slotCount, menuId = null, roundNumber = null) {
+    const trimmedName = playerName ? playerName.trim() : null;
+    let game;
+    if (gameId) {
+      game = await GameModel.getGameById(gameId);
+    } else {
+      game = await GameModel.getCurrentGame(menuId, roundNumber);
+    }
     const freeSlots = game.slots.filter(s => !s.player_name);
 
     if (freeSlots.length < slotCount) {
@@ -50,18 +63,25 @@ const SlotModel = {
     const assigned = [];
     for (let i = 0; i < slotCount; i++) {
       const target = freeSlots[i];
-      await this.assignSlot(game.id, target.slot_number, playerName);
+      await this.assignSlot(game.id, target.slot_number, trimmedName, menuId, roundNumber);
       assigned.push(target.slot_number);
     }
 
+    GameModel.saveCurrentStorage();
     return assigned;
   },
 
   /**
    * Giải phóng tất cả slot của 1 người chơi
    */
-  async releasePlayerSlots(gameId, playerName) {
-    const game = gameId ? await GameModel.getGameById(gameId) : await GameModel.getCurrentGame();
+  async releasePlayerSlots(gameId, playerName, menuId = null, roundNumber = null) {
+    const trimmedName = playerName ? playerName.trim() : null;
+    let game;
+    if (gameId) {
+      game = await GameModel.getGameById(gameId);
+    } else {
+      game = await GameModel.getCurrentGame(menuId, roundNumber);
+    }
 
     if (isConfigured() && supabase) {
       try {
@@ -69,15 +89,16 @@ const SlotModel = {
           .from('slots')
           .update({ player_name: null, updated_at: new Date() })
           .eq('game_id', game.id)
-          .eq('player_name', playerName);
+          .eq('player_name', trimmedName);
       } catch (e) {}
     }
 
     game.slots.forEach(s => {
-      if (s.player_name === playerName) s.player_name = null;
+      if (s.player_name === trimmedName) s.player_name = null;
     });
-    game.winners = game.winners.filter(w => w !== playerName);
+    game.winners = game.winners.filter(w => w !== trimmedName);
     game.updatedAt = new Date();
+    GameModel.saveCurrentStorage();
     return true;
   },
 

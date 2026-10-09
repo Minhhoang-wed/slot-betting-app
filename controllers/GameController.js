@@ -104,8 +104,8 @@ const GameController = {
   // Chốt chuyến hiện tại & Sang chuyến mới (Lưu lịch sử chuyến)
   async nextRound(req, res) {
     try {
-      const { menuId, settlementResults } = req.body;
-      const result = await GameModel.finishAndStartNextRound(menuId, settlementResults);
+      const { menuId, settlementResults, winners, settleMode, slots } = req.body;
+      const result = await GameModel.finishAndStartNextRound(menuId, settlementResults, winners, settleMode, slots);
       const roundsList = GameModel.getRoundsList(result.nextRound.menuId);
       res.json({
         success: true,
@@ -134,8 +134,8 @@ const GameController = {
   // Gán hoặc thay đổi người chơi cho 1 ô slot
   async updateSlot(req, res) {
     try {
-      const { gameId, slotNumber, playerName } = req.body;
-      const updated = await SlotModel.assignSlot(gameId, slotNumber, playerName || null);
+      const { gameId, slotNumber, playerName, menuId, roundNumber } = req.body;
+      const updated = await SlotModel.assignSlot(gameId, slotNumber, playerName || null, menuId, roundNumber);
       res.json({ success: true, data: updated });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -145,11 +145,11 @@ const GameController = {
   // Đăng ký nhanh N slot cho khách
   async quickRegister(req, res) {
     try {
-      const { gameId, playerName, slotCount } = req.body;
+      const { gameId, playerName, slotCount, menuId, roundNumber } = req.body;
       if (!playerName) {
         return res.status(400).json({ success: false, error: 'Thiếu tên người chơi' });
       }
-      const slotsAssigned = await SlotModel.quickRegister(gameId, playerName, Number(slotCount) || 1);
+      const slotsAssigned = await SlotModel.quickRegister(gameId, playerName, Number(slotCount) || 1, menuId, roundNumber);
       res.json({ success: true, message: `Đã đăng ký ${slotCount} slot cho ${playerName}`, slots: slotsAssigned });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });
@@ -159,8 +159,8 @@ const GameController = {
   // Hủy toàn bộ slot của người chơi
   async removePlayer(req, res) {
     try {
-      const { gameId, playerName } = req.body;
-      await SlotModel.releasePlayerSlots(gameId, playerName);
+      const { gameId, playerName, menuId, roundNumber } = req.body;
+      await SlotModel.releasePlayerSlots(gameId, playerName, menuId, roundNumber);
       res.json({ success: true, message: `Đã hủy các slot của ${playerName}` });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
@@ -184,6 +184,24 @@ const GameController = {
       const { gameId } = req.body;
       const result = await SlotModel.removeLastSlot(gameId);
       res.json({ success: true, message: 'Đã xóa bớt 1 ô slot', data: result });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  },
+
+  // Đồng bộ kết quả chốt ván cược từ Client lên Server
+  async finalizeGame(req, res) {
+    try {
+      const { menuId, winners, settleMode, deductSlotCost, finishedResults, customerAttachedProducts, slots } = req.body;
+      const game = await GameModel.finalizeGame(menuId, {
+        winners,
+        settleMode,
+        deductSlotCost,
+        finishedResults,
+        customerAttachedProducts,
+        slots
+      });
+      res.json({ success: true, message: 'Đã lưu kết quả quyết toán ván đấu!', data: game });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
     }

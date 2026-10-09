@@ -460,8 +460,11 @@
               <button class="btn-neon-round-next" style="padding: 6px 14px; font-size: 0.8rem;" onclick="triggerNextRound()" title="Chốt chuyến hiện tại và tự động mở chuyến mới">
                 <i class="fa-solid fa-forward-step"></i> Chốt & Mở Chuyến Mới
               </button>
-              <button class="btn-ghost-light" onclick="exportCurrentMenuCsv()" title="Tải file báo cáo của Menu này">
-                <i class="fa-solid fa-file-csv text-green"></i> Xuất File Menu Này
+              <button class="btn-neon-green" style="padding: 6px 14px; font-size: 0.8rem;" onclick="exportCurrentRoundSettlementCsv()" title="Tải file Excel/CSV quyết toán chi tiết của chuyến hiện tại">
+                <i class="fa-solid fa-file-excel"></i> Xuất Quyết Toán Chuyến Này (Excel)
+              </button>
+              <button class="btn-ghost-light" style="padding: 6px 14px; font-size: 0.8rem;" onclick="exportCurrentMenuCsv()" title="Tải file báo cáo tổng kết toàn bộ Menu này">
+                <i class="fa-solid fa-file-csv text-gold"></i> Xuất File Cả Menu
               </button>
               <button class="btn-ghost-primary" onclick="switchTab('reports')" title="Chuyển sang màn hình Báo Cáo">
                 <i class="fa-solid fa-chart-pie"></i> Xem Báo Cáo Tất Cả Menu
@@ -480,18 +483,19 @@
                   <tr>
                     <th>Khách Hàng</th>
                     <th>Slot Đã Mua</th>
-                    <th>Tiền Vốn (A)</th>
+                    <th>Tiền Cược (A)</th>
                     <th>Tiền Thưởng (B)</th>
-                    <th>Số Tiền Thực Tế (Net = B - A)</th>
+                    <th>Mỹ Phẩm Kèm (C)</th>
+                    <th>Thực Nhận / Cần Trả (Net)</th>
                     <th>Trạng Thái Quyết Toán</th>
                     <th class="text-right">Hành Động</th>
                   </tr>
                 </thead>
                 <tbody id="finalSettlementTableBody">
                   <tr>
-                    <td colspan="7" class="text-center text-muted py-5">
+                    <td colspan="8" class="text-center text-muted py-5">
                       <i class="fa-solid fa-hourglass-start text-xl mb-2 text-muted"></i>
-                      <p>Vui lòng bấm <b>"Tính Kết Quả & Xuất Báo Cáo"</b> ở trên để xem bảng quyết toán chi tiết.</p>
+                      <p>Vui lòng điền tên khách vào ô slot và chọn <b>Người Thắng Cuộc</b> để hệ thống tự động quyết toán chi tiết.</p>
                     </td>
                   </tr>
                 </tbody>

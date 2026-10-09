@@ -2,6 +2,8 @@
  * MODEL LAYER: Quản lý Dữ liệu Kèo Slot theo Từng Menu & Từng Chuyến (Rounds)
  * Hỗ trợ nhiều Menu, trong mỗi Menu hiển thị 2-3 chuyến hoặc mở thêm chuyến tùy ý.
  */
+const fs = require('fs');
+const path = require('path');
 const { supabase, isConfigured } = require('../config/supabase.config');
 const MenuModel = require('./MenuModel');
 
@@ -14,6 +16,56 @@ const roundsByMenu = {};
 // Map lưu số chuyến đang active của từng menu: { [menuId]: roundNumber }
 const activeRoundNumberByMenu = {};
 
+// File lưu trữ dữ liệu bền vững (tránh mất sau 2 phút do serverless / server restart)
+const STORAGE_DIR = path.join(__dirname, '../data');
+const STORAGE_FILE = path.join(STORAGE_DIR, 'rounds_storage.json');
+
+function ensureStorageDir() {
+  if (!fs.existsSync(STORAGE_DIR)) {
+    try {
+      fs.mkdirSync(STORAGE_DIR, { recursive: true });
+    } catch (e) {}
+  }
+}
+
+function saveStorage() {
+  try {
+    ensureStorageDir();
+    const payload = {
+      currentActiveMenuId,
+      roundsByMenu,
+      activeRoundNumberByMenu,
+      savedAt: new Date().toISOString()
+    };
+    fs.writeFileSync(STORAGE_FILE, JSON.stringify(payload, null, 2), 'utf8');
+  } catch (e) {
+    console.warn("Lỗi lưu storage:", e.message);
+  }
+}
+
+function loadStorage() {
+  try {
+    if (fs.existsSync(STORAGE_FILE)) {
+      const raw = fs.readFileSync(STORAGE_FILE, 'utf8');
+      const data = JSON.parse(raw);
+      if (data) {
+        if (data.currentActiveMenuId) currentActiveMenuId = data.currentActiveMenuId;
+        if (data.roundsByMenu && typeof data.roundsByMenu === 'object') {
+          Object.assign(roundsByMenu, data.roundsByMenu);
+        }
+        if (data.activeRoundNumberByMenu && typeof data.activeRoundNumberByMenu === 'object') {
+          Object.assign(activeRoundNumberByMenu, data.activeRoundNumberByMenu);
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Lỗi đọc storage:", e.message);
+  }
+}
+
+// Khởi chạy đọc dữ liệu đã lưu
+loadStorage();
+
 /**
  * Helper tạo đối tượng Chuyến (Round)
  */
@@ -22,7 +74,7 @@ function createRoundGame(menu, roundNumber, options = {}) {
   const slots = [];
   for (let i = 1; i <= totalSlots; i++) {
     const ownerName = options.slotsPlayerMap ? (options.slotsPlayerMap[i] || null) : null;
-    slots.push({ slot_number: i, player_name: ownerName });
+    slots.push({ slot_number: i, player_name: ownerName ? ownerName.trim() : null });
   }
 
   return {
@@ -46,7 +98,7 @@ function createRoundGame(menu, roundNumber, options = {}) {
 }
 
 /**
- * Khởi tạo sẵn 2 - 3 chuyến cho từng Menu để người dùng trải nghiệm ngay
+ * Khởi tạo sẵn các chuyến cho từng Menu
  */
 function initDefaultRoundsForMenu(menu) {
   if (roundsByMenu[menu.id] && roundsByMenu[menu.id].length > 0) {
@@ -54,8 +106,6 @@ function initDefaultRoundsForMenu(menu) {
   }
 
   const rounds = [];
-
-  // Khởi tạo Chuyến #1 sạch sẽ, mới toanh (sẵn sàng đón khách thật trên live)
   const r1 = createRoundGame(menu, 1, {
     status: 'open',
     settleMode: 'solo',
@@ -66,6 +116,7 @@ function initDefaultRoundsForMenu(menu) {
 
   activeRoundNumberByMenu[menu.id] = 1;
   roundsByMenu[menu.id] = rounds;
+  saveStorage();
   return rounds;
 }
 
@@ -142,6 +193,7 @@ const GameModel = {
 
     rounds.push(newRound);
     activeRoundNumberByMenu[targetMenuId] = nextRoundNumber;
+    saveStorage();
     return newRound;
   },
 
@@ -168,6 +220,7 @@ const GameModel = {
     }
 
     game.updatedAt = new Date();
+    saveStorage();
     return game;
   },
 
@@ -191,12 +244,14 @@ const GameModel = {
       });
       roundsByMenu[targetMenuId] = [cleanRound];
       activeRoundNumberByMenu[targetMenuId] = 1;
+      saveStorage();
       return cleanRound;
     }
 
     rounds.splice(idx, 1);
     const lastRound = rounds[rounds.length - 1];
     activeRoundNumberByMenu[targetMenuId] = lastRound.roundNumber;
+    saveStorage();
     return lastRound;
   },
 
@@ -209,7 +264,7 @@ const GameModel = {
       name: r.name,
       status: r.status,
       totalSlots: r.totalSlots,
-      occupiedSlots: (r.slots || []).filter(s => s.player_name).length,
+      occupiedSlots: (r.slots || []).filter(s => s.player_name && s.player_name.trim()).length,
       winners: r.winners || [],
       prizeValue: r.prizeValue,
       slotPrice: r.slotPrice,
@@ -241,6 +296,7 @@ const GameModel = {
     if (slotPrice) game.slotPrice = Number(slotPrice);
     if (prizeValue) game.prizeValue = Number(prizeValue);
     game.updatedAt = new Date();
+    saveStorage();
     return game;
   },
 
@@ -265,28 +321,74 @@ const GameModel = {
     if (slotPrice) currentGame.slotPrice = Number(slotPrice);
     if (prizeValue) currentGame.prizeValue = Number(prizeValue);
     currentGame.updatedAt = new Date();
-
+    saveStorage();
     return currentGame;
   },
 
-  async finishAndStartNextRound(menuId = null, settlementResults = null) {
+  async finishAndStartNextRound(menuId = null, settlementResults = null, winners = null, settleMode = null, slots = null) {
     const targetMenuId = menuId || currentActiveMenuId;
     const currentGame = await this.getCurrentGame(targetMenuId);
 
     currentGame.status = 'finished';
     currentGame.finishedAt = new Date();
-    if (settlementResults) {
-      currentGame.finishedResults = settlementResults;
-      if (settlementResults.winners) currentGame.winners = settlementResults.winners;
-      if (settlementResults.settleMode) currentGame.settleMode = settlementResults.settleMode;
+
+    if (winners && Array.isArray(winners) && winners.length > 0) {
+      currentGame.winners = winners;
+    } else if (settlementResults && settlementResults.winners) {
+      currentGame.winners = settlementResults.winners;
     }
 
+    if (settleMode) {
+      currentGame.settleMode = settleMode;
+    } else if (settlementResults && settlementResults.settleMode) {
+      currentGame.settleMode = settlementResults.settleMode;
+    }
+
+    if (settlementResults) {
+      if (Array.isArray(settlementResults)) {
+        currentGame.finishedResults = settlementResults;
+      } else if (settlementResults.finishedResults) {
+        currentGame.finishedResults = settlementResults.finishedResults;
+      }
+    }
+
+    if (slots && Array.isArray(slots)) {
+      currentGame.slots = slots.map(s => ({
+        slot_number: s.id || s.slot_number,
+        player_name: (s.owner || s.player_name || '').trim() || null
+      }));
+    }
+
+    saveStorage();
     const nextGame = await this.createNewRound(targetMenuId);
+    saveStorage();
 
     return {
       completedRound: currentGame,
       nextRound: nextGame
     };
+  },
+
+  async finalizeGame(menuId, data = {}) {
+    const targetMenuId = menuId || currentActiveMenuId;
+    const currentGame = await this.getCurrentGame(targetMenuId);
+
+    currentGame.status = 'finished';
+    currentGame.finishedAt = new Date();
+    if (data.winners && Array.isArray(data.winners)) currentGame.winners = data.winners;
+    if (data.settleMode) currentGame.settleMode = data.settleMode;
+    if (data.finishedResults) currentGame.finishedResults = data.finishedResults;
+    if (data.customerAttachedProducts) currentGame.attachedProducts = data.customerAttachedProducts;
+    if (data.deductSlotCost !== undefined) currentGame.deductSlotCost = data.deductSlotCost;
+    if (data.slots && Array.isArray(data.slots)) {
+      currentGame.slots = data.slots.map(s => ({
+        slot_number: s.id || s.slot_number,
+        player_name: (s.owner || s.player_name || '').trim() || null
+      }));
+    }
+    currentGame.updatedAt = new Date();
+    saveStorage();
+    return currentGame;
   },
 
   getRoundHistory(menuId = null) {
@@ -302,6 +404,10 @@ const GameModel = {
       all = all.concat(rounds);
     });
     return all;
+  },
+
+  saveCurrentStorage() {
+    saveStorage();
   }
 };
 

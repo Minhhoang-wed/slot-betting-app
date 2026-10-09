@@ -33,6 +33,7 @@ router.post('/game/slot/add', GameController.addSlot);
 router.post('/game/slot/remove', GameController.removeSlot);
 router.post('/game/quick-register', GameController.quickRegister);
 router.post('/game/remove-player', GameController.removePlayer);
+router.post('/game/finalize', GameController.finalizeGame);
 
 // --- SETTLEMENT (CHỐT WINNER & CHIA THƯỞNG 2/3) ---
 router.post('/settle', SettlementController.settle);
