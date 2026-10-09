@@ -103,7 +103,7 @@ const MenuModel = {
   async createMenu({ name, slotPrice, totalSlots, prizeValue, description }) {
     const code = 'MENU_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     const newMenu = {
-      id: 'menu-' + Date.now(),
+      id: 'menu-' + Date.now() + '-' + Math.random().toString(36).slice(2),
       code,
       name: name || `Menu Kèo ${Number(slotPrice).toLocaleString('vi-VN')} đ`,
       slot_price: Number(slotPrice) || 150000,

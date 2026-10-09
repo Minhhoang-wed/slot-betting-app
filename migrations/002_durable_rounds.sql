@@ -55,6 +55,10 @@ DECLARE m public.menus; g public.games; number integer; slot_count integer; pric
 BEGIN
   SELECT * INTO m FROM public.menus WHERE id=p_menu_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'Menu không tồn tại'; END IF;
+  IF p_options->>'initializeOnly'='true' THEN
+    SELECT * INTO g FROM public.games WHERE menu_id=m.id ORDER BY round_number DESC LIMIT 1;
+    IF FOUND THEN RETURN g.id; END IF;
+  END IF;
   SELECT coalesce(max(round_number),0)+1 INTO number FROM public.games WHERE menu_id=m.id;
   slot_count=coalesce((p_options->>'totalSlots')::integer,m.total_slots);
   price=coalesce((p_options->>'slotPrice')::numeric,m.slot_price);
@@ -93,7 +97,7 @@ BEGIN
     owners=CASE WHEN buyer IS NULL THEN '[]'::jsonb ELSE coalesce(p_payload->'shares','[]'::jsonb) END;
     IF jsonb_typeof(owners)<>'array' THEN RAISE EXCEPTION 'Tỷ lệ ghế chung không hợp lệ'; END IF;
     IF jsonb_array_length(owners)>0 THEN
-      IF EXISTS(SELECT 1 FROM jsonb_array_elements(owners) o WHERE nullif(trim(o->>'name'),'') IS NULL OR (o->>'percent')::numeric < 1 OR (o->>'percent')::numeric > 100 OR (o->>'percent')::numeric <> trunc((o->>'percent')::numeric))
+      IF EXISTS(SELECT 1 FROM jsonb_array_elements(owners) o WHERE nullif(trim(o->>'name'),'') IS NULL OR o->>'percent' IS NULL OR (o->>'percent')::numeric < 1 OR (o->>'percent')::numeric > 100 OR (o->>'percent')::numeric <> trunc((o->>'percent')::numeric))
         OR (SELECT coalesce(sum((o->>'percent')::numeric),0) FROM jsonb_array_elements(owners) o)<>100
         OR (SELECT count(DISTINCT lower(trim(o->>'name'))) FROM jsonb_array_elements(owners) o)<>jsonb_array_length(owners) THEN
         RAISE EXCEPTION 'Tỷ lệ phải đủ 100%% và tên khác nhau';

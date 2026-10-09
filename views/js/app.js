@@ -1,5 +1,10 @@
+function currentRoundReady() {
+ const ready=Boolean(gameState.id && gameState.menuId===currentActiveMenuId && gameState.roundNumber===currentRoundNumber);
+ if(!ready)showToast('Đang tải chuyến. Vui lòng đợi hoặc tải lại trang.');return ready;
+}
 let roundConfigQueue = Promise.resolve();
 function saveRoundConfig(options) {
+ if (!currentRoundReady()) return Promise.resolve(false);
  const menuId=currentActiveMenuId,roundNumber=currentRoundNumber;
  roundConfigQueue=roundConfigQueue.then(async()=>{
   try {const json=await apiJson('/api/game/round',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({menuId,roundNumber,...options})});
@@ -13,6 +18,7 @@ async function reloadCurrentRound() {
 }
 let slotMutationPending = false;
 async function mutateSlots(url, payload) {
+ if (!currentRoundReady()) return false;
  if (slotMutationPending) return false;
  slotMutationPending = true;
  const menuId = currentActiveMenuId, roundNumber = currentRoundNumber;
@@ -506,7 +512,7 @@ function renderPlayerTable() {
         </div>
       </td>
       <td>
-        <span class="badge-gold-neon" style="padding: 2px 8px; font-size: 0.7rem;">${p.slots.length} Slot</span>
+        <span class="badge-gold-neon" style="padding: 2px 8px; font-size: 0.7rem;">${p.slotCount} Slot</span>
         <span class="text-xs text-muted">(${p.slots.map(s => '#' + s).join(', ')})</span>
       </td>
       <td class="font-bold text-gold">
@@ -634,7 +640,7 @@ function renderWinnerCheckboxes() {
     pill.className = `winner-pill-item ${isChecked ? 'checked' : ''}`;
     pill.innerHTML = `
       <i class="fa-solid ${isChecked ? 'fa-circle-check text-gold' : 'fa-circle text-muted'}"></i>
-      <span>${p.name} <span class="text-xs text-muted">(${p.slots.length} slot)</span></span>
+      <span>${p.name} <span class="text-xs text-muted">(${p.slotCount} slot)</span></span>
     `;
 
     pill.onclick = () => toggleWinnerPill(p.name);
@@ -765,6 +771,7 @@ function autoCalculateSettlement(silent = true) {
 
 let settlementSavePending = null;
 function saveSettlement() {
+ if (!currentRoundReady()) return Promise.resolve(false);
   if (settlementSavePending) return settlementSavePending;
   const menuId = currentActiveMenuId, roundNumber = currentRoundNumber;
   settlementSavePending = apiJson('/api/game/finalize', {
@@ -1757,6 +1764,7 @@ async function fetchMenus() {
     if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
     if (json.success && json.data) {
       menusList = json.data;
+      if (!menusList.some(m=>m.id===currentActiveMenuId)) currentActiveMenuId=menusList[0]?.id || null;
       renderMenuPills();
       populateReportMenuSelect();
       const badge = document.getElementById("reportCountBadge");
@@ -2184,6 +2192,7 @@ async function initAppMenusAndGame() {
 
 // Chốt Chuyến Hiện Tại & Mở Chuyến Mới
 async function triggerNextRound() {
+ if (!currentRoundReady()) return;
   const confirmMsg = `Bạn có chắc muốn CHỐT Chuyến #${currentRoundNumber} của [${gameState.name}] và mở Chuyến #${currentRoundNumber + 1} mới?\n\nKết quả chuyến hiện tại sẽ được lưu vào lịch sử và tích lũy vào Báo Cáo.`;
   if (!confirm(confirmMsg)) return;
 
@@ -2521,6 +2530,7 @@ function onReportMenuChange(val) {
   loadReports();
 }
 
+let reportRequestRevision=0;
 async function loadReports() {
   const isAll = currentReportFilterMenuId === 'all';
   const query = (document.getElementById("reportSearchCustomerInput")?.value || "").trim().toLowerCase();
@@ -2542,10 +2552,12 @@ async function loadReports() {
 }
 
 async function loadSingleMenuReport(menuId, query = '') {
+  const revision=++reportRequestRevision;
   try {
     const res = await fetch(`/api/reports/menu/${menuId}`);
     const json = await res.json();
     if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
+    if (revision!==reportRequestRevision) return;
     if (json.success && json.data) {
       const data = json.data;
       const menu = data.menu || {};
@@ -2580,6 +2592,7 @@ async function loadSingleMenuReport(menuId, query = '') {
         filtered = filtered.filter(c => (c.customerName || '').toLowerCase().includes(query));
       }
 
+      if (query && badgeEl) badgeEl.innerText=`${filtered.length} khách khớp lọc / ${(data.customers || []).length} khách toàn menu`;
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-5">${query ? "Không có khách khớp bộ lọc. Xóa tên tìm kiếm để xem toàn menu." : "Chưa có khách trong menu này."}</td></tr>`;
         return;
@@ -2630,10 +2643,12 @@ async function loadSingleMenuReport(menuId, query = '') {
 }
 
 async function loadAllMenusReport(query = '') {
+  const revision=++reportRequestRevision;
   try {
     const res = await fetch('/api/reports/all-menus');
     const json = await res.json();
     if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
+    if (revision!==reportRequestRevision) return;
     if (json.success && json.data) {
       const data = json.data;
       const menus = data.menus;

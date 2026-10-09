@@ -162,7 +162,7 @@ async function loadOrInitRoundsForMenu(menu, initialize = true) {
 
   if (!initialize) { roundsByMenu[menu.id] = []; return []; }
   if (isConfigured() && supabase) {
-    const { data: gameId } = await supabase.rpc('create_slot_round', { p_menu_id: menu.id, p_options: {} });
+    const { data: gameId } = await supabase.rpc('create_slot_round', { p_menu_id: menu.id, p_options: { initializeOnly:true } });
     const { data } = await supabase.from('games').select('*, slots(*)').eq('id', gameId).single();
     if (!data) throw new Error('Không tải được chuyến vừa tạo');
     const round = mapGameRowToRound(data, menu);
