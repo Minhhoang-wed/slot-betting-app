@@ -22,9 +22,9 @@ const ReportModel = {
     // Đảm bảo ván hiện tại của menu này đã được tải/khởi tạo
     await GameModel.getCurrentGame(menu.id);
 
-    let allRounds = GameModel.getAllRounds(menu.id);
+    let allRounds = await GameModel.getAllRounds(menu.id);
     if (!allRounds || allRounds.length === 0) {
-      allRounds = GameModel.getAllRounds(menuId);
+      allRounds = await GameModel.getAllRounds(menuId);
     }
     const customerMap = {};
 
@@ -417,7 +417,7 @@ const ReportModel = {
    * Tạo chuỗi CSV chi tiết tất cả các Chuyến (Lịch sử ván cược)
    */
   async exportDetailedRoundsCsv(menuId = null) {
-    const rounds = GameModel.getAllRounds(menuId);
+    const rounds = await GameModel.getAllRounds(menuId);
 
     let csv = '';
     csv += `LỊCH SỬ CHI TIẾT TẤT CẢ CÁC CHUYẾN KÈO\n`;

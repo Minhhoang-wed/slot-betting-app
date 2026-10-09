@@ -124,7 +124,7 @@ const GameController = {
   async getRoundHistory(req, res) {
     try {
       const { menuId } = req.query;
-      const history = GameModel.getRoundHistory(menuId);
+      const history = await GameModel.getRoundHistory(menuId);
       res.json({ success: true, data: history });
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });

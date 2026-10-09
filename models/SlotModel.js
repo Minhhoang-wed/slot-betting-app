@@ -1,5 +1,6 @@
 /**
  * MODEL LAYER: Quản lý chi tiết các ô Slot (Slots)
+ * Hỗ trợ đồng bộ thời gian thực với Supabase Database
  */
 const { supabase, isConfigured } = require('../config/supabase.config');
 const GameModel = require('./GameModel');
@@ -17,7 +18,7 @@ const SlotModel = {
       game = await GameModel.getCurrentGame(menuId, roundNumber);
     }
 
-    if (isConfigured() && supabase) {
+    if (isConfigured() && supabase && game && game.id) {
       try {
         const { data, error } = await supabase
           .from('slots')
@@ -28,19 +29,34 @@ const SlotModel = {
           .eq('game_id', game.id)
           .eq('slot_number', slotNumber)
           .select()
-          .single();
+          .maybeSingle();
 
-        if (!error && data) return data;
-      } catch (e) {}
+        if (!error && !data) {
+          await supabase.from('slots').upsert({
+            game_id: game.id,
+            slot_number: slotNumber,
+            player_name: trimmedName,
+            updated_at: new Date()
+          }, { onConflict: 'game_id,slot_number' });
+        }
+      } catch (e) {
+        console.warn('Lỗi assignSlot Supabase:', e.message);
+      }
     }
 
-    const slot = game.slots.find(s => s.slot_number === slotNumber);
-    if (slot) {
-      slot.player_name = trimmedName;
+    if (game && game.slots) {
+      let slot = game.slots.find(s => s.slot_number === slotNumber);
+      if (slot) {
+        slot.player_name = trimmedName;
+      } else {
+        slot = { slot_number: slotNumber, player_name: trimmedName };
+        game.slots.push(slot);
+      }
+      game.updatedAt = new Date();
+      GameModel.saveCurrentStorage();
+      return slot;
     }
-    game.updatedAt = new Date();
-    GameModel.saveCurrentStorage();
-    return slot;
+    return null;
   },
 
   /**
@@ -54,7 +70,7 @@ const SlotModel = {
     } else {
       game = await GameModel.getCurrentGame(menuId, roundNumber);
     }
-    const freeSlots = game.slots.filter(s => !s.player_name);
+    const freeSlots = (game.slots || []).filter(s => !s.player_name);
 
     if (freeSlots.length < slotCount) {
       throw new Error(`Chỉ còn ${freeSlots.length} slot trống, không đủ để lấy ${slotCount} slot!`);
@@ -83,22 +99,26 @@ const SlotModel = {
       game = await GameModel.getCurrentGame(menuId, roundNumber);
     }
 
-    if (isConfigured() && supabase) {
+    if (isConfigured() && supabase && game && game.id) {
       try {
         await supabase
           .from('slots')
           .update({ player_name: null, updated_at: new Date() })
           .eq('game_id', game.id)
           .eq('player_name', trimmedName);
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Lỗi releasePlayerSlots Supabase:', e.message);
+      }
     }
 
-    game.slots.forEach(s => {
-      if (s.player_name === trimmedName) s.player_name = null;
-    });
-    game.winners = game.winners.filter(w => w !== trimmedName);
-    game.updatedAt = new Date();
-    GameModel.saveCurrentStorage();
+    if (game && game.slots) {
+      game.slots.forEach(s => {
+        if (s.player_name === trimmedName) s.player_name = null;
+      });
+      game.winners = (game.winners || []).filter(w => w !== trimmedName);
+      game.updatedAt = new Date();
+      GameModel.saveCurrentStorage();
+    }
     return true;
   },
 
@@ -116,14 +136,15 @@ const SlotModel = {
     const game = gameId ? await GameModel.getGameById(gameId) : await GameModel.getCurrentGame();
     const newSlotNumber = (game.slots ? game.slots.length : 0) + 1;
 
-    if (isConfigured() && supabase) {
+    let slotId = null;
+    if (isConfigured() && supabase && game && game.id) {
       try {
         await supabase
           .from('games')
           .update({ total_slots: newSlotNumber, updated_at: new Date() })
           .eq('id', game.id);
 
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('slots')
           .insert({
             game_id: game.id,
@@ -133,15 +154,18 @@ const SlotModel = {
           .select()
           .single();
 
-        if (!error && data) return data;
-      } catch (e) {}
+        if (data) slotId = data.id;
+      } catch (e) {
+        console.warn('Lỗi addSlot Supabase:', e.message);
+      }
     }
 
-    const newSlot = { slot_number: newSlotNumber, player_name: null };
+    const newSlot = { id: slotId, slot_number: newSlotNumber, player_name: null };
     if (!game.slots) game.slots = [];
     game.slots.push(newSlot);
     game.totalSlots = newSlotNumber;
     game.updatedAt = new Date();
+    GameModel.saveCurrentStorage();
     return newSlot;
   },
 
@@ -154,8 +178,10 @@ const SlotModel = {
       throw new Error('Bàn cược phải có ít nhất 1 slot!');
     }
     const lastSlotNumber = game.slots.length;
+    const removedSlot = game.slots.pop();
+    game.totalSlots = game.slots.length;
 
-    if (isConfigured() && supabase) {
+    if (isConfigured() && supabase && game && game.id) {
       try {
         await supabase
           .from('slots')
@@ -165,15 +191,16 @@ const SlotModel = {
 
         await supabase
           .from('games')
-          .update({ total_slots: lastSlotNumber - 1, updated_at: new Date() })
+          .update({ total_slots: game.totalSlots, updated_at: new Date() })
           .eq('id', game.id);
-      } catch (e) {}
+      } catch (e) {
+        console.warn('Lỗi removeLastSlot Supabase:', e.message);
+      }
     }
 
-    game.slots.pop();
-    game.totalSlots = game.slots.length;
     game.updatedAt = new Date();
-    return { success: true, remaining: game.slots.length };
+    GameModel.saveCurrentStorage();
+    return { success: true, remaining: game.slots.length, removed: removedSlot };
   }
 };
 
