@@ -39,9 +39,9 @@ test('individual Excel contains only the selected customer and reconciles paid p
   assert.equal(ws.getCell('E12').value.result??0,0);
   assert.equal(ws.getCell('H12').value.result,155000);
   assert.equal(ws.getCell('H12').fill.fgColor.argb,'FFF1DE');
-  assert.equal(detail.getCell('A6').value,'Kiều');
-  assert.equal(detail.getCell('H9').value,'Đã hủy phiếu');
-  assert.equal(detail.getCell('E6').value,'Mua #1, #2 · Thắng #2');
+  assert.equal(detail.getCell('B6').value,'Kiều');
+  assert.equal(detail.getCell('I9').value,'Đã hủy phiếu');
+  assert.match(detail.getCell('F6').value,/Mua #1, #2 · Thắng #2/);
   for(const sheet of wb.worksheets)sheet.eachRow(row=>row.eachCell(cell=>{
     assert.notEqual(cell.value,'kieu');assert.notEqual(cell.value,'Khánh');
   }));
@@ -66,7 +66,7 @@ test('download handler returns an xlsx for one customer and refuses missing or a
 
 test('search shows a separate safely encoded download for every matching row',()=>{
   const elements={financeSearch:{value:'k'},financeBody:{innerHTML:''}};
-  const context=vm.createContext({document:{getElementById:id=>elements[id]},CustomerSearch:require('../views/js/customer-search'),formatVND:String,
+  const context=vm.createContext({URLSearchParams,document:{getElementById:id=>elements[id]},CustomerSearch:require('../views/js/customer-search'),formatVND:String,
     blindBagEscape:s=>String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')});
   vm.runInContext(fs.readFileSync(require.resolve('../views/js/blind-bag-finance'),'utf8'),context);
   context.rows=data.customers;

@@ -114,12 +114,14 @@ function history(rounds){const wb=workbook(),ws=sheet(wb,'Lịch sử','LỊCH S
  band(ws,end+2,'Kết quả cũ không lưu slot thắng: giữ nguyên tên và số tiền đã chốt; không suy ra tất cả slot của người thắng.',{fill:null,color:colors.muted});ws.getRow(end+2).height=46;return wb;
 }
 function finance(data,{customerName}={}) {
-  const context=customerName?'Khách hàng: '+customerName:'Số tiền theo dữ liệu đang lưu';
+  const periodLabel=data.period?.label || 'Tất cả các ngày';
+  const context=(customerName?'Khách hàng: '+customerName:'Số tiền theo dữ liệu đang lưu')+' · '+periodLabel;
   const wb=workbook(),ws=sheet(wb,'Tổng hợp',customerName?'QUYẾT TOÁN RIÊNG KHÁCH HÀNG':'QUYẾT TOÁN BÀN KÈO, TÚI MÙ VÀ PASS',context,[28,21,21,21,21,21,23,23]);
   summary(ws,5,customerName?'KHÁCH CẦN TRẢ SHOP':'TỔNG KHÁCH CẦN TRẢ SHOP',data.customerPays,{fill:colors.orange});
   summary(ws,6,customerName?'SHOP CẦN TRẢ KHÁCH':'TỔNG SHOP CẦN TRẢ KHÁCH',data.shopPays,{fill:colors.green});
   band(ws,8,'Số cuối = Số dư bàn kèo − Hóa đơn túi mù còn thiếu + Tiền shop thu lại.',{fill:null,color:colors.muted});ws.getRow(8).height=46;
   band(ws,9,'Hóa đơn chưa xác nhận trả tiền được tính là còn thiếu. Bàn kèo gồm cả chuyến chưa chốt.',{fill:null,color:colors.muted});ws.getRow(9).height=46;
+  band(ws,10,'Ngày mở chuyến / ngày mua túi mù / ngày thu lại pass, theo giờ Việt Nam.'+(data.period?.date?' Chỉ tính ngày được chọn, không gồm công nợ ngày khác.':''),{fill:colors.blue});ws.getRow(10).height=52;
   const rows=data.customers.map(c=>[c.customerName,c.slotNet,c.bagTotal,c.bagPaid,c.bagDue,c.buybackTotal,c.shopPays,c.customerPays]);
   const end=table(ws,11,['Khách hàng','Số dư bàn kèo','Tổng hóa đơn túi mù','Khách đã trả','Túi mù còn thiếu','Tiền pass được nhận','SHOP TRẢ KHÁCH','KHÁCH TRẢ SHOP'],rows,{moneyCols:[2,3,4,5,6,7,8],payCols:[8],receiveCols:[7]});
   rows.forEach((_,i)=>{const r=12+i,c=data.customers[i];ws.getCell(r,5).value={formula:`C${r}-D${r}`,result:c.bagDue};ws.getCell(r,7).value={formula:`MAX(0,B${r}-E${r}+F${r})`,result:c.shopPays};ws.getCell(r,8).value={formula:`MAX(0,E${r}-B${r}-F${r})`,result:c.customerPays};});
@@ -129,10 +131,16 @@ function finance(data,{customerName}={}) {
     ws.getCell('F6').value={formula:`SUM(G12:G${end-1})`,result:data.shopPays};
     ws.views=[{state:'frozen',ySplit:11,xSplit:1,showGridLines:false,zoomScale:100}];
   }
-  const source=sheet(wb,'Chi tiết','CHI TIẾT GIAO DỊCH',customerName?context:'Phiếu pass đã hủy không được cộng vào tổng tiền khách nhận',[28,28,28,16,40,12,23,30]);
-  table(source,5,['Khách hàng','Loại giao dịch','Menu / đợt túi mù','Chuyến / slot','Sản phẩm / hóa đơn','Số lượng','Số tiền','Trạng thái'],data.customers.flatMap(c=>c.events.map(e=>[c.customerName,e.type,e.context,e.slots,e.name,e.quantity,e.amount,e.status])),{moneyCols:[7],countCols:[6]});
+  const source=sheet(wb,'Chi tiết','CHI TIẾT GIAO DỊCH',context,[24,28,28,28,16,44,12,23,30]);
+  const description=e=>e.name+(e.type==='Bàn kèo'?`\nTiền slot: ${Number(e.buyCost || 0).toLocaleString('vi-VN')} đ\nTiền thưởng: ${Number(e.prizeWon || 0).toLocaleString('vi-VN')} đ\nHàng kèm: ${Number(e.attachedCost || 0).toLocaleString('vi-VN')} đ`:'')+((e.items || e.attachedItems || []).length?'\n'+(e.items || e.attachedItems).map(p=>`${p.name} × ${p.quantity ?? p.qty ?? 1}`).join(', '):'');
+  const events=data.customers.flatMap(c=>c.events.map(e=>({customerName:c.customerName,...e})));
+  // Excel dates have no timezone. Store the Vietnam wall time for sortable timestamps.
+  const timestamp=value=>value&&Number.isFinite(new Date(value).getTime())?new Date(new Date(value).getTime()+7*3600000):'Chưa lưu ngày';
+  table(source,5,['Thời gian Việt Nam','Khách hàng','Loại giao dịch','Menu / đợt túi mù','Chuyến / slot','Sản phẩm / hóa đơn','Số lượng','Số tiền / số dư','Trạng thái'],events.map(e=>[timestamp(e.occurredAt),e.customerName,e.type,e.context,e.slots,description(e),e.quantity,e.amount,e.status]),{moneyCols:[8],countCols:[7]});
+  events.forEach((_,i)=>{source.getCell(i+6,1).numFmt='dd/mm/yyyy hh:mm';});
   source.views=[{state:'frozen',ySplit:5,xSplit:1,showGridLines:false,zoomScale:100}];
   if(customerName){band(source,source.rowCount+2,'Phiếu pass đã hủy không được cộng vào tổng tiền khách nhận.',{fill:null,color:colors.muted});source.getRow(source.rowCount).height=46;}
+  if(data.undatedCount){band(ws,end+2,`${data.undatedCount} giao dịch cũ chưa lưu ngày; chỉ xuất các giao dịch đó khi chọn Tất cả.`,{fill:colors.orange});ws.getRow(end+2).height=46;}
   return wb;
 }
 module.exports={customer,menu,all,round,history,finance};

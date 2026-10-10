@@ -21,6 +21,35 @@
 .bb-finance-receive { color:#047857; background:#e3f3ea; }
 .bb-finance-pay { color:#b45309; background:#fff1de; }
 #financeMessage { padding-top:12px; }
+.finance-filters { display:flex; flex-wrap:wrap; gap:16px; align-items:end; }
+.finance-filters > div:last-child { flex:1; min-width:240px; }
+.finance-filters label { display:block; margin-bottom:8px; font-weight:700; }
+.finance-filters .modern-input { min-height:46px; font-size:16px; }
+.finance-filters [hidden] { display:none !important; }
+.finance-filters .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.finance-period-label { font-size:19px; font-weight:700; color:#243b53; }
+.finance-help { font-size:15px; line-height:1.6; color:#52606d; }
+.finance-row-actions { display:grid; gap:8px; }
+.finance-row-actions button { min-height:44px; font-size:15px; }
+#financeExportAll[aria-disabled="true"] { opacity:.5; pointer-events:none; }
+.finance-detail-dialog { border:0; border-radius:18px; padding:0; margin:auto; width:min(1100px,95vw); max-height:92vh; color:#243b53; background:#fffdf9; box-shadow:0 20px 70px #0005; }
+.finance-detail-dialog::backdrop { background:#0008; }
+.finance-detail-dialog .bb-modal-header h3 { font-size:22px; }
+.finance-detail-dialog .bb-modal-header p { font-size:16px; margin:6px 0 0; }
+.finance-detail-dialog .bb-modal-body { max-height:65vh; overflow-y:auto; font-size:16px; }
+.finance-detail-dialog .bb-modal-footer a { min-height:46px; padding:12px 18px; font-size:16px; text-decoration:none; }
+.finance-detail-dialog .bb-modal-footer button { min-height:46px; font-size:16px; }
+.finance-detail-dialog .bb-modal-close-btn { min-width:44px; min-height:44px; }
+.finance-detail-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.finance-detail-summary > div { padding:14px; border:1px solid #dfd7cb; border-radius:10px; }
+.finance-detail-summary strong { display:block; font-size:21px; margin-top:8px; }
+.finance-detail-final { padding:16px; border-radius:10px; font-size:21px; font-weight:700; }
+.finance-detail-section h4 { font-size:19px; margin:24px 0 12px; }
+.finance-detail-scroll { overflow-x:auto; }
+.finance-detail-scroll table { min-width:850px; }
+.finance-detail-scroll td, .finance-detail-scroll th { padding:14px; font-size:15px; }
+.finance-detail-scroll td p { font-size:14px; margin:8px 0 0; }
+@media(max-width:600px) { .finance-detail-summary { grid-template-columns:1fr; } .finance-detail-dialog .bb-modal-footer { flex-wrap:wrap; } }
 /* =================================================================
    BLIND BAGS (TÚI MÙ) - MODERN LUXURY DESIGN SYSTEM
    Phong cách ấm áp, tinh gọn, trực quan 100%, không rườm rà

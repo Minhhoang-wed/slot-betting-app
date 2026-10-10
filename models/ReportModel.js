@@ -73,6 +73,8 @@ const ReportModel = {
           customerMap[key(name)].roundsDetails.push({
             roundNumber: round.roundNumber,
             roundName: round.name,
+            createdAt: round.createdAt,
+            finishedAt: round.finishedAt,
             slotPrice:round.slotPrice,
             slots: res.slotsList || [],
             slotCount,
@@ -152,6 +154,8 @@ const ReportModel = {
         customerMap[key(name)].roundsDetails.push({
           roundNumber: round.roundNumber,
           roundName: round.name,
+          createdAt: round.createdAt,
+          finishedAt: round.finishedAt,
           slotPrice: round.slotPrice,
           slots: slotNums,
           slotCount: participant.slotCount,
