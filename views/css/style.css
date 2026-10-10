@@ -3416,6 +3416,21 @@ input[type="number"] {
 .customer-search-detail { margin-top: 16px; flex-wrap: wrap; }
 
 /* Clear seat selection and separate purchased seats from winning seats. */
+.customer-combined-balance { width: 100%; padding: 18px; margin-top: 14px; border: 1px solid #d6d3d1; border-radius: 12px; background: #fff; color: #292524; }
+.customer-combined-balance h3 { margin: 0; font-size: 18px; line-height: 1.5; }
+.customer-combined-scope, .customer-combined-note { font-size: 14px; line-height: 1.6; color: #57534e; margin: 8px 0; }
+.customer-combined-parts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.customer-combined-parts > div { padding: 14px; border-radius: 8px; background: #f5f5f4; }
+.customer-combined-parts span, .customer-combined-parts strong, .customer-combined-parts small { display: block; }
+.customer-combined-parts span { font-size: 15px; line-height: 1.5; }
+.customer-combined-parts strong { font-size: 23px; margin: 8px 0; }
+.customer-combined-parts small { font-size: 13px; line-height: 1.5; color: #57534e; }
+.customer-combined-final { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px; border: 1px solid; border-radius: 8px; font-size: 17px; font-weight: 800; }
+.customer-combined-final strong { font-size: 30px; }
+.customer-combined-pay { color: #9a3412; background: #fff7ed; border-color: #fdba74; }
+.customer-combined-receive { color: #166534; background: #f0fdf4; border-color: #86efac; }
+.customer-combined-equation { margin: 10px 0; font-size: 16px; line-height: 1.6; font-weight: 700; }
+@media (max-width: 700px) { .customer-combined-parts { grid-template-columns: 1fr; } }
 .workspace-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .workspace-grid > .surface-card { min-width: 0; }
 .workspace-grid .card-top-bar { flex-wrap: wrap; }

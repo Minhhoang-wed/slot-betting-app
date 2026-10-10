@@ -64,7 +64,7 @@ const ReportController = {
   async searchCustomer(req, res) {
     try {
       const { name } = req.query;
-      const data = await ReportModel.searchCustomer(name);
+      const data = await FinanceModel.searchCustomers(name);
       res.json({ success: true, data });
     } catch (err) {
       res.status(400).json({ success: false, error: err.message });

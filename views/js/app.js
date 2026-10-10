@@ -271,6 +271,7 @@ function switchTab(tabId) {
     document.getElementById("tabBtnReports").classList.add("active");
     loadReports();
     if (typeof loadFinanceSummary === 'function') loadFinanceSummary();
+    if (document.getElementById('reportSearchCustomerInput')?.value.trim()) filterCustomerReports();
   } else if (tabId === 'shop') {
     document.getElementById("tabShop").classList.add("active");
     document.getElementById("tabBtnShop").classList.add("active");
@@ -2799,7 +2800,9 @@ function renderCustomerSearchMatches(customers, query) {
   for (const customer of customers) {
     const button = document.createElement('button'); button.type = 'button'; button.className = 'customer-search-choice';
     const name = document.createElement('strong'); name.textContent = customer.customerName;
-    const info = document.createElement('span'); info.textContent = customer.totalSlots + ' slot · Thưởng: ' + formatVND(customer.totalPrizeWon);
+    const info = document.createElement('span');
+    const finance = customer.finance;
+    info.textContent = finance ? (finance.customerPays ? 'Khách trả shop: ' + formatVND(finance.customerPays) : finance.shopPays ? 'Shop trả khách: ' + formatVND(finance.shopPays) : 'Không còn chênh lệch') : customer.totalSlots + ' slot · Thưởng: ' + formatVND(customer.totalPrizeWon);
     button.append(name, info); button.setAttribute('aria-pressed', 'false');
     button.addEventListener('click', () => {
       list.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', 'false'));
@@ -2814,6 +2817,24 @@ function renderCustomerSearchMatches(customers, query) {
 }
 function escapeCustomerSearchText(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+function renderCustomerCombinedBalance(match) {
+  const f = match.finance;
+  if (!f) return '<p role="status">Chưa tải được quyết toán chung. Hãy tìm lại khách trước khi chuyển tiền.</p>';
+  const final = f.customerPays ? 'KHÁCH CẦN TRẢ SHOP' : f.shopPays ? 'SHOP CẦN TRẢ KHÁCH' : 'KHÔNG CÒN CHÊNH LỆCH';
+  const amount = f.customerPays || f.shopPays || 0;
+  return `<section class="customer-combined-balance" aria-label="Quyết toán chung của khách">
+    <h3>TIỀN CUỐI CÙNG: Bàn kèo + Túi mù + Pass</h3>
+    <p class="customer-combined-scope">Tất cả các menu, tất cả các ngày · Theo dữ liệu đã lưu</p>
+    <div class="customer-combined-parts">
+      <div><span>1. Số dư Bàn kèo</span><strong>${formatVND(f.slotNet)}</strong><small>Đã tính tiền slot và hàng kèm theo từng chuyến</small></div>
+      <div><span>2. Trừ tiền Túi mù còn thiếu</span><strong>− ${formatVND(f.bagDue)}</strong><small>Đã trả: ${formatVND(f.bagPaid)} / Tổng hóa đơn: ${formatVND(f.bagTotal)}</small></div>
+      <div><span>3. Cộng tiền shop thu đồ pass</span><strong>+ ${formatVND(f.buybackTotal)}</strong><small>Chỉ cộng phiếu pass còn hiệu lực</small></div>
+    </div>
+    <div class="customer-combined-final ${f.customerPays ? 'customer-combined-pay' : 'customer-combined-receive'}"><span>${final}</span><strong>${formatVND(amount)}</strong></div>
+    <p class="customer-combined-equation">${formatVND(f.slotNet)} − ${formatVND(f.bagDue)} + ${formatVND(f.buybackTotal)} = ${formatVND(f.netAmount)}</p>
+    <p class="customer-combined-note">Hóa đơn Túi mù chưa xác nhận trả tiền vẫn được tính là còn thiếu. Chuyến Bàn kèo chưa chốt còn tạm tính. Muốn xem riêng hôm nay / hôm qua, dùng phần Quyết toán chung phía trên.</p>
+  </section>`;
 }
 function renderCustomerSearchDetail(match, insightBox) {
         insightBox.style.display = "flex";
@@ -2837,8 +2858,7 @@ function renderCustomerSearchDetail(match, insightBox) {
         }
 
         // Kiểm tra mỹ phẩm mua kèm
-        const localItems = getCustomerAttachedProducts(match.customerName) || [];
-        const attachedItems = localItems.length ? localItems : (match.attachedItems || []);
+        const attachedItems = match.attachedItems || [];
         const attachedTotalCost = attachedItems.reduce((s, it) => s + (it.price * it.qty), 0);
         let attachedText = "";
         if (attachedItems.length > 0) {
@@ -2853,9 +2873,6 @@ function renderCustomerSearchDetail(match, insightBox) {
           `;
         }
 
-        // Tính Net cuối cùng sau khi cấn trừ mỹ phẩm
-        const finalNetWithProducts = match.netAmount + (match.totalAttachedCost || 0) - attachedTotalCost;
-
         insightBox.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; width: 100%;">
             <div class="font-bold text-gold" style="font-size: 1.15rem;">
@@ -2863,18 +2880,19 @@ function renderCustomerSearchDetail(match, insightBox) {
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <button class="btn-neon-gold" id="customerSearchExport" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 700;">
-                <i class="fa-solid fa-file-excel"></i> Xuất File Chi Tiết Excel (.xlsx)
+                <i class="fa-solid fa-file-excel"></i> Xuất Excel quyết toán tổng
               </button>
               <button class="btn-neon-green" id="customerSearchBill" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 700;">
-                <i class="fa-solid fa-receipt"></i> Mở Bill Khách Này
+                <i class="fa-solid fa-receipt"></i> Xem chi tiết & tiền pass
               </button>
             </div>
           </div>
+          ${renderCustomerCombinedBalance(match)}
           <div style="margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.92rem; width: 100%;">
             <span>Tổng cược slot: <b class="text-gold">${formatVND(match.totalBuyCost)}</b> (${match.totalSlots} slot)</span>
             <span>Tổng trúng thưởng: <b class="text-green">${formatVND(match.totalPrizeWon)}</b></span>
             <span>Mỹ phẩm kèm: <b class="text-accent">${formatVND(attachedTotalCost)}</b></span>
-            <span>SỐ DƯ RÒNG CUỐI CÙNG (NET): <b class="${finalNetWithProducts >= 0 ? 'text-green' : 'text-red'}" style="font-size: 1.05rem;">${finalNetWithProducts > 0 ? '+' : ''}${formatVND(finalNetWithProducts)}</b> (${finalNetWithProducts > 0 ? 'Shop trả khách' : finalNetWithProducts < 0 ? 'Khách trả shop' : 'Hòa tiền'})</span>
+            <span>Số dư riêng Bàn kèo: <b>${formatVND(match.netAmount)}</b></span>
           </div>
           <div class="mt-2" style="width: 100%;">
             <span class="text-xs text-muted font-bold uppercase">CHI TIẾT CÁC MENU & CHUYẾN KHÁCH ĐÃ VÀO:</span>
@@ -2882,8 +2900,14 @@ function renderCustomerSearchDetail(match, insightBox) {
             ${attachedText}
           </div>
         `;
-  insightBox.querySelector('#customerSearchExport').addEventListener('click', () => downloadSingleCustomerDetailCsv(match.customerName));
-  insightBox.querySelector('#customerSearchBill').addEventListener('click', () => openBillModal(match.customerName));
+  insightBox.querySelector('#customerSearchExport').addEventListener('click', () => {
+    if (!match.finance) return showToast('Hãy tìm lại khách để tải quyết toán chung.');
+    downloadReadableWorkbook(financeExportURL(match.customerName,match.financePeriod),'Quyet_toan_' + match.customerName + '_tat_ca');
+  });
+  insightBox.querySelector('#customerSearchBill').addEventListener('click', () => {
+    if (!match.finance) return showToast('Hãy tìm lại khách để tải quyết toán chung.');
+    showFinanceCustomerDetail(match.finance,match.financePeriod);
+  });
 }
 
 const activeReportDownloads = new Set();

@@ -79,9 +79,9 @@ function financeDateValue() {
   if(!date)throw new Error('Hãy chọn ngày cần xem.');
   return date;
 }
-function financeExportURL(name) {
+function financeExportURL(name,period=financePeriod) {
   const base=name===undefined?'/api/reports/export/finance':'/api/reports/export/finance/customer';
-  const params=new URLSearchParams({date:financePeriod.date || 'all'});
+  const params=new URLSearchParams({date:period.date || 'all'});
   if(name!==undefined)params.set('name',name);
   return base+'?'+params.toString();
 }
@@ -131,12 +131,16 @@ function createFinanceDetailModal() {
 function closeFinanceDetail(){const modal=document.getElementById('financeDetailModal');if(modal?.open)modal.close();}
 function openFinanceDetail(index) {
   const customer=financeRows[index];if(!customer||!financeLoaded)return;
+  showFinanceCustomerDetail(customer,financePeriod);
+}
+function showFinanceCustomerDetail(customer,period) {
   const escape=blindBagEscape;
   const time=value=>value?new Date(value).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'Chưa lưu ngày';
   const groups=[['1. Bàn kèo',['Bàn kèo']],['2. Túi mù và sản phẩm bốc được',['Mua túi mù và hàng kèm','Sản phẩm bốc được']],['3. Shop thu lại đồ pass',['Shop thu lại']]];
   document.getElementById('financeDetailTitle').textContent='Chi tiết khách: '+customer.customerName;
-  document.getElementById('financeDetailPeriod').textContent=financePeriod.label+' · Giờ Việt Nam';
-  document.getElementById('financeDetailExport').href=financeExportURL(customer.customerName);
+  document.getElementById('financeDetailPeriod').textContent=period.label+' · Giờ Việt Nam';
+  document.getElementById('financeDetailExport').href=financeExportURL(customer.customerName,period);
+  document.getElementById('financeDetailExport').textContent=period.date?'Xuất Excel khách này theo ngày':'Xuất Excel quyết toán tổng của khách';
   const note=e=>e.type==='Bàn kèo'?`<p>Tiền slot: ${formatVND(e.buyCost || 0)} · Thưởng: ${formatVND(e.prizeWon || 0)} · Hàng kèm: ${formatVND(e.attachedCost || 0)}</p>`:'';
   const items=e=>(e.items||e.attachedItems||[]).length?'<p>'+(e.items||e.attachedItems).map(p=>escape(p.name)+' × '+Number(p.quantity??p.qty??1)).join(', ')+'</p>':'';
   const sections=groups.map(([title,types])=>{const events=customer.events.filter(e=>types.includes(e.type));return `<section class="finance-detail-section"><h4>${title}</h4>${events.length?`<div class="finance-detail-scroll"><table class="bb-table"><thead><tr><th>Thời gian</th><th>Menu / đợt</th><th>Chuyến / slot</th><th>Nội dung</th><th>Số tiền / số dư</th><th>Trạng thái</th></tr></thead><tbody>${events.map(e=>`<tr><td>${escape(time(e.occurredAt))}</td><td>${escape(e.context)}</td><td>${escape(e.slots)}</td><td><b>${escape(e.name)}</b>${note(e)}${items(e)}${e.type==='Mua túi mù và hàng kèm'&&e.discount?'<p>Giảm giá: '+formatVND(e.discount)+'</p>':''}</td><td>${e.type==='Sản phẩm bốc được'?'—':formatVND(e.amount)}</td><td>${escape(e.status)}</td></tr>`).join('')}</tbody></table></div>`:'<p>Không có giao dịch trong phần này.</p>'}</section>`;}).join('');

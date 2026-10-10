@@ -279,10 +279,10 @@ const ReportModel = {
    * Tra cứu nhanh theo tên Khách Hàng (vd: Tìm "Người A")
    * Xem Người A đã vào bao nhiêu slot ở từng Menu và từng Chuyến
    */
-  async searchCustomer(customerName) {
+  async searchCustomer(customerName, summary = null) {
     if (!customerName) return null;
     const search = require('../views/js/customer-search');
-    const allSummary = await this.getAllCustomersSummary();
+    const allSummary = summary || await this.getAllCustomersSummary();
     const matched = allSummary.customers.filter(c => search.matches(c.customerName, customerName));
 
     // Lấy chi tiết từng chuyến của khách này
