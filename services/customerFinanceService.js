@@ -11,7 +11,9 @@ function summarize(slotReport, blindRounds) {
   for (const row of slotReport.customers) {
     const customer=get(row.customerName);customer.slotNet=row.netAmount;
     for (const menu of Object.values(row.menuBreakdown)) for (const round of menu.rounds || []) {
-      customer.events.push({type:'Bàn kèo',context:menu.menuName,slots:'Chuyến #'+round.roundNumber,name:'Ô '+(round.slots || []).map(n=>'#'+n).join(', '),quantity:round.slotCount,amount:round.net,status:round.status==='finished'?'Đã chốt':'Chưa chốt'});
+      const bought='Mua '+(round.slots || []).map(n=>'#'+n).join(', ');
+      const wins=Array.isArray(round.winningSlotsList) ? (round.winningSlotsList.length ? 'Thắng '+round.winningSlotsList.map(n=>'#'+n).join(', ') : 'Không có slot thắng') : (round.status==='finished' ? 'Kết quả cũ chưa lưu slot thắng' : 'Chưa chọn slot thắng');
+      customer.events.push({type:'Bàn kèo',context:menu.menuName,slots:'Chuyến #'+round.roundNumber,name:bought+' · '+wins,quantity:round.slotCount,amount:round.net,status:round.status==='finished'?'Đã chốt':'Chưa chốt',winningSlotsList:round.winningSlotsList,winningSlotCount:round.winningSlotCount,prizeWon:round.prizeWon});
     }
   }
   for (const round of blindRounds) {

@@ -17,7 +17,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
-  <link rel="stylesheet" href="css/style.css?v=2.6">
+  <link rel="stylesheet" href="css/style.css?v=3.0">
   <link rel="stylesheet" href="css/blind-bags.css?v=3.0">
 </head>
 <body class="theme-lovable">
@@ -336,8 +336,8 @@
               <div class="top-bar-title">
                 <span class="icon-circle icon-gold"><i class="fa-solid fa-crown"></i></span>
                 <div>
-                  <h2 class="card-heading">Trung Tâm Quyết Toán & Chia Giải</h2>
-                  <p class="card-caption">Chọn 1, 2 hoặc 3 người thắng. Tiền giải chia theo số slot của người thắng</p>
+                  <h2 class="card-heading">Chọn Slot Thắng & Chốt Kết Quả</h2>
+                  <p class="card-caption">Chọn đúng số slot trên phiếu. Mỗi slot thắng nhận một phần giải bằng nhau.</p>
                 </div>
               </div>
               <span class="badge-counter-gold" id="playerCountBadge">0 Người Chơi</span>
@@ -362,80 +362,45 @@
                 </table>
               </div>
 
-              <!-- SETTLEMENT MODE SELECTOR (DẠNG DANH SÁCH RỘNG KHÔNG BỊ CO CHỮ) -->
+              <!-- Winning seats are selected individually, including multiple seats of one customer. -->
               <div class="settle-decision-box">
                 <div class="decision-heading">
-                  <i class="fa-solid fa-scale-balanced text-gold"></i>
-                  <span>CHỌN CHẾ ĐỘ QUYẾT TOÁN THẮNG GIẢI:</span>
+                  <span class="winning-step-number">1</span>
+                  <span>CHỌN CÁC SLOT THẮNG TRÊN PHIẾU</span>
                 </div>
-
-                <div class="mode-cards-stack">
-                  <!-- Mode 1: Solo Win -->
-                  <div class="mode-card active" id="modeCardSolo" onclick="selectSettleMode('solo')">
-                    <div class="mode-icon-badge"><i class="fa-solid fa-trophy"></i></div>
-                    <div class="mode-info">
-                      <span class="mode-name">1 Người Thắng Tất Cả (Solo Win)</span>
-                      <span class="mode-sub">Nhận trọn 100% giải thưởng (<span id="soloAmountText">1.350.000 đ</span>)</span>
-                    </div>
-                    <div class="mode-radio-check"><i class="fa-solid fa-check"></i></div>
-                  </div>
-
-                  <!-- Mode 2: Chia 2 -->
-                  <div class="mode-card" id="modeCardSplit2" onclick="selectSettleMode('split2')">
-                    <div class="mode-icon-badge"><i class="fa-solid fa-people-arrows"></i></div>
-                    <div class="mode-info">
-                      <span class="mode-name">2 người thắng</span>
-                      <span class="mode-sub" id="split2AmountText">Chia theo số slot của 2 người thắng</span>
-                    </div>
-                    <div class="mode-radio-check"><i class="fa-solid fa-check"></i></div>
-                  </div>
-
-                  <!-- Mode 3: Chia 3 -->
-                  <div class="mode-card" id="modeCardSplit3" onclick="selectSettleMode('split3')">
-                    <div class="mode-icon-badge"><i class="fa-solid fa-users-rays"></i></div>
-                    <div class="mode-info">
-                      <span class="mode-name">3 người thắng</span>
-                      <span class="mode-sub" id="split3AmountText">Chia theo số slot của 3 người thắng</span>
-                    </div>
-                    <div class="mode-radio-check"><i class="fa-solid fa-check"></i></div>
-                  </div>
+                <p class="winning-slot-help">Bấm từng ô để chọn hoặc bỏ chọn. Một khách có thể thắng một hoặc nhiều slot.</p>
+                <div class="selector-title-row">
+                  <span id="winnerSelectedCount" class="winning-count-badge" aria-live="polite">0 slot thắng</span>
+                  <button type="button" class="winning-clear-btn" onclick="clearWinningSlots()">Bỏ chọn tất cả</button>
                 </div>
+                <div class="winning-slots-grid" id="winnerCheckboxesList" aria-label="Danh sách slot để chọn thắng"></div>
+                <div class="winning-prize-preview" aria-live="polite">
+                  <div><span>Tổng giải của chuyến</span><strong id="winningPrizeTotal">0 đ</strong></div>
+                  <div><span>Tiền thưởng / slot thắng</span><strong id="winningPrizePerSlot">Chọn slot để tính</strong></div>
+                </div>
+                <p class="winning-slot-example">Ví dụ: 1.200.000đ ÷ 3 slot thắng = 400.000đ/slot. Khách thắng 2 slot nhận 800.000đ. Slot chung chia theo tỷ lệ sở hữu.</p>
 
                 <!-- TÙY CHỌN CẤN TRỪ TIỀN CƯỢC -->
                 <div class="deduct-toggle-bar">
                   <div class="deduct-toggle-info">
-                    <span class="deduct-title"><i class="fa-solid fa-calculator text-gold"></i> Quy tắc tính tiền người thắng:</span>
-                    <span class="deduct-desc" id="deductExplainText">Đang chọn: <b>Tự động cấn trừ</b> (Người thắng nhận = Tiền giải - Tiền mua slot).</span>
+                    <span class="deduct-title"><span class="winning-step-number">2</span> Tiền slot của người thắng</span>
+                    <span class="deduct-desc" id="deductExplainText">Tiền người thắng nhận = Tiền thưởng − tiền của <b>tất cả slot đã mua</b> − hàng mua kèm.</span>
                   </div>
                   <div class="deduct-btns">
                     <button type="button" id="btnDeductTrue" class="btn-deduct-toggle active" onclick="setDeductSlotCost(true)">
-                      <i class="fa-solid fa-scale-balanced"></i> Cấn Trừ Net
+                      <i class="fa-solid fa-scale-balanced"></i> Chưa trả · Trừ tiền slot
                     </button>
                     <button type="button" id="btnDeductFalse" class="btn-deduct-toggle" onclick="setDeductSlotCost(false)">
-                      <i class="fa-solid fa-gift"></i> Nhận Đủ 100%
+                      <i class="fa-solid fa-check"></i> Đã trả · Không trừ lại
                     </button>
-                  </div>
-                </div>
-
-                <!-- WINNERS SELECTION CHECKBOXES -->
-                <div class="winner-selector-area">
-                  <div class="selector-title-row">
-                    <span id="winnerSelectionGuideText"><i class="fa-solid fa-circle-check text-green"></i> Tick chọn <b>1 người nhận giải</b>:</span>
-                    <span class="text-xs text-muted" id="winnerSelectedCount">Đã chọn: 0</span>
-                  </div>
-
-                  <div class="winner-pills-wrap" id="winnerCheckboxesList">
-                    <!-- Dynamic pills -->
                   </div>
                 </div>
 
                 <!-- ACTION BUTTONS -->
+                <p class="winning-selection-status" id="winningSelectionStatus" role="status">Chọn đúng các slot thắng trên phiếu.</p>
                 <div class="decision-actions-row">
-                  <button class="btn-neon-gold flex-2" onclick="finalizeGameResults()">
-                    <i class="fa-solid fa-calculator"></i> Tính Kết Quả & Xuất Báo Cáo
-                  </button>
-                  <button class="btn-neon-roulette flex-1" onclick="spinRandomWinner()" title="Quay Roulette ngẫu nhiên">
-                    <i class="fa-solid fa-shuffle"></i> Quay Random
+                  <button class="btn-neon-gold flex-2 winning-finalize-btn" id="finalizeResultsBtn" onclick="finalizeGameResults()" disabled>
+                    <i class="fa-solid fa-check-double"></i> 3. Chốt kết quả · Lưu lịch sử
                   </button>
                 </div>
 
@@ -452,8 +417,8 @@
             <div class="header-badge-title">
               <span class="gold-trophy-circle"><i class="fa-solid fa-file-invoice-dollar"></i></span>
               <div>
-                <h2 class="settle-title">BẢNG QUYẾT TOÁN RÒNG (NET SETTLEMENT) & XUẤT FILE BILL</h2>
-                <p class="settle-desc">Tự động cấn trừ: Tiền Thưởng - Tiền Cược. Hiển thị rõ số tiền khách cần chuyển hoặc shop cần trả.</p>
+                <h2 class="settle-title">TIỀN THƯỞNG & TIỀN CẦN THANH TOÁN</h2>
+                <p class="settle-desc">Tiền thưởng theo slot thắng. Tiền slot tính trên toàn bộ slot đã mua. Dòng màu xanh: shop trả khách; dòng màu đỏ: khách trả shop.</p>
               </div>
             </div>
 
@@ -484,6 +449,7 @@
                   <tr>
                     <th>Khách Hàng</th>
                     <th>Slot Đã Mua</th>
+                    <th>Slot Thắng</th>
                     <th>Tiền Cược (A)</th>
                     <th>Tiền Thưởng (B)</th>
                     <th>Mỹ Phẩm Kèm (C)</th>
@@ -494,9 +460,9 @@
                 </thead>
                 <tbody id="finalSettlementTableBody">
                   <tr>
-                    <td colspan="8" class="text-center text-muted py-5">
+                    <td colspan="9" class="text-center text-muted py-5">
                       <i class="fa-solid fa-hourglass-start text-xl mb-2 text-muted"></i>
-                      <p>Vui lòng điền tên khách vào ô slot và chọn <b>Người Thắng Cuộc</b> để hệ thống tự động quyết toán chi tiết.</p>
+                      <p>Chọn các <b>slot thắng</b> trên phiếu để xem trước tiền thưởng và tiền cần thanh toán.</p>
                     </td>
                   </tr>
                 </tbody>
@@ -1198,7 +1164,7 @@
             <option value="finished">🏁 Đã kết thúc / Đã chốt</option>
           </select>
         </div>
-        <div class="config-field mb-3" id="roundModalSettleModeField">
+        <div class="config-field mb-3" id="roundModalSettleModeField" hidden>
           <label>Chế Độ Quyết Toán Thắng Giải</label>
           <select id="roundModalSettleMode" class="modern-select">
             <option value="solo">🏆 Solo Win (1 Người Thắng Trọn Giải)</option>
@@ -1243,9 +1209,9 @@
   <!-- Toast Notification -->
   <div id="toast" class="modern-toast"></div>
 
-  <script src="/js/settlement-core.js?v=2.8"></script>
+  <script src="/js/settlement-core.js?v=3.0"></script>
   <script src="/js/customer-search.js"></script>
-<script src="js/app.js?v=2.9"></script>
+<script src="js/app.js?v=3.0"></script>
   <script src="js/blind-bags.js?v=3"></script>
   <script src="js/blind-bag-finance.js?v=3"></script>
 </body>

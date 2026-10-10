@@ -104,9 +104,9 @@ const GameController = {
   // Chốt chuyến hiện tại & Sang chuyến mới (Lưu lịch sử chuyến)
   async nextRound(req, res) {
     try {
-      const { menuId, roundNumber, settlementResults, winners, settleMode, slots, deductSlotCost, customerAttachedProducts } = req.body;
+      const { menuId, roundNumber, settlementResults, winners, settleMode, slots, deductSlotCost, customerAttachedProducts, winningSlots, expectedUpdatedAt } = req.body;
       if (!menuId || !Number.isInteger(Number(roundNumber)) || Number(roundNumber) < 1) throw new Error("Thiếu ID menu hoặc số chuyến");
-      const result = await GameModel.finishAndStartNextRound(menuId, settlementResults, winners, settleMode, slots, roundNumber, { deductSlotCost, customerAttachedProducts });
+      const result = await GameModel.finishAndStartNextRound(menuId, settlementResults, winners, settleMode, slots, roundNumber, { deductSlotCost, customerAttachedProducts, winningSlots, expectedUpdatedAt });
       const roundsList = GameModel.getRoundsList(result.nextRound.menuId);
       res.json({
         success: true,
@@ -195,11 +195,13 @@ const GameController = {
   // Đồng bộ kết quả chốt ván cược từ Client lên Server
   async finalizeGame(req, res) {
     try {
-      const { menuId, roundNumber, winners, settleMode, deductSlotCost, finishedResults, customerAttachedProducts, slots } = req.body;
+      const { menuId, roundNumber, winners, settleMode, deductSlotCost, finishedResults, customerAttachedProducts, slots, winningSlots, expectedUpdatedAt } = req.body;
       if (!menuId || !Number.isInteger(Number(roundNumber)) || Number(roundNumber) < 1) throw new Error("Thiếu ID menu hoặc số chuyến");
       const game = await GameModel.finalizeGame(menuId, {
         roundNumber,
         winners,
+        winningSlots,
+        expectedUpdatedAt,
         settleMode,
         deductSlotCost,
         finishedResults,

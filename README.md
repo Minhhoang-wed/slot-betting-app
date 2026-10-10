@@ -1,5 +1,18 @@
 # 🎰 LUCKY SLOT & SHOP PRO V2.5 (KIẾN TRÚC MVC + SUPABASE)
 
+## Chốt theo slot thắng trên phiếu
+
+1. Điền khách mua vào từng slot như bình thường.
+2. Trong **Chọn Slot Thắng & Chốt Kết Quả**, bấm đúng từng số slot thắng trên phiếu. Không giới hạn số khách hoặc số slot thắng.
+3. Kiểm tra tiền thưởng và chọn trạng thái tiền slot của người thắng. **Chưa trả** trừ tất cả slot đã mua; **Đã trả** không trừ lại tiền slot của người thắng. Người không thắng vẫn có tiền slot cần trả.
+4. Bấm **Chốt kết quả · Lưu lịch sử** rồi xuất Excel. Các lựa chọn trước khi chốt chỉ là bản xem trước.
+
+Ví dụ tổng giải 1.200.000đ, Mayne mua slot #2 và #9 nhưng chỉ #2 thắng; Freefire thắng #4 và #6: chọn #2, #4, #6. Mỗi slot thắng nhận 400.000đ, Mayne nhận thưởng 400.000đ, Freefire 800.000đ. Nếu mỗi khách chưa trả 2 slot × 135.000đ, thực nhận tương ứng 130.000đ và 530.000đ. Slot chung chia tiền thưởng của chính slot đó theo tỷ lệ sở hữu.
+
+Lịch sử và Excel lưu riêng slot đã mua, slot thắng và tiền thưởng. Kết quả cũ giữ số tiền đã lưu và ghi rõ nếu chưa lưu số slot thắng; admin có thể chọn lại slot rồi chốt để sửa. Bản cập nhật này không cần migration SQL mới, dùng JSON `finished_results` hiện có sau migration `002_durable_rounds.sql`. Dữ liệu thay đổi sau lúc tải chuyến sẽ yêu cầu tải lại trước khi chốt.
+
+Kiểm thử giao diện riêng bằng `node scripts/preview-winning-slots.cjs --serve --port=3114`. Script dùng bộ nhớ riêng, chặn Supabase và không ghi đè dữ liệu thật.
+
 ## Túi mù trong Mỹ phẩm bán lẻ
 
 - Mỗi đợt gồm **15 slot, 414.000đ/slot**, độc lập với bàn kèo, người thắng và quyết toán thưởng.

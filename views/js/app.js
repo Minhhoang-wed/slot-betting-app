@@ -59,6 +59,8 @@ let gameState = {
   status: "open", // 'open' | 'full' | 'finished'
   settleMode: "solo", // 'solo' | 'split2' | 'split3'
   winners: [],
+  winningSlots: [],
+  settlementDirty: false,
   finishedResults: null
 };
 
@@ -111,7 +113,7 @@ function addAttachedProductToCustomer(customerName, productId, qty = 1) {
 
 function removeAttachedProductFromCustomer(customerName, index) {
   if (!customerName) return;
-  const key = customerName.trim();
+  const key = SettlementCore.key(customerName);
   if (customerAttachedProducts[key]) {
     customerAttachedProducts[key].splice(index, 1);
   }
@@ -307,11 +309,17 @@ async function updateGameConfig() {
 }
 
 function updateSplitAmounts() {
-  const solo = formatVND(gameState.prizeValue);
-  const soloEl = document.getElementById("soloAmountText");
-  if (soloEl) soloEl.innerText = solo;
-  document.getElementById("split2AmountText").innerText = 'Chia theo số slot của 2 người thắng';
-  document.getElementById("split3AmountText").innerText = 'Chia theo số slot của 3 người thắng';
+  const selected = gameState.winningSlots || [];
+  const total = document.getElementById('winningPrizeTotal');
+  const perSlot = document.getElementById('winningPrizePerSlot');
+  if (total) total.textContent = formatVND(gameState.prizeValue);
+  if (perSlot) perSlot.textContent = selected.length ? formatVND(Math.floor(gameState.prizeValue / selected.length)) : 'Chọn slot để tính';
+}
+
+function roundWinnerSummary(round) {
+  const names = (round.winners || []).join(', ') || 'Chưa chốt';
+  const selected = round.winningSlots ?? SettlementCore.winningSlotsFromResults(round.finishedResults);
+  return escapeCustomerSearchText(names) + (Array.isArray(selected) && selected.length ? `<br><small>Slot thắng: ${selected.map(n=>'#'+n).join(', ')}</small>` : round.status === 'finished' && round.winners?.length ? '<br><small>Kết quả cũ chưa lưu số slot thắng</small>' : '');
 }
 
 async function resetCurrentGame() {
@@ -326,7 +334,7 @@ function renderSlotBoard() {
 
   gameState.slots.forEach(slot => {
     const isOccupied = slot.owner !== null;
-    const isWinnerSlot = gameState.winners.includes(slot.owner);
+    const isWinnerSlot = (gameState.winningSlots || []).includes(slot.id);
 
     const tile = document.createElement("div");
     tile.className = `slot-tile ${isOccupied ? 'occupied' : ''} ${isWinnerSlot ? 'winner' : ''}`;
@@ -335,7 +343,7 @@ function renderSlotBoard() {
     const initial = isOccupied ? slot.owner.trim().charAt(0).toUpperCase() : '+';
 
     tile.innerHTML = `
-      <div class="tile-number-badge">#${slot.id}</div>
+      <div class="tile-number-badge">#${slot.id}${isWinnerSlot ? ' · THẮNG' : ''}</div>
       <div class="tile-center-content">
         ${isOccupied ? `
           <div class="tile-avatar">${initial}</div>
@@ -552,10 +560,10 @@ function updateHeroStats() {
 
   const statusEl = document.getElementById("heroGameStatus");
   if (gameState.winners.length > 0) {
-    statusEl.innerText = "👑 ĐÃ CÓ WINNER";
+    statusEl.innerText = gameState.settlementDirty ? 'ĐANG XEM TRƯỚC · CHƯA CHỐT' : 'ĐÃ CHỐT KẾT QUẢ';
     statusEl.style.color = "#b45309";
   } else if (isFull) {
-    statusEl.innerText = "🔥 ĐỦ 100% SLOT - SẴN SÀNG QUAY";
+    statusEl.innerText = "ĐỦ SLOT · CHỜ CHỌN SLOT THẮNG";
     statusEl.style.color = "#b45309";
   } else {
     statusEl.innerText = "🟢 ĐANG MỞ ĐĂNG KÝ";
@@ -582,6 +590,7 @@ function updateHeroStats() {
 let deductSlotCost = true; // true: cấn trừ tiền slot (Net); false: nhận đủ 100% giải thưởng
 
 function setDeductSlotCost(val) {
+  if (gameState.winningSlots === null || settlementSavePending) return;
   playSound('click');
   deductSlotCost = val;
   const btnTrue = document.getElementById("btnDeductTrue");
@@ -591,141 +600,70 @@ function setDeductSlotCost(val) {
   if (val) {
     if (btnTrue) btnTrue.classList.add("active");
     if (btnFalse) btnFalse.classList.remove("active");
-    if (explain) explain.innerHTML = `Đang chọn: <b>Tự động cấn trừ</b> (Người thắng nhận = Tiền giải - Tiền mua slot).`;
+    if (explain) explain.innerHTML = `Tiền người thắng nhận = Tiền thưởng − tiền của <b>tất cả slot đã mua</b> − hàng mua kèm.`;
   } else {
     if (btnTrue) btnTrue.classList.remove("active");
     if (btnFalse) btnFalse.classList.add("active");
-    if (explain) explain.innerHTML = `Đang chọn: <b>Nhận đủ 100% giải thưởng</b> (Dành cho khách đã thanh toán tiền slot trước).`;
+    if (explain) explain.innerHTML = `Không trừ lại tiền slot của người thắng. Chỉ dùng khi <b>người thắng đã trả tiền slot</b>; người không thắng vẫn tính tiền slot.`;
+  }
+  if (Array.isArray(gameState.winningSlots) && gameState.winningSlots.length) {
+    gameState.settlementDirty = true;
+    autoCalculateSettlement(true);
+    renderWinnerCheckboxes();
   }
 }
 
-// --- SETTLEMENT SELECTION LOGIC (SOLO VS CHIA 2 VS CHIA 3) ---
-function selectSettleMode(mode) {
-  playSound('click');
-  gameState.settleMode = mode;
-  gameState.winners = [];
-
-  document.querySelectorAll(".mode-card").forEach(el => el.classList.remove("active"));
-  if (mode === 'solo') document.getElementById("modeCardSolo").classList.add("active");
-  else if (mode === 'split2') document.getElementById("modeCardSplit2").classList.add("active");
-  else if (mode === 'split3') document.getElementById("modeCardSplit3").classList.add("active");
-
-  const guideText = document.getElementById("winnerSelectionGuideText");
-  if (mode === 'solo') {
-    guideText.innerHTML = `<i class="fa-solid fa-trophy text-gold"></i> Tick chọn <b>1 người thắng trọn giải</b>:`;
-  } else if (mode === 'split2') {
-    guideText.innerHTML = `<i class="fa-solid fa-people-arrows text-accent"></i> Tick chọn <b>2 người để chia đôi giải</b>:`;
-  } else if (mode === 'split3') {
-    guideText.innerHTML = `<i class="fa-solid fa-users-rays text-green"></i> Tick chọn <b>3 người để chia ba giải</b>:`;
-  }
-
-  renderWinnerCheckboxes();
-}
-
+// Select actual winning seats; a customer's other seats do not earn a prize.
 function renderWinnerCheckboxes() {
   const container = document.getElementById("winnerCheckboxesList");
-  const players = getGroupedPlayerData();
-  document.getElementById("winnerSelectedCount").innerText = `Đã chọn: ${gameState.winners.length}`;
-
-  if (players.length === 0) {
-    container.innerHTML = `<p class="text-muted text-sm italic">Chưa có người chơi nào đăng ký slot.</p>`;
-    return;
-  }
-
+  if (!container) return;
+  const chosen = gameState.winningSlots || [];
+  const count = document.getElementById('winnerSelectedCount');
+  if (count) count.textContent = `${chosen.length} slot thắng`;
   container.innerHTML = "";
-  players.forEach(p => {
-    const isChecked = gameState.winners.includes(p.name);
-    const pill = document.createElement("div");
-    pill.className = `winner-pill-item ${isChecked ? 'checked' : ''}`;
-    pill.innerHTML = `
-      <i class="fa-solid ${isChecked ? 'fa-circle-check text-gold' : 'fa-circle text-muted'}"></i>
-      <span>${p.name} <span class="text-xs text-muted">(${p.slotCount} slot)</span></span>
-    `;
-
-    pill.onclick = () => toggleWinnerPill(p.name);
-    container.appendChild(pill);
+  gameState.slots.forEach(slot => {
+    const occupied = Boolean((slot.owner || '').trim());
+    const selected = chosen.includes(slot.id);
+    const owners = slot.shares?.length ? slot.shares.map(p => `${p.name} (${p.percent}%)`).join(' + ') : slot.owner;
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = `winning-slot-choice${selected ? ' selected' : ''}`;
+    button.disabled = !occupied;
+    button.setAttribute('aria-pressed', String(selected));
+    button.setAttribute('aria-label', `Slot #${slot.id}: ${owners || 'Trống'}${selected ? ', đã chọn thắng' : ''}`);
+    button.innerHTML = `<span class="winning-slot-number">#${slot.id}<i class="fa-solid ${selected ? 'fa-circle-check' : 'fa-circle'}" aria-hidden="true"></i></span><strong>${escapeCustomerSearchText(owners || 'Chưa có khách')}</strong><span>${occupied ? (selected ? 'ĐÃ CHỌN THẮNG' : 'Bấm chọn slot thắng') : 'Slot trống'}</span>`;
+    button.onclick = () => toggleWinningSlot(slot.id);
+    container.appendChild(button);
   });
+  const note = document.getElementById('winningSelectionStatus');
+  if (note) {
+    note.className = `winning-selection-status${gameState.settlementDirty ? ' pending' : ''}`;
+    note.textContent = gameState.winningSlots === null ? 'Kết quả cũ chưa lưu số slot thắng. Chọn lại slot nếu cần sửa kết quả.' : gameState.settlementDirty ? 'Đang xem trước. Bấm “Chốt kết quả” để lưu.' : gameState.status === 'finished' ? 'Kết quả đã chốt và lưu vào lịch sử.' : 'Chọn đúng các slot thắng trên phiếu.';
+  }
+  const finalize = document.getElementById('finalizeResultsBtn');
+  if (finalize) finalize.disabled = !chosen.length;
+  ['btnDeductTrue','btnDeductFalse'].forEach(id=>{const button=document.getElementById(id);if(button)button.disabled=gameState.winningSlots===null;});
+  updateSplitAmounts();
 }
-
-function toggleWinnerPill(playerName) {
+function toggleWinningSlot(slotNumber) {
+  if (settlementSavePending) return;
+  const slot = gameState.slots.find(s => s.id === slotNumber);
+  if (!slot?.owner) return;
   playSound('click');
-  const cleanName = (playerName || '').trim();
-  const mode = gameState.settleMode;
-
-  if (gameState.winners.includes(cleanName)) {
-    gameState.winners = gameState.winners.filter(w => w !== cleanName);
-  } else {
-    if (mode === 'solo') {
-      gameState.winners = [cleanName];
-    } else if (mode === 'split2') {
-      if (gameState.winners.length >= 2) {
-        alert("Chế độ Chia Đôi chỉ được chọn tối đa 2 người!");
-        return;
-      }
-      gameState.winners.push(cleanName);
-    } else if (mode === 'split3') {
-      if (gameState.winners.length >= 3) {
-        alert("Chế độ Chia Ba chỉ được chọn tối đa 3 người!");
-        return;
-      }
-      gameState.winners.push(cleanName);
-    }
-  }
-
-  renderWinnerCheckboxes();
-  renderSlotBoard();
+  const selected = gameState.winningSlots || [];
+  gameState.winningSlots = selected.includes(slotNumber) ? selected.filter(n => n !== slotNumber) : [...selected,slotNumber].sort((a,b)=>a-b);
+  gameState.settlementDirty = true;
   autoCalculateSettlement(true);
-}
-
-// Roulette Random Spinner with audio drumroll
-function spinRandomWinner() {
-  const players = getGroupedPlayerData();
-  if (players.length === 0) return alert("Chưa có người chơi nào để quay!");
-
-  const pool = [];
-  gameState.slots.forEach(s => {
-    const owner = (s.owner || '').trim();
-    if (owner) pool.push(owner);
-  });
-
-  // Suspense tick sound interval
-  let count = 0;
-  const timer = setInterval(() => {
-    playSound('tick');
-    count++;
-    if (count > 15) {
-      clearInterval(timer);
-      executeSpinResult(pool);
-    }
-  }, 100);
-}
-
-function executeSpinResult(pool) {
-  playSound('win');
-  triggerConfetti();
-
-  if (gameState.settleMode === 'solo') {
-    const chosen = pool[Math.floor(Math.random() * pool.length)];
-    gameState.winners = [chosen];
-    showToast(`🎉 CHÚC MỪNG [${chosen}] ĐÃ CHIẾN THẮNG TRỌN GIẢI!`);
-  } else if (gameState.settleMode === 'split2') {
-    const unique = [...new Set(pool)];
-    if (unique.length < 2) return alert("Cần ít nhất 2 người chơi khác nhau để chia đôi!");
-    const shuffled = unique.sort(() => 0.5 - Math.random());
-    gameState.winners = [shuffled[0], shuffled[1]];
-    showToast(`🎉 CHÚC MỪNG 2 NGƯỜI CHIA ĐÔI: [${shuffled[0]}] và [${shuffled[1]}]!`);
-  } else if (gameState.settleMode === 'split3') {
-    const unique = [...new Set(pool)];
-    if (unique.length < 3) return alert("Cần ít nhất 3 người chơi khác nhau để chia ba!");
-    const shuffled = unique.sort(() => 0.5 - Math.random());
-    gameState.winners = [shuffled[0], shuffled[1], shuffled[2]];
-    showToast(`🎉 CHÚC MỪNG 3 NGƯỜI CHIA BA: [${shuffled[0]}], [${shuffled[1]}], [${shuffled[2]}]!`);
-  }
-
   renderWinnerCheckboxes();
   renderSlotBoard();
-  updateHeroStats();
-  autoCalculateSettlement(false);
+}
+function clearWinningSlots() {
+  if (settlementSavePending) return;
+  gameState.winningSlots = [];
+  gameState.settlementDirty = true;
+  autoCalculateSettlement(true);
+  renderWinnerCheckboxes();
+  renderSlotBoard();
 }
 
 function triggerConfetti() {
@@ -739,16 +677,21 @@ function autoCalculateSettlement(silent = true) {
   const players = getGroupedPlayerData();
   const tbody = document.getElementById("finalSettlementTableBody");
 
-  if (players.length === 0 || !gameState.winners || gameState.winners.length === 0) {
+  if (gameState.winningSlots === null && gameState.finishedResults?.length) {
+    gameState.finishedResults = SettlementCore.withAttachedProducts(gameState.finishedResults, customerAttachedProducts);
+    renderSettlementTableUI(gameState.finishedResults);
+    return silent ? true : saveSettlement();
+  }
+  if (players.length === 0 || !gameState.winningSlots?.length) {
     gameState.finishedResults = null;
-    gameState.status = "open";
+    gameState.winners = [];
     updateHeroStats();
     if (tbody) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="8" class="text-center text-muted py-5">
+          <td colspan="9" class="text-center text-muted py-5">
             <i class="fa-solid fa-ticket text-xl mb-2 text-accent"></i>
-            <p>Chuyến #${currentRoundNumber} đang mở! Điền tên khách vào ô slot, chọn người trúng để tự động quyết toán.</p>
+            <p>Chọn các slot thắng trên phiếu để xem tiền thưởng và tiền cần thanh toán.</p>
           </td>
         </tr>
       `;
@@ -759,9 +702,12 @@ function autoCalculateSettlement(silent = true) {
   }
 
   let settlementList;
-  try { settlementList = SettlementCore.calculate(gameState, gameState.settleMode, gameState.winners, deductSlotCost, customerAttachedProducts); }
+  try { settlementList = SettlementCore.calculateBySlots(gameState, gameState.winningSlots, deductSlotCost, customerAttachedProducts); }
   catch (error) { if (!silent) alert(error.message); return false; }
   gameState.finishedResults = settlementList;
+  gameState.winners = settlementList.filter(r=>r.isWinner).map(r=>r.playerName);
+  gameState.settleMode = SettlementCore.modeForWinningSlots(gameState.winningSlots);
+  updateHeroStats();
   renderSettlementTableUI(settlementList);
   if (silent) return true; // Preview only; explicit confirmation persists results.
   return saveSettlement();
@@ -774,7 +720,7 @@ function saveSettlement() {
   const menuId = currentActiveMenuId, roundNumber = currentRoundNumber;
   settlementSavePending = apiJson('/api/game/finalize', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ menuId, roundNumber, winners: gameState.winners, settleMode: gameState.settleMode,
+    body: JSON.stringify({ menuId, roundNumber, expectedUpdatedAt:gameState.updatedAt, ...(Array.isArray(gameState.winningSlots) ? {winningSlots:gameState.winningSlots} : {}), settleMode: gameState.settleMode,
       deductSlotCost, customerAttachedProducts })
   }).then(json => {
     if (currentActiveMenuId === menuId && currentRoundNumber === roundNumber) applyGameData(json.data);
@@ -790,7 +736,7 @@ function saveSettlement() {
 async function finalizeGameResults() {
   const players = getGroupedPlayerData();
   if (players.length === 0) return alert("Chưa có người chơi nào!");
-  if (!gameState.winners || gameState.winners.length === 0) return alert("Vui lòng chọn người thắng hoặc người nhận giải trước!");
+  if (!gameState.winningSlots?.length && !(gameState.winningSlots === null && gameState.finishedResults?.length)) return alert("Vui lòng chọn đúng các slot thắng trên phiếu trước!");
 
   playSound('win');
   triggerConfetti();
@@ -829,6 +775,9 @@ function renderSettlementTableUI(settlementList) {
         <span class="badge-gold-neon" style="font-size: 0.72rem;">${item.slotCount} slot</span>
         <span class="text-xs text-muted">(#${(item.slotsList || []).join(', #')})</span>
       </td>
+      <td class="winning-result-cell">
+        ${Array.isArray(item.winningSlotsList) ? (item.winningSlotsList.length ? `<strong>${item.winningSlotsList.map(n=>'#'+n).join(', ')}</strong><small>${item.winningSlotCount} slot thắng</small>` : '<span class="text-muted">Không thắng</span>') : '<small class="text-muted">Chưa lưu số slot</small>'}
+      </td>
       <td class="font-bold text-gold">${formatVND(item.buyCost)}</td>
       <td>
         ${item.isWinner ? `<span class="font-bold text-green"><i class="fa-solid fa-crown text-gold"></i> ${formatVND(item.prizeWon)}</span>` : `<span class="text-muted">0 đ</span>`}
@@ -862,11 +811,14 @@ function renderSettlementTableUI(settlementList) {
   const summaryBar = document.getElementById("summaryMetaBar");
   if (summaryBar) {
     const winningRows = settlementList.filter(row => row.isWinner);
-    const label = winningRows.every(row => row.prizeRule === 'winner_slots') ? 'Thưởng theo số slot người thắng' : 'Tiền thưởng đã lưu';
-    const modeText = `${label}: ` + winningRows.map(row => `<b>${escapeCustomerSearchText(row.playerName)}</b> (${row.slotCount} slot): <b>${formatVND(row.prizeWon)}</b>`).join(' · ');
+    const bySlots = winningRows.every(row => row.prizeRule === 'winning_slots');
+    const modeText = winningRows.map(row => `<b>${escapeCustomerSearchText(row.playerName)}</b>${bySlots ? ` · thắng ${row.winningSlotsList.map(n=>'#'+n).join(', ')}` : ''}: <b>${formatVND(row.prizeWon)}</b>`).join('<br>');
+    const selected = gameState.winningSlots || [];
+    const formula = bySlots ? `Tổng giải ${formatVND(gameState.prizeValue)} ÷ ${selected.length} slot thắng = ${formatVND(Math.floor(gameState.prizeValue / selected.length))}/slot${gameState.prizeValue % selected.length ? ' (phần lẻ 1đ được chia vào các slot đầu)' : ''}` : 'Kết quả đã lưu theo cách tính cũ; chưa có số slot thắng để đối chiếu.';
 
     summaryBar.innerHTML = `
-      <div><i class="fa-solid fa-circle-check text-green"></i> Đã quyết toán xong: <b>${gameState.name}</b> (Chuyến #${gameState.roundNumber || currentRoundNumber})</div>
+      <div><i class="fa-solid ${gameState.settlementDirty ? 'fa-clock text-gold' : 'fa-circle-check text-green'}"></i> <b>${gameState.settlementDirty ? 'XEM TRƯỚC · CHƯA CHỐT' : 'ĐÃ CHỐT'}</b> · ${escapeCustomerSearchText(gameState.name)} · Chuyến #${gameState.roundNumber || currentRoundNumber}</div>
+      <div>${formula}</div>
       <div>${modeText}</div>
     `;
   }
@@ -1208,7 +1160,7 @@ function addProductToCurrentBill() {
   addAttachedProductToCustomer(custName, prodId, qty);
   recalculateAndRenderBill();
   renderPlayerTable();
-  if (gameState.status === 'finished') finalizeGameResults();
+  refreshSettlementForProducts();
   showToast(`Đã thêm vào Bill của ${custName}!`);
   select.value = "";
   qtyInput.value = "1";
@@ -1221,7 +1173,7 @@ function removeBillAttachedProduct(idx) {
   removeAttachedProductFromCustomer(custName, idx);
   recalculateAndRenderBill();
   renderPlayerTable();
-  if (gameState.status === 'finished') finalizeGameResults();
+  refreshSettlementForProducts();
   showToast("Đã bớt món mỹ phẩm khỏi Bill");
 }
 
@@ -1284,7 +1236,7 @@ function addAttachModalProduct() {
   addAttachedProductToCustomer(currentAttachingCustomer, prodId, qty);
   renderAttachModalItems();
   renderPlayerTable();
-  if (gameState.status === 'finished') finalizeGameResults();
+  refreshSettlementForProducts();
   showToast(`Đã thêm sản phẩm cho [${currentAttachingCustomer}]!`);
   select.value = "";
   qtyInput.value = "1";
@@ -1296,7 +1248,16 @@ function removeAttachModalProduct(idx) {
   removeAttachedProductFromCustomer(currentAttachingCustomer, idx);
   renderAttachModalItems();
   renderPlayerTable();
-  if (gameState.status === 'finished') finalizeGameResults();
+  refreshSettlementForProducts();
+}
+
+function refreshSettlementForProducts() {
+  if (gameState.status === 'finished' && !gameState.settlementDirty) return finalizeGameResults();
+  if (gameState.winningSlots?.length) {
+    gameState.settlementDirty = true;
+    autoCalculateSettlement(true);
+    renderWinnerCheckboxes();
+  }
 }
 
 function saveAndOpenBillForCustomer() {
@@ -1817,6 +1778,7 @@ function applyGameData(data) {
   }
 
   gameState.id = data.id;
+  gameState.updatedAt = data.updatedAt;
   gameState.menuId = currentActiveMenuId;
   gameState.roundNumber = currentRoundNumber;
   gameState.name = data.name;
@@ -1827,9 +1789,15 @@ function applyGameData(data) {
   gameState.settleMode = data.settleMode || 'solo';
   gameState.winners = data.winners || [];
   gameState.finishedResults = data.finishedResults?.length ? data.finishedResults : null;
+  gameState.winningSlots = data.winningSlots !== undefined ? data.winningSlots : SettlementCore.winningSlotsFromResults(gameState.finishedResults) ?? (gameState.status === 'finished' ? null : []);
+  gameState.settlementDirty = false;
   customerAttachedProducts = Object.fromEntries((gameState.finishedResults || []).map(r=>[SettlementCore.key(r.playerName),r.attachedItems || []]));
   const savedWinner=(gameState.finishedResults || []).find(r=>r.isWinner);
   deductSlotCost=savedWinner ? savedWinner.deducted !== false : true;
+  document.getElementById('btnDeductTrue')?.classList.toggle('active', deductSlotCost);
+  document.getElementById('btnDeductFalse')?.classList.toggle('active', !deductSlotCost);
+  const deductText=document.getElementById('deductExplainText');
+  if(deductText)deductText.innerHTML=deductSlotCost ? 'Tiền người thắng nhận = Tiền thưởng − tiền của <b>tất cả slot đã mua</b> − hàng mua kèm.' : 'Không trừ lại tiền slot của người thắng. Chỉ dùng khi <b>người thắng đã trả tiền slot</b>; người không thắng vẫn tính tiền slot.';
 
   gameState.slots = (data.slots || []).map(s => ({
     id: s.slot_number,
@@ -1896,9 +1864,9 @@ function applyGameData(data) {
     if (tbody && !gameState.finishedResults) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="7" class="text-center text-muted py-5">
+          <td colspan="9" class="text-center text-muted py-5">
             <i class="fa-solid fa-ticket text-xl mb-2 text-accent"></i>
-            <p>Chuyến #${currentRoundNumber} đang mở! Điền tên khách vào ô slot, chọn người trúng và bấm <b>"Tính Kết Quả & Xuất Báo Cáo"</b> khi kết thúc ván.</p>
+            <p>Chuyến #${currentRoundNumber} đang mở. Chọn các slot thắng trên phiếu, kiểm tra tiền rồi bấm <b>“Chốt kết quả”</b>.</p>
           </td>
         </tr>
       `;
@@ -2176,10 +2144,8 @@ async function triggerNextRound() {
 
   playSound('coin');
 
-  // Đảm bảo kết quả đã được tính toán nếu có người thắng
-  if ((!gameState.finishedResults || gameState.finishedResults.length === 0) && gameState.winners && gameState.winners.length > 0) {
-    autoCalculateSettlement(true);
-  }
+  if (gameState.settlementDirty && gameState.winningSlots?.length && !await autoCalculateSettlement(false)) return;
+  if (gameState.settlementDirty && !gameState.winningSlots?.length && gameState.status === 'finished') return alert('Chuyến đã chốt. Chọn slot thắng và chốt lại trước khi mở chuyến mới.');
 
   try {
     const res = await fetch('/api/game/next-round', {
@@ -2188,10 +2154,12 @@ async function triggerNextRound() {
       body: JSON.stringify({
         menuId: currentActiveMenuId,
         roundNumber: currentRoundNumber,
+        expectedUpdatedAt: gameState.updatedAt,
         deductSlotCost,
         customerAttachedProducts,
         settlementResults: gameState.finishedResults,
         winners: gameState.winners,
+        ...(Array.isArray(gameState.winningSlots) ? { winningSlots: gameState.winningSlots } : {}),
         settleMode: gameState.settleMode,
         slots: gameState.slots
       })
@@ -2420,7 +2388,7 @@ async function openRoundHistoryModal() {
       historyList.forEach(r => {
         const item = document.createElement("div");
         item.className = "round-history-item";
-        const winnersText = (r.winners || []).join(', ') || 'Chưa chốt';
+        const winnersText = roundWinnerSummary(r);
         const occupied = r.slots ? r.slots.filter(s => (s.player_name || s.owner || '').trim()).length : 0;
         item.innerHTML = `
           <div>
@@ -2431,7 +2399,7 @@ async function openRoundHistoryModal() {
             <div class="text-xs text-muted">
               <span>Đã cược: <b>${occupied}/${r.totalSlots} slot</b></span> • 
               <span>Giải thưởng: <b class="text-gold">${formatVND(r.prizeValue)}</b></span> • 
-              <span>Winner: <b class="text-green font-bold">${winnersText}</b></span>
+              <span>Nhận giải: <b class="text-green font-bold">${winnersText}</b></span>
             </div>
           </div>
           <div class="text-right">
@@ -2455,7 +2423,7 @@ async function openRoundHistoryModal() {
           historyList.forEach(r => {
             const item = document.createElement("div");
             item.className = "round-history-item";
-            const winnersText = (r.winners || []).join(', ') || 'Chưa chốt';
+            const winnersText = roundWinnerSummary(r);
             const occupied = r.slots ? r.slots.filter(s => (s.player_name || s.owner || '').trim()).length : 0;
             item.innerHTML = `
               <div>
@@ -2466,7 +2434,7 @@ async function openRoundHistoryModal() {
                 <div class="text-xs text-muted">
                   <span>Đã cược: <b>${occupied}/${r.totalSlots} slot</b></span> • 
                   <span>Giải thưởng: <b class="text-gold">${formatVND(r.prizeValue)}</b></span> • 
-                  <span>Winner: <b class="text-green font-bold">${winnersText}</b></span>
+                  <span>Nhận giải: <b class="text-green font-bold">${winnersText}</b></span>
                 </div>
               </div>
               <div class="text-right">
@@ -2722,7 +2690,7 @@ async function loadRoundsHistoryTable() {
     if (json.success && json.data && json.data.length > 0) {
       json.data.reverse().forEach(r => {
         const tr = document.createElement("tr");
-        const winners = (r.winners || []).join(', ') || 'Chưa chốt';
+        const winners = roundWinnerSummary(r);
         const occupied = r.slots ? r.slots.filter(s => s.player_name).length : 0;
         tr.innerHTML = `
           <td><span class="badge-gold-neon">Chuyến #${r.roundNumber}</span></td>
@@ -2934,6 +2902,7 @@ function downloadRoundsDetailCsv() {
   return downloadReadableWorkbook('/api/reports/export/rounds?format=xlsx', 'Lich_su_cac_chuyen');
 }
 function exportCurrentRoundSettlementCsv() {
+  if(gameState.settlementDirty || gameState.status !== 'finished') return alert('Bấm “Chốt kết quả” để lưu trước khi xuất Excel.');
   const round = gameState.roundNumber || currentRoundNumber || 1;
   return downloadReadableWorkbook('/api/reports/export/round?menuId=' + encodeURIComponent(currentActiveMenuId) + '&roundNumber=' + round, 'Quyet_toan_chuyen_' + round);
 }

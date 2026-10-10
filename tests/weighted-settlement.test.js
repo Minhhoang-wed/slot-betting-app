@@ -36,17 +36,23 @@ test('integer allocation preserves every đồng, handles ties and large amounts
   assert.throws(()=>core.allocate(10,['A','B'],[1]));
 });
 
-test('browser preview and summary show each actual award instead of an equal split', () => {
-  const elements={finalSettlementTableBody:{innerHTML:'',children:[],appendChild(row){this.children.push(row);}},summaryMetaBar:{innerHTML:''},soloAmountText:{},split2AmountText:{},split3AmountText:{}};
-  const context=vm.createContext({console,Intl,input:game,document:{addEventListener(){},getElementById:id=>elements[id]||null,createElement:()=>({innerHTML:''})}});
+test('browser preview distinguishes winning slots from all purchased slots and does not persist', () => {
+  const input={...game,slots:['mayne','freefire','freefire','mayne','khách khác'].map((owner,i)=>({id:i+1,owner}))};
+  const elements={finalSettlementTableBody:{innerHTML:'',children:[],appendChild(row){this.children.push(row);}},summaryMetaBar:{innerHTML:''},winningPrizeTotal:{},winningPrizePerSlot:{}};
+  let fetches=0;
+  const context=vm.createContext({console,Intl,input,fetch(){fetches++;throw new Error('Preview must not save');},document:{addEventListener(){},getElementById:id=>elements[id]||null,createElement:()=>({innerHTML:''})}});
   vm.runInContext(fs.readFileSync(require.resolve('../views/js/settlement-core'),'utf8'),context);
   vm.runInContext(fs.readFileSync(require.resolve('../views/js/app'),'utf8'),context);
-  vm.runInContext("gameState={...input,name:'TEST',roundNumber:1,winners:['mayne','freefire'],settleMode:'split2'}; updateHeroStats=()=>{}; autoCalculateSettlement(true); updateSplitAmounts();",context);
+  vm.runInContext("gameState={...input,name:'TEST',roundNumber:1,winningSlots:[1,2,3],winners:[],settlementDirty:true}; updateHeroStats=()=>{}; autoCalculateSettlement(true); updateSplitAmounts();",context);
   assert.match(elements.summaryMetaBar.innerHTML,/mayne.*400\.000.*freefire.*800\.000/);
   assert.doesNotMatch(elements.summaryMetaBar.innerHTML,/600\.000|Mỗi người nhận/);
-  assert.match(elements.finalSettlementTableBody.children[0].innerHTML,/265\.000/);
+  assert.match(elements.finalSettlementTableBody.children[0].innerHTML,/130\.000/);
   assert.match(elements.finalSettlementTableBody.children[1].innerHTML,/530\.000/);
-  assert.equal(elements.split2AmountText.innerText,'Chia theo số slot của 2 người thắng');
+  assert.match(elements.summaryMetaBar.innerHTML,/CHƯA CHỐT/);
+  assert.match(elements.finalSettlementTableBody.children[0].innerHTML,/#1<\/strong>/);
+  assert.match(elements.finalSettlementTableBody.children[0].innerHTML,/#1, #4/);
+  assert.equal(elements.winningPrizePerSlot.textContent,'400.000 đ');
+  assert.equal(fetches,0);
 });
 
 test('actual models persist weighted prizes, history/report and Excel retain them', async () => {

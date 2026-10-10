@@ -1,4 +1,4 @@
-const { key, allocate, groups } = require('../views/js/settlement-core');
+const { key, allocate, groups, calculateBySlots, winningSlotsFromResults } = require('../views/js/settlement-core');
 /**
  * MODEL LAYER: Thống Kê Dữ Liệu & Xuất Báo Cáo File Excel (CSV Chuẩn UTF-8 BOM)
  * Phục vụ nghiệp vụ:
@@ -79,6 +79,9 @@ const ReportModel = {
             buyCost,
             isWinner: !!res.isWinner,
             prizeWon,
+            winningSlotsList: res.winningSlotsList,
+            winningSlotCount: res.winningSlotCount,
+            prizeRule: res.prizeRule,
             attachedItems: res.attachedItems || [],
             attachedCost,
             net,
@@ -92,7 +95,9 @@ const ReportModel = {
       const roundPlayers = groups(round);
 
       const roundWinners = (round.winners || []).map(key);
-      const awards = roundWinners.length ? allocate(Number(round.prizeValue), roundWinners,
+      const bySlots = Array.isArray(round.winningSlots) && round.winningSlots.length > 0;
+      const slotResults = bySlots ? calculateBySlots(round, round.winningSlots, round.deductSlotCost ?? true, round.attachedProducts || {}) : null;
+      const awards = bySlots ? Object.fromEntries(slotResults.map(r=>[key(r.playerName),r.prizeWon])) : roundWinners.length ? allocate(Number(round.prizeValue), roundWinners,
         roundWinners.map(id => Math.round((roundPlayers.get(id)?.slotCount || 0) * 100))) : {};
 
       [...roundPlayers].forEach(([id, participant]) => {
@@ -115,9 +120,10 @@ const ReportModel = {
         }
 
         const buyCost = participant.totalCost;
-        const isWinner = roundWinners.includes(id);
+        const slotResult = slotResults?.find(r=>key(r.playerName)===id);
+        const isWinner = bySlots ? slotResult.isWinner : roundWinners.includes(id);
         let prizeWon = 0;
-        if (isWinner && roundWinners.length > 0) {
+        if (isWinner) {
           prizeWon = awards[id] || 0;
         }
 
@@ -152,6 +158,9 @@ const ReportModel = {
           buyCost,
           isWinner,
           prizeWon,
+          winningSlotsList: slotResult?.winningSlotsList,
+          winningSlotCount: slotResult?.winningSlotCount,
+          prizeRule: slotResult?.prizeRule,
           attachedItems: attached,
           attachedCost,
           net,
@@ -190,6 +199,8 @@ const ReportModel = {
         totalSlots: r.totalSlots,
         occupiedSlots: (r.slots || []).filter(s => s.player_name).length,
         winners: r.winners || [],
+        winningSlots: winningSlotsFromResults(r.finishedResults) ?? r.winningSlots ?? null,
+        prizeRule: (r.finishedResults || []).find(result=>result.prizeRule)?.prizeRule || null,
         prizeValue: r.prizeValue,
         createdAt: r.createdAt
       }))
@@ -410,12 +421,13 @@ const ReportModel = {
     let csv = '';
     csv += `LỊCH SỬ CHI TIẾT TẤT CẢ CÁC CHUYẾN KÈO\n`;
     csv += `Thời Gian Xuất: ${new Date().toLocaleString('vi-VN')}\n\n`;
-    csv += `Chuyến Số,Menu,Tên Chuyến,Trạng Thái,Slot Số,Khách Giữ Slot,Người Thắng Kèo?,Đơn Giá Slot (VNĐ),Thời Gian\n`;
+    csv += `Chuyến Số,Menu,Tên Chuyến,Trạng Thái,Slot Số,Khách Giữ Slot,Slot Thắng?,Đơn Giá Slot (VNĐ),Thời Gian\n`;
 
     rounds.forEach(r => {
       (r.slots || []).forEach(s => {
-        const isWinner = s.player_name && (r.winners || []).map(key).includes(key(s.player_name));
-        csv += `${r.roundNumber},"${r.menuCode || r.menuId}","${r.name}","${r.status === 'finished' ? 'Đã kết thúc' : 'Đang mở'}",${s.slot_number},"${s.player_name || '(Trống)'}","${isWinner ? 'WINNER (TRÚNG GIẢI)' : ''}",${r.slotPrice},"${new Date(r.createdAt).toLocaleString('vi-VN')}"\n`;
+        const selected = winningSlotsFromResults(r.finishedResults) ?? r.winningSlots;
+        const winText = Array.isArray(selected) ? (selected.includes(s.slot_number) ? 'SLOT THẮNG' : '') : r.status === 'finished' ? 'Kết quả cũ chưa lưu slot thắng' : '';
+        csv += `${r.roundNumber},"${r.menuCode || r.menuId}","${r.name}","${r.status === 'finished' ? 'Đã kết thúc' : 'Đang mở'}",${s.slot_number},"${s.player_name || '(Trống)'}","${winText}",${r.slotPrice},"${new Date(r.createdAt).toLocaleString('vi-VN')}"\n`;
       });
     });
 

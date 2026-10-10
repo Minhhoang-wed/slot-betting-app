@@ -3399,3 +3399,59 @@ input[type="number"] {
 .customer-search-choice:hover, .customer-search-choice[aria-pressed="true"] { border-color: #b45309; background: #fff4df; color: #422006; }
 .customer-search-choice:focus-visible { outline: 3px solid #0369a1; outline-offset: 3px; }
 .customer-search-detail { margin-top: 16px; flex-wrap: wrap; }
+
+/* Clear seat selection and separate purchased seats from winning seats. */
+.workspace-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.workspace-grid > .surface-card { min-width: 0; }
+.workspace-grid .card-top-bar { flex-wrap: wrap; }
+.workspace-grid .top-bar-title { min-width: 0; }
+.workspace-grid .top-bar-title > div { min-width: 0; }
+.workspace-grid .icon-circle { flex-shrink: 0; }
+.workspace-grid .card-heading, .workspace-grid .card-caption { white-space: normal; }
+.workspace-grid .card-caption { font-size: 14px; line-height: 1.5; margin-top: 4px; }
+.winning-step-number { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: #9a3412; color: #fff; font-weight: 800; font-size: 15px; margin-right: 6px; }
+.winning-slot-help { font-size: 15px; line-height: 1.55; color: #57534e; margin: 10px 0 16px; }
+.winning-count-badge { background: #fef3c7; border: 1px solid #d97706; color: #78350f; padding: 7px 12px; border-radius: 8px; font-size: 15px; font-weight: 800; }
+.winning-clear-btn { background: #fff; border: 1px solid #a8a29e; color: #44403c; padding: 9px 12px; border-radius: 8px; cursor: pointer; font: inherit; font-size: 14px; }
+.winning-slots-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 15px 0; }
+.winning-slot-choice { display: flex; flex-direction: column; gap: 7px; min-height: 112px; padding: 13px; text-align: left; border: 2px solid #d6d3d1; border-radius: 10px; background: #fff; color: #292524; font: inherit; cursor: pointer; transition: border-color .15s, background .15s; }
+.winning-slot-number { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 19px; font-weight: 800; color: #78716c; }
+.winning-slot-number i { font-size: 18px; }
+.winning-slot-choice strong { font-size: 16px; line-height: 1.35; overflow-wrap: anywhere; }
+.winning-slot-choice > span:last-child { font-size: 12px; line-height: 1.4; }
+.winning-slot-choice:hover:not(:disabled) { border-color: #a16207; background: #fffbeb; }
+.winning-slot-choice.selected { border-color: #15803d; background: #eaf8ee; color: #14532d; }
+.winning-slot-choice.selected .winning-slot-number { color: #15803d; }
+.winning-slot-choice:disabled { background: #f5f5f4; color: #78716c; border-style: dashed; cursor: default; }
+.winning-slot-choice:focus-visible, .winning-clear-btn:focus-visible, .winning-finalize-btn:focus-visible { outline: 3px solid #0369a1; outline-offset: 3px; }
+.winning-prize-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; border: 1px solid #f59e0b; border-radius: 10px; background: #fffbeb; }
+.winning-prize-preview div { display: flex; flex-direction: column; gap: 7px; }
+.winning-prize-preview span { font-size: 14px; color: #57534e; }
+.winning-prize-preview strong { font-size: 20px; color: #92400e; }
+.winning-slot-example { font-size: 14px; line-height: 1.6; margin: 12px 0 20px; color: #57534e; }
+.winning-selection-status { font-size: 15px; line-height: 1.5; padding: 12px 14px; border-radius: 8px; background: #ecfdf5; color: #166534; margin: 18px 0 12px; }
+.winning-selection-status.pending { background: #fff7ed; color: #9a3412; border: 1px solid #fdba74; }
+.winning-finalize-btn { font-size: 16px; min-height: 48px; }
+.winning-finalize-btn:disabled { opacity: .5; cursor: not-allowed; }
+.winning-result-cell { background: #f0fdf4; color: #166534; min-width: 110px; }
+.winning-result-cell strong, .winning-result-cell small { display: block; line-height: 1.5; }
+.result-table td:nth-child(4), .result-table td:nth-child(5), .result-table td:nth-child(6), .result-table td:nth-child(7) { white-space: nowrap; }
+.result-highlight-ribbon { line-height: 1.6; font-size: 15px; }
+.settle-card-header { background: #fff8ed; }
+.settle-title { color: #292524; }
+.settle-desc { color: #57534e; font-size: 14px; line-height: 1.6; }
+.result-highlight-ribbon > div:last-child { flex-basis: 100%; }
+.tile-number-badge { white-space: nowrap; }
+.settle-decision-box .deduct-toggle-bar { flex-direction: column; align-items: stretch; }
+.settle-decision-box .deduct-title { font-size: 16px; }
+.settle-decision-box .deduct-desc { font-size: 14px; line-height: 1.55; margin-top: 9px; }
+.settle-decision-box .deduct-btns { display: flex; gap: 8px; margin-top: 12px; }
+.settle-decision-box .btn-deduct-toggle { flex: 1; font-size: 14px; padding: 11px 9px; white-space: normal; line-height: 1.4; }
+@media (max-width: 1080px) {
+  .workspace-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .winning-slots-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .winning-prize-preview { grid-template-columns: 1fr; }
+  .winning-slot-choice { min-height: 110px; }
+}

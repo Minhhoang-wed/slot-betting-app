@@ -51,7 +51,72 @@
         prizeRule: 'winner_slots', deducted: isWinner && deduct, attachedItems: items, attachedTotalCost, settleType: netAmount > 0 ? 'shop_pays_player' : 'player_pays_shop' };
     });
   }
-  const api = { key, allocate, groups, calculate };
+  function winningSlotNumbers(game, selected) {
+    if (!Array.isArray(selected) || !selected.length) throw new Error('Chọn ít nhất một slot thắng');
+    if (selected.some(n => typeof n !== 'number' && !(typeof n === 'string' && /^\d+$/.test(n.trim())))) throw new Error('Slot thắng phải là số ghế');
+    const numbers = selected.map(n => Number(n));
+    if (numbers.some(n => !Number.isSafeInteger(n) || n < 1) || new Set(numbers).size !== numbers.length) throw new Error('Slot thắng phải là số ghế khác nhau');
+    const slots = new Map(game.slots.map(s => [Number(s.slot_number || s.id), s]));
+    if (numbers.some(n => !slots.has(n) || !String(slots.get(n).player_name || slots.get(n).owner || '').trim())) throw new Error('Chỉ chọn slot đã có khách trong chuyến');
+    return numbers.sort((a,b) => a-b);
+  }
+  function winningSlotsFromResults(results) {
+    if (!Array.isArray(results) || !results.some(r => r.prizeRule === 'winning_slots')) return null;
+    return [...new Set(results.flatMap(r => Array.isArray(r.winningSlots) ? r.winningSlots : r.winningSlotsList || []))].sort((a,b)=>a-b);
+  }
+  function withAttachedProducts(results, attached) {
+    if (!Array.isArray(results) || !attached || typeof attached !== 'object' || Array.isArray(attached)) throw new Error('Danh sách mỹ phẩm không hợp lệ');
+    return results.map(row => {
+      const items = Object.entries(attached).filter(([name]) => key(name) === key(row.playerName)).flatMap(([,list]) => {
+        if (!Array.isArray(list)) throw new Error('Danh sách mỹ phẩm không hợp lệ');
+        return list.map(item => {
+          const price=Number(item.price),qty=Number(item.qty ?? 1);
+          if (!Number.isSafeInteger(price) || price<0 || !Number.isSafeInteger(qty) || qty<1) throw new Error('Tiền mỹ phẩm không hợp lệ');
+          return {...item,price,qty};
+        });
+      });
+      const attachedTotalCost=items.reduce((sum,item)=>sum+item.price*item.qty,0);
+      if (!Number.isSafeInteger(attachedTotalCost)) throw new Error('Tiền mỹ phẩm không hợp lệ');
+      const prizeWon=Number(row.prizeWon || 0),buyCost=Number(row.buyCost || 0);
+      if (!Number.isSafeInteger(prizeWon) || prizeWon<0 || !Number.isSafeInteger(buyCost) || buyCost<0) throw new Error('Số tiền đã lưu không hợp lệ');
+      const netAmount=(row.isWinner && row.deducted===false ? prizeWon : prizeWon-buyCost)-attachedTotalCost;
+      if (!Number.isSafeInteger(netAmount)) throw new Error('Số tiền quyết toán không hợp lệ');
+      return {...row,attachedItems:items,attachedTotalCost,netAmount,settleType:netAmount>0?'shop_pays_player':'player_pays_shop'};
+    });
+  }
+  function modeForWinningSlots(selected) {
+    return selected.length === 1 ? 'solo' : selected.length === 2 ? 'split2' : 'split3';
+  }
+  function calculateBySlots(game, selected, deduct = true, attached = {}) {
+    const players = groups(game);
+    const winningSlots = winningSlotNumbers(game, selected);
+    const slotAwards = allocate(Number(game.prizeValue), winningSlots.map(String));
+    const slots = new Map(game.slots.map(s => [Number(s.slot_number || s.id), s]));
+    const awards = new Map();
+    for (const number of winningSlots) {
+      const slot = slots.get(number);
+      const owner = String(slot.player_name || slot.owner).trim();
+      const shares = Array.isArray(slot.shares) && slot.shares.length ? slot.shares : [{name:owner, percent:100}];
+      const split = allocate(slotAwards[String(number)], shares.map(p=>p.name), shares.map(p=>p.percent));
+      for (const share of shares) {
+        const id=key(share.name);
+        if (!awards.has(id)) awards.set(id,{amount:0,slots:[],count:0});
+        const award=awards.get(id);
+        award.amount+=split[id];award.slots.push(number);award.count+=share.percent/100;
+      }
+    }
+    return [...players].map(([id,p]) => {
+      const items=Object.entries(attached).filter(([name])=>key(name)===id).flatMap(([,items])=>items);
+      const attachedTotalCost=items.reduce((sum,it)=>sum+Number(it.price)*Number(it.qty||1),0);
+      if (!Number.isSafeInteger(attachedTotalCost) || attachedTotalCost < 0) throw new Error('Tiền mỹ phẩm không hợp lệ');
+      const award=awards.get(id),isWinner=!!award,prizeWon=award?.amount || 0,buyCost=p.totalCost;
+      const netAmount=(isWinner && !deduct ? prizeWon : prizeWon-buyCost)-attachedTotalCost;
+      return {playerName:p.name,slotCount:p.slotCount,slotsList:p.slots,buyCost,prizeWon,netAmount,isWinner,
+        prizeRule:'winning_slots',winningSlots:[...winningSlots],winningSlotsList:award?.slots || [],winningSlotCount:award?.count || 0,
+        deducted:isWinner && deduct,attachedItems:items,attachedTotalCost,settleType:netAmount>0?'shop_pays_player':'player_pays_shop'};
+    });
+  }
+  const api = { key, allocate, groups, calculate, calculateBySlots, winningSlotNumbers, winningSlotsFromResults, modeForWinningSlots, withAttachedProducts };
   if (typeof module !== 'undefined') module.exports = api;
   else root.SettlementCore = api;
 })(typeof window === 'undefined' ? this : window);

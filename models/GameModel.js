@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { supabase, isConfigured } = require('../services/durableDatabase');
 const MenuModel = require('./MenuModel');
+const settlementCore = require('../views/js/settlement-core');
 
 // Quản lý trạng thái Menu đang chọn trong bộ nhớ
 let currentActiveMenuId = null;
@@ -109,6 +110,8 @@ function mapGameRowToRound(g, menu) {
     status: g.status || 'open',
     settleMode: g.settle_mode || 'solo',
     winners: Array.isArray(g.winners) ? g.winners : [],
+    winningSlots: settlementCore.winningSlotsFromResults(g.finished_results) ?? (g.status === 'finished' ? null : []),
+    prizeRule: (g.finished_results || []).find(r=>r.prizeRule)?.prizeRule || null,
     slots: slots,
     finishedResults: g.finished_results || null,
     finishedAt: g.finished_at || null,
@@ -232,6 +235,8 @@ async function loadOrInitRoundsForMenu(menu, initialize = true) {
     status: 'open',
     settleMode: 'solo',
     winners: [],
+    winningSlots: [],
+    prizeRule: null,
     slots: slots,
     finishedResults: null,
     finishedAt: null,
@@ -279,6 +284,8 @@ const GameModel = {
     }
 
     game.menuCode = menu.code;
+    game.winningSlots = settlementCore.winningSlotsFromResults(game.finishedResults) ?? (game.status === 'finished' ? null : []);
+    game.prizeRule = (game.finishedResults || []).find(r=>r.prizeRule)?.prizeRule || null;
 
     return game;
   },
@@ -368,6 +375,8 @@ const GameModel = {
       status: options.status || 'open',
       settleMode: options.settleMode || 'solo',
       winners: options.winners || [],
+      winningSlots: [],
+      prizeRule: null,
       slots: slots,
       finishedResults: null,
       finishedAt: null,
@@ -390,6 +399,10 @@ const GameModel = {
       return this.getGameById(game.id);
     }
 
+    if (options.status === 'open' && game.status === 'finished') {
+      game.winners = []; game.finishedResults = null; game.finishedAt = null; game.nextRoundId = null;
+      game.winningSlots = []; game.prizeRule = null;
+    }
     if (options.name) game.name = options.name;
     if (options.slotPrice !== undefined) game.slotPrice = Number(options.slotPrice);
     if (options.prizeValue !== undefined) game.prizeValue = Number(options.prizeValue);
@@ -489,6 +502,8 @@ const GameModel = {
       totalSlots: r.totalSlots,
       occupiedSlots: (r.slots || []).filter(s => s.player_name && s.player_name.trim()).length,
       winners: r.winners || [],
+      winningSlots: settlementCore.winningSlotsFromResults(r.finishedResults) ?? (r.status === 'finished' ? null : []),
+      prizeRule: (r.finishedResults || []).find(result=>result.prizeRule)?.prizeRule || null,
       prizeValue: r.prizeValue,
       slotPrice: r.slotPrice,
       finishedAt: r.finishedAt,
@@ -499,7 +514,11 @@ const GameModel = {
   async getGameById(gameId) {
     for (const rounds of (isConfigured() ? [] : Object.values(roundsByMenu))) {
       const found = (rounds || []).find(r => r.id === gameId);
-      if (found) return found;
+      if (found) {
+        found.winningSlots = settlementCore.winningSlotsFromResults(found.finishedResults) ?? (found.status === 'finished' ? null : []);
+        found.prizeRule = (found.finishedResults || []).find(r=>r.prizeRule)?.prizeRule || null;
+        return found;
+      }
     }
 
     if (isConfigured() && supabase) {
@@ -542,6 +561,8 @@ const GameModel = {
     currentGame.slots = newSlots;
     currentGame.status = 'open';
     currentGame.winners = [];
+    currentGame.winningSlots = [];
+    currentGame.prizeRule = null;
     currentGame.finishedResults = null;
     currentGame.finishedAt = null;
     if (name) currentGame.name = name;
@@ -585,13 +606,34 @@ const GameModel = {
 
   async persistSettlement(menuId, data, openNext) {
     const game = await this.getCurrentGame(menuId, data.roundNumber ?? null);
-    const core = require('../views/js/settlement-core');
-    const winners = data.winners || game.winners || [];
-    const settleMode = data.settleMode || game.settleMode;
+    if (data.expectedUpdatedAt !== undefined) {
+      const actualStamp=typeof game.updatedAt === 'string' ? game.updatedAt : game.updatedAt?.toISOString();
+      const expectedStamp=typeof data.expectedUpdatedAt === 'string' ? data.expectedUpdatedAt : data.expectedUpdatedAt?.toISOString?.();
+      if (!expectedStamp || expectedStamp!==actualStamp) throw new Error('Dữ liệu chuyến đã thay đổi. Hãy tải lại trước khi chốt');
+    }
+    const core = settlementCore;
+    let winners = data.winners || game.winners || [];
+    let settleMode = data.settleMode || game.settleMode;
     const attached = data.customerAttachedProducts ?? Object.fromEntries((game.finishedResults || []).map(r=>[r.playerName,r.attachedItems || []]));
     const deduct = data.deductSlotCost ?? (game.finishedResults || []).find(r=>r.isWinner)?.deducted ?? true;
-    const results = winners.length ? core.calculate(game, settleMode, winners, deduct, attached) : [];
-    if (!winners.length && !openNext) throw new Error('Chưa chọn người nhận giải');
+    const hasSavedResults = game.status === 'finished' && Array.isArray(game.finishedResults) && game.finishedResults.length > 0;
+    let results;
+    // Opening a successor must use the already saved snapshot, including legacy outcomes.
+    if (hasSavedResults && (openNext || data.winningSlots === undefined)) {
+      results = game.finishedResults; winners = game.winners || []; settleMode = game.settleMode;
+      if (!openNext && data.customerAttachedProducts !== undefined) results = core.withAttachedProducts(results, data.customerAttachedProducts);
+    } else if (data.winningSlots !== undefined) {
+      if (openNext && Array.isArray(data.winningSlots) && !data.winningSlots.length) {
+        results = []; winners = []; settleMode = 'solo';
+      } else {
+        results = core.calculateBySlots(game, data.winningSlots, deduct, attached);
+        winners = results.filter(r=>r.isWinner).map(r=>r.playerName);
+        settleMode = core.modeForWinningSlots(data.winningSlots);
+      }
+    } else {
+      results = winners.length ? core.calculate(game, settleMode, winners, deduct, attached) : [];
+    }
+    if (!winners.length && !openNext) throw new Error('Chưa chọn slot thắng');
     if (isConfigured() && supabase) {
       const { data: saved } = await supabase.rpc('finish_slot_round', {
         p_game_id: game.id, p_menu_id: game.menuId, p_expected_updated_at: game.updatedAt,
@@ -603,6 +645,8 @@ const GameModel = {
     }
     game.status = 'finished'; game.winners = winners; game.settleMode = settleMode;
     game.finishedResults = results; game.finishedAt = new Date(); game.updatedAt = new Date();
+    game.winningSlots = core.winningSlotsFromResults(results);
+    game.prizeRule = results.find(r=>r.prizeRule)?.prizeRule || null;
     saveStorage();
     let nextRound = game.nextRoundId ? await this.getGameById(game.nextRoundId) : null;
     if (openNext && !nextRound) { nextRound = await this.createNewRound(game.menuId); game.nextRoundId = nextRound.id; saveStorage(); }
