@@ -268,6 +268,7 @@ function switchTab(tabId) {
     document.getElementById("tabReports").classList.add("active");
     document.getElementById("tabBtnReports").classList.add("active");
     loadReports();
+    if (typeof loadFinanceSummary === 'function') loadFinanceSummary();
   } else if (tabId === 'shop') {
     document.getElementById("tabShop").classList.add("active");
     document.getElementById("tabBtnShop").classList.add("active");

@@ -80,4 +80,24 @@ function round(game){const rows=(game.finishedResults||[]).map(r=>({customerName
 function history(rounds){const wb=workbook(),ws=sheet(wb,'Lịch sử','LỊCH SỬ CÁC CHUYẾN','Tất cả chuyến đã lưu',[30,10,16,12,18,32,20,24]);summary(ws,5,'Số chuyến đã chốt',rounds.filter(r=>r.status==='finished').length,{currency:false});summary(ws,6,'Số chuyến chưa chốt',rounds.filter(r=>r.status!=='finished').length,{currency:false});
  table(ws,8,['Menu / tên chuyến','Chuyến','Kết quả','Ghế đã bán','Giá mỗi ghế','Người nhận giải','Tổng giải','Thời gian Việt Nam'],rounds.map(r=>[r.name,'#'+r.roundNumber,r.status==='finished'?'Đã chốt':'Chưa chốt',(r.slots||[]).filter(s=>s.player_name).length,r.slotPrice,(r.winners||[]).join(', ')||'Chưa chọn',r.prizeValue,timeVN(r.finishedAt||r.createdAt)]),{moneyCols:[5,7],countCols:[4]});return wb;
 }
-module.exports={customer,menu,all,round,history};
+function finance(data) {
+  const wb=workbook(),ws=sheet(wb,'Tổng hợp','QUYẾT TOÁN BÀN KÈO, TÚI MÙ VÀ PASS','Số tiền theo dữ liệu đang lưu',[28,21,21,21,21,21,23,23]);
+  summary(ws,5,'TỔNG KHÁCH CẦN TRẢ SHOP',data.customerPays,{fill:colors.orange});
+  summary(ws,6,'TỔNG SHOP CẦN TRẢ KHÁCH',data.shopPays,{fill:colors.green});
+  band(ws,8,'Số cuối = Số dư bàn kèo − Hóa đơn túi mù còn thiếu + Tiền shop thu lại.',{fill:null,color:colors.muted});ws.getRow(8).height=46;
+  band(ws,9,'Hóa đơn chưa xác nhận trả tiền được tính là còn thiếu. Bàn kèo gồm cả chuyến chưa chốt.',{fill:null,color:colors.muted});ws.getRow(9).height=46;
+  const rows=data.customers.map(c=>[c.customerName,c.slotNet,c.bagTotal,c.bagPaid,c.bagDue,c.buybackTotal,c.shopPays,c.customerPays]);
+  const end=table(ws,11,['Khách hàng','Số dư bàn kèo','Tổng hóa đơn túi mù','Khách đã trả','Túi mù còn thiếu','Tiền pass được nhận','SHOP TRẢ KHÁCH','KHÁCH TRẢ SHOP'],rows,{moneyCols:[2,3,4,5,6,7,8],payCols:[8],receiveCols:[7]});
+  rows.forEach((_,i)=>{const r=12+i,c=data.customers[i];ws.getCell(r,5).value={formula:`C${r}-D${r}`,result:c.bagDue};ws.getCell(r,7).value={formula:`MAX(0,B${r}-E${r}+F${r})`,result:c.shopPays};ws.getCell(r,8).value={formula:`MAX(0,E${r}-B${r}-F${r})`,result:c.customerPays};});
+  if(rows.length){
+    total(ws,end,'TỔNG',[2,3,4,5,6,7,8],12,end-1);
+    ws.getCell('F5').value={formula:`SUM(H12:H${end-1})`,result:data.customerPays};
+    ws.getCell('F6').value={formula:`SUM(G12:G${end-1})`,result:data.shopPays};
+    ws.views=[{state:'frozen',ySplit:11,xSplit:1,showGridLines:false,zoomScale:100}];
+  }
+  const source=sheet(wb,'Chi tiết','CHI TIẾT GIAO DỊCH','Phiếu pass đã hủy không được cộng vào tổng tiền khách nhận',[28,28,28,16,40,12,23,30]);
+  table(source,5,['Khách hàng','Loại giao dịch','Menu / đợt túi mù','Chuyến / slot','Sản phẩm / hóa đơn','Số lượng','Số tiền','Trạng thái'],data.customers.flatMap(c=>c.events.map(e=>[c.customerName,e.type,e.context,e.slots,e.name,e.quantity,e.amount,e.status])),{moneyCols:[7],countCols:[6]});
+  source.views=[{state:'frozen',ySplit:5,xSplit:1,showGridLines:false,zoomScale:100}];
+  return wb;
+}
+module.exports={customer,menu,all,round,history,finance};

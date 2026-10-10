@@ -6,21 +6,21 @@ const { createBlindBagService, createMemoryStore } = require('../services/blindB
 async function setup(store = createMemoryStore()) {
   const catalog = [{ id: 1, name: 'Son', price: 250000 }, { id: 2, name: 'Phấn', price: 290000 }];
   const service = createBlindBagService(store, { getAll: async () => catalog });
-  const round = await service.create({ name: 'Túi mù tháng 10', productIds: Array.from({ length: 15 }, (_, i) => i % 2 + 1) });
+  const round = await service.create({ name: 'Túi mù tháng 10', productIds: Array.from({ length: 45 }, (_, i) => i % 2 + 1) });
   const buy = (quantity, overrides = {}) => service.checkout(round.id, {
     requestId: randomUUID(), customerName: 'Khách A', phone: '0901234567', quantity, items: [], discount: 0, ...overrides
   });
   return { service, round, buy, catalog };
 }
 
-test('creates exactly 15 product units, retaining repeated types and snapshots', async () => {
+test('creates exactly 45 product units, retaining repeated types and snapshots', async () => {
   const { service, round, catalog } = await setup();
-  assert.equal(round.data.pool.length, 15);
+  assert.equal(round.data.pool.length, 45);
   assert.equal(round.data.price, 414000);
   catalog[0].name = 'Đã sửa tên';
   assert.equal((await service.list())[0].data.pool[0].name, 'Son');
-  await assert.rejects(service.create({ productIds: [1] }), /đúng 15/);
-  await assert.rejects(service.create({ productIds: Array(15).fill(99) }), /không còn/);
+  await assert.rejects(service.create({ productIds: [1] }), /đúng 45/);
+  await assert.rejects(service.create({ productIds: Array(45).fill(99) }), /không còn/);
 });
 
 test('mixed checkout stores authoritative prices, buyer, slots and full receipt together', async () => {
@@ -102,7 +102,7 @@ test('simultaneous assignments cannot give one product to two slots', async () =
 test('new rounds retain previous buyers and results', async () => {
   const { buy, service, round } = await setup();
   await buy(1);
-  await service.create({ productIds: Array(15).fill(1) });
+  await service.create({ productIds: Array(45).fill(1) });
   const rounds = await service.list();
   assert.equal(rounds.length, 2);
   assert.equal(rounds.find(r => r.id === round.id).data.slots.length, 1);
@@ -125,7 +125,7 @@ test('supports custom round price in creation, dynamic update, and checkout calc
   const round = await service.create({
     name: 'Đợt giá mềm',
     price: 200000,
-    productIds: Array(15).fill(1)
+    productIds: Array(45).fill(1)
   });
   assert.equal(round.data.price, 200000);
 
@@ -161,6 +161,6 @@ test('supports custom round price in creation, dynamic update, and checkout calc
   assert.equal(order2.total, 300000);
 
   // Rejects negative or non-integer prices
-  await assert.rejects(service.create({ productIds: Array(15).fill(1), price: -1000 }), /không âm/);
+  await assert.rejects(service.create({ productIds: Array(45).fill(1), price: -1000 }), /không âm/);
   await assert.rejects(service.update(round.id, { price: 'invalid' }), /không âm/);
 });

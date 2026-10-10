@@ -14,10 +14,12 @@ const blindBagEscape = value => String(value ?? '').replace(/[&<>"']/g, c => ({
 }[c]));
 
 const selectedBlindBag = () => blindBagRounds.find(r => r.id === blindBagSelectedId);
+const bbProductCount = round => round.data.productsPerSlot || 1;
+const bbAssigned = slot => slot.productNumbers || (slot.productNumber == null ? [] : [slot.productNumber]);
 
 const blindBagStatus = round => {
   if (round.data.slots.length < 15) return { text: 'Đang mở bán', class: 'bb-status-open' };
-  if (round.data.slots.every(s => s.productNumber !== null)) return { text: 'Đã hoàn thành', class: 'bb-status-done' };
+  if (round.data.slots.every(s => bbAssigned(s).length === bbProductCount(round))) return { text: 'Đã hoàn thành', class: 'bb-status-done' };
   return { text: 'Đủ 15 slot · Chờ bốc thăm', class: 'bb-status-waiting' };
 };
 
@@ -50,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <i class="fa-solid fa-gem"></i> <span id="bbPriceBadgeText">414.000 đ / slot</span> <i class="fa-solid fa-pen-to-square bb-price-edit-icon"></i>
           </button>
           <span class="bb-chip bb-chip-emerald"><i class="fa-solid fa-boxes-packing"></i> 15 slot / đợt</span>
+          <span class="bb-chip bb-chip-emerald">Đợt mới: 3 sản phẩm / slot</span>
         </div>
       </div>
       <div class="bb-top-actions">
@@ -71,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Modals
   createBlindBagModalDOM();
   createBlindBagEditPriceModalDOM();
+  createBlindBagPassModalDOM();
+  createFinancePanel();
 
   // Khôi phục pending đơn nếu có
   try {
@@ -133,16 +138,16 @@ function createBlindBagModalDOM() {
         <div class="bb-modal-toolbar">
           <div class="bb-modal-quick-actions">
             <button class="bb-btn-tool" onclick="autoFillRandomProducts()">
-              <i class="fa-solid fa-dice"></i> Chọn ngẫu nhiên 15 món
+              <i class="fa-solid fa-dice"></i> Chọn ngẫu nhiên 45 món
             </button>
             <button class="bb-btn-tool" onclick="autoFillPreviousProducts()">
-              <i class="fa-solid fa-copy"></i> Dùng lại 15 món đợt trước
+              <i class="fa-solid fa-copy"></i> Dùng lại danh mục đợt trước
             </button>
             <button class="bb-btn-tool" onclick="resetCreateModalProducts()">
               <i class="fa-solid fa-rotate-left"></i> Xóa chọn
             </button>
           </div>
-          <span id="bbCreateProgressBadge" class="bb-chip bb-chip-gold">Đã chọn: 0/15</span>
+          <span id="bbCreateProgressBadge" class="bb-chip bb-chip-gold">Đã chọn: 0/45</span>
         </div>
         <div id="blindBagProductPool" class="bb-modal-grid-15"></div>
       </div>
@@ -238,7 +243,7 @@ function openEditBlindBagPriceModal() {
   const nameEl = document.getElementById('bbEditPriceRoundName');
   const currentBadge = document.getElementById('bbEditPriceCurrentBadge');
   const input = document.getElementById('bbEditPriceInput');
-  const currentPrice = Number(round.data.price) || 414000;
+  const currentPrice = Number(round.data.price ?? 414000);
   if (nameEl) nameEl.textContent = round.data.name;
   if (currentBadge) currentBadge.textContent = `Hiện tại: ${currentPrice.toLocaleString('vi-VN')} đ / slot`;
   if (input) input.value = currentPrice;
@@ -290,6 +295,7 @@ async function saveBlindBagPrice() {
     }
     closeEditBlindBagPriceModal();
     renderBlindBags();
+    loadFinanceSummary();
     const formatted = (typeof formatVND === 'function') ? formatVND(priceVal) : priceVal.toLocaleString('vi-VN') + ' đ';
     if (typeof showToast === 'function') showToast(`Đã đổi giá túi mù thành ${formatted} / slot!`);
     if (typeof playSound === 'function') playSound('success');
@@ -344,6 +350,7 @@ async function loadBlindBags() {
     }
     renderBlindBags();
   }
+  loadFinanceSummary();
 }
 
 function selectBlindBag(id) {
@@ -361,7 +368,7 @@ function renderBlindBags() {
   if (!host) return;
 
   const round = selectedBlindBag();
-  const roundPrice = round ? (Number(round.data.price) || 414000) : 414000;
+  const roundPrice = round ? (Number(round.data.price ?? 414000)) : 414000;
 
   // Cập nhật giá trên huy hiệu tiêu đề
   const priceBadgeText = document.getElementById('bbPriceBadgeText');
@@ -415,7 +422,7 @@ function renderBlindBags() {
         </div>
         <select id="blindBagRound" class="modern-input" onchange="selectBlindBag(this.value)">
           ${blindBagRounds.map(r => {
-            const p = Number(r.data.price) || 414000;
+            const p = Number(r.data.price ?? 414000);
             return `
             <option value="${blindBagEscape(r.id)}" ${r.id === round.id ? 'selected' : ''}>
               ${blindBagEscape(r.data.name)} (${p.toLocaleString('vi-VN')} đ · ${r.data.slots.length}/15 slot)
@@ -520,8 +527,8 @@ function renderBlindBags() {
         <span class="bb-tab-count">${buyers.size}</span>
       </button>
       <button class="bb-tab-pill ${blindBagActiveTab === 'pool' ? 'active' : ''}" onclick="switchBlindBagTab('pool')">
-        <i class="fa-solid fa-box-open"></i> 15 Món quà trong đợt
-        <span class="bb-tab-count">15</span>
+        <i class="fa-solid fa-box-open"></i> ${pool.length} món quà (${bbProductCount(round)} món / slot)
+        <span class="bb-tab-count">${pool.length}</span>
       </button>
     </div>`;
 
@@ -583,7 +590,9 @@ function renderBlindBags() {
                     <div class="bb-order-btn-customer"><i class="fa-solid fa-user"></i> ${blindBagEscape(o.customerName)}</div>
                     <div class="bb-order-btn-slots">Slot: ${o.slots.map(n => '#' + n).join(', ')}</div>
                   </div>
-                  <div class="bb-order-btn-amount">${(typeof formatVND === 'function') ? formatVND(o.total) : o.total.toLocaleString('vi-VN') + ' đ'}</div>
+                  <div class="bb-order-btn-amount">${formatVND(o.total)}
+                    <label class="bb-paid-control" onclick="event.stopPropagation()"><input type="checkbox" ${o.paid ? 'checked' : ''} ${blindBagBusy ? 'disabled' : ''} onchange="setBlindBagPayment(${idx},this.checked)"> Khách đã trả tiền</label>
+                  </div>
                 </div>
               `).join('')}
             </div>
@@ -594,7 +603,7 @@ function renderBlindBags() {
     html += `
       <div class="bb-pool-grid">
         ${pool.map(p => {
-          const assignedSlot = slots.find(s => s.productNumber === p.number);
+          const assignedSlot = slots.find(s => bbAssigned(s).includes(p.number));
           return `
             <div class="bb-pool-item">
               <div class="bb-pool-item-num">#${p.number}</div>
@@ -610,6 +619,8 @@ function renderBlindBags() {
         }).join('')}
       </div>`;
   }
+
+  html += `<div class="bb-data-card bb-pass-history"><h3>Phiếu shop thu lại đồ</h3>${(round.data.returns || []).length ? round.data.returns.map((r,i)=>`<div class="bb-pass-row"><div><b>${blindBagEscape(r.customerName)}</b> · Slot #${r.slotNumber}<br>${r.items.map(p=>blindBagEscape(p.name)+' ('+formatVND(p.price)+')').join(', ')}<br><b>${formatVND(r.total)}</b> · ${r.voided ? 'Đã hủy' : 'Đã cộng tiền pass vào quyết toán'}</div>${r.voided ? '' : `<button class="btn-action-dim" onclick="voidBlindBagPass(${i})">Hủy phiếu</button>`}</div>`).join('') : '<p>Chưa có phiếu thu lại đồ.</p>'}</div>`;
 
   host.innerHTML = html;
 }
@@ -643,35 +654,15 @@ function renderSingleSlotCard(slotNum, slot, round) {
       <div class="bb-slot-reward-box">
         <div class="bb-reward-pending"><i class="fa-solid fa-hourglass-half"></i> Chờ đủ 15 slot</div>
       </div>`;
-  } else if (slot.productNumber === null) {
-    // Đã đủ 15 slot, chưa gán quà
-    rewardSection = `
-      <div class="bb-slot-reward-box">
-        <select class="bb-reward-select" onchange="assignBlindBagProduct(${slotNum}, this.value)" ${blindBagBusy ? 'disabled' : ''}>
-          <option value="">-- Chọn quà bốc trúng --</option>
-          ${pool.map(p => {
-            const takenByOther = slots.some(s => s.number !== slotNum && s.productNumber === p.number);
-            return `<option value="${p.number}" ${takenByOther ? 'disabled' : ''}>${p.number}. ${blindBagEscape(p.name)} ${takenByOther ? '(Đã gán)' : ''}</option>`;
-          }).join('')}
-        </select>
-      </div>`;
   } else {
-    // Đã gán quà
-    const wonItem = pool.find(p => p.number === slot.productNumber);
-    rewardSection = `
-      <div class="bb-slot-reward-box">
-        <div class="bb-reward-won">
-          <div class="bb-reward-won-content">
-            <span class="bb-reward-won-label"><i class="fa-solid fa-gift"></i> Trúng quà</span>
-            <span class="bb-reward-won-name" title="${wonItem ? blindBagEscape(wonItem.name) : ''}">
-              ${wonItem ? blindBagEscape(wonItem.name) : 'Sản phẩm #' + slot.productNumber}
-            </span>
-          </div>
-          <button class="bb-reward-edit-btn" onclick="assignBlindBagProduct(${slotNum}, '')" title="Bỏ gán / Chọn lại">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      </div>`;
+    const numbers=bbAssigned(slot);
+    const passed=(round.data.returns || []).filter(r=>!r.voided).flatMap(r=>r.items.map(p=>p.productNumber));
+    rewardSection=`<div class="bb-slot-reward-box bb-three-rewards"><b>Bốc được ${numbers.length}/${bbProductCount(round)} món</b>
+      ${Array.from({length:bbProductCount(round)},(_,i)=>`<label>Món ${i+1}<select class="bb-reward-select" data-bb-slot="${slotNum}" ${blindBagBusy || passed.includes(numbers[i]) ? 'disabled' : ''}>
+      <option value="">-- Chọn sản phẩm --</option>${pool.map(p=>{const taken=slots.some(s=>s.number!==slotNum && bbAssigned(s).includes(p.number));return `<option value="${p.number}" ${numbers[i]===p.number?'selected':''} ${taken?'disabled':''}>#${p.number} ${blindBagEscape(p.name)}${taken?' (Đã gán)':''}</option>`;}).join('')}</select>${passed.includes(numbers[i]) ? '<span class="text-green">Đã pass cho shop</span>' : ''}</label>`).join('')}
+      <button class="btn-neon-gold" onclick="saveBlindBagRewards(${slotNum})" ${blindBagBusy?'disabled':''}>Lưu sản phẩm</button>
+      <button class="btn-neon-green" onclick="openBlindBagPass(${slotNum})" ${numbers.length!==bbProductCount(round)||numbers.every(n=>passed.includes(n))||blindBagBusy?'disabled':''}>Shop thu lại đồ</button>
+    </div>`;
   }
 
   return `
@@ -703,7 +694,7 @@ function openBlindBagCreateModal() {
   const priceInput = document.getElementById('blindBagPrice');
   if (priceInput) {
     const prev = selectedBlindBag();
-    priceInput.value = prev ? (Number(prev.data.price) || 414000) : 414000;
+    priceInput.value = prev ? (Number(prev.data.price ?? 414000)) : 414000;
     updateCreatePresetChipsState();
   }
   prepareBlindBagProducts();
@@ -719,9 +710,9 @@ function prepareBlindBagProducts() {
   const host = document.getElementById('blindBagProductPool');
   if (!host) return;
   const previous = [...host.querySelectorAll('select')].map(s => s.value);
-  host.innerHTML = Array.from({ length: 15 }, (_, i) => `
+  host.innerHTML = Array.from({ length: 45 }, (_, i) => `
     <div class="bb-modal-slot-picker">
-      <label><i class="fa-solid fa-gift"></i> Quà slot #${i + 1}</label>
+      <label><i class="fa-solid fa-gift"></i> Sản phẩm #${i + 1}</label>
       <select class="modern-input" onchange="updateCreateProgress()">
         <option value="">-- Chọn sản phẩm --</option>
         ${products.map(p => `
@@ -741,11 +732,11 @@ function updateCreateProgress() {
   const badge = document.getElementById('bbCreateProgressBadge');
   const createBtn = document.getElementById('blindBagCreate');
   if (badge) {
-    badge.textContent = `Đã chọn: ${filled}/15`;
-    badge.className = filled === 15 ? 'bb-chip bb-chip-emerald' : 'bb-chip bb-chip-gold';
+    badge.textContent = `Đã chọn: ${filled}/45`;
+    badge.className = filled === 45 ? 'bb-chip bb-chip-emerald' : 'bb-chip bb-chip-gold';
   }
   if (createBtn) {
-    createBtn.disabled = filled !== 15 || blindBagBusy;
+    createBtn.disabled = filled !== 45 || blindBagBusy;
   }
 }
 
@@ -757,7 +748,7 @@ function autoFillRandomProducts() {
     s.value = randomProduct.id;
   });
   updateCreateProgress();
-  if (typeof showToast === 'function') showToast('Đã tự động chọn 15 sản phẩm ngẫu nhiên.');
+  if (typeof showToast === 'function') showToast('Đã chọn đủ 45 sản phẩm.');
 }
 
 function autoFillPreviousProducts() {
@@ -766,11 +757,11 @@ function autoFillPreviousProducts() {
     return alert('Chưa có đợt túi mù trước đó để sao chép.');
   }
   const selects = [...document.querySelectorAll('#blindBagProductPool select')];
-  previousRound.data.pool.forEach((item, idx) => {
-    if (selects[idx]) selects[idx].value = item.productId;
+  selects.forEach((select, idx) => {
+    select.value = previousRound.data.pool[idx % previousRound.data.pool.length]?.productId || '';
   });
   updateCreateProgress();
-  if (typeof showToast === 'function') showToast('Đã sao chép 15 sản phẩm từ đợt trước.');
+  if (typeof showToast === 'function') showToast('Đã sao chép danh mục cho 45 món.');
 }
 
 function resetCreateModalProducts() {
@@ -782,8 +773,8 @@ function resetCreateModalProducts() {
 async function createBlindBag() {
   if (blindBagBusy) return;
   const productIds = [...document.querySelectorAll('#blindBagProductPool select')].map(s => s.value);
-  if (productIds.length !== 15 || productIds.some(id => !id)) {
-    return alert('Vui lòng chọn đủ 15 sản phẩm cho 15 vị trí quà.');
+  if (productIds.length !== 45 || productIds.some(id => !id)) {
+    return alert('Vui lòng chọn đủ 45 sản phẩm cho 15 slot, mỗi slot 3 món.');
   }
   blindBagBusy = true;
   const createBtn = document.getElementById('blindBagCreate');
@@ -868,7 +859,7 @@ function updateSellPricePreview() {
   if (!qtyInput || !preview) return;
   const qty = parseInt(qtyInput.value) || 1;
   const round = selectedBlindBag();
-  const price = Number(round?.data?.price) || 414000;
+  const price = Number(round?.data?.price ?? 414000);
   const total = qty * price;
   preview.textContent = (typeof formatVND === 'function') ? formatVND(total) : total.toLocaleString('vi-VN') + ' đ';
 }
@@ -920,7 +911,7 @@ async function quickSellBlindBag() {
   syncFromBBNames();
 
   // Đảm bảo giỏ hàng có item túi mù này
-  const slotPrice = Number(round.data.price) || 414000;
+  const slotPrice = Number(round.data.price ?? 414000);
   const existing = cart.find(item => item.blindBagRoundId);
   if (existing && existing.blindBagRoundId !== round.id) {
     return alert('Mỗi hóa đơn chỉ mua slot của một đợt túi mù. Hãy xuất hóa đơn hiện tại trước.');
@@ -961,7 +952,7 @@ function addBlindBagToCart() {
 
   syncFromBBNames();
 
-  const slotPrice = Number(round.data.price) || 414000;
+  const slotPrice = Number(round.data.price ?? 414000);
   if (existing) {
     existing.qty += quantity;
     existing.product.price = slotPrice;
@@ -1076,7 +1067,7 @@ function showBlindBagOrder(index) {
 }
 
 function renderBlindBagInvoice(round, order) {
-  const slotPrice = Number(order.slotPrice) || Number(round.data.price) || 414000;
+  const slotPrice = Number(order.slotPrice ?? round.data.price ?? 414000);
   const items = order.items.map(item => ({ product: { name: item.name, price: item.price }, qty: item.quantity }));
   items.push({
     product: {

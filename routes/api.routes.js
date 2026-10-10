@@ -18,6 +18,9 @@ router.post('/blind-bags', BlindBagController.create);
 router.put('/blind-bags/:id', BlindBagController.update);
 router.post('/blind-bags/:id/checkout', BlindBagController.checkout);
 router.put('/blind-bags/:id/assignment', BlindBagController.assign);
+router.put('/blind-bags/:id/payment', BlindBagController.payment);
+router.post('/blind-bags/:id/buyback', BlindBagController.buyback);
+router.post('/blind-bags/:id/buyback/void', BlindBagController.voidBuyback);
 
 // --- MENUS KÈO (150K, 200K, 100K...) ---
 router.get('/menus', MenuController.getMenus);
@@ -47,6 +50,8 @@ router.post('/game/finalize', GameController.finalizeGame);
 router.post('/settle', SettlementController.settle);
 
 // --- THỐNG KÊ & XUẤT BÁO CÁO FILE EXCEL (CSV UTF-8 BOM) ---
+router.get('/reports/finance', ReportController.getFinance);
+router.get('/reports/export/finance', ReportController.downloadFinance);
 router.get('/reports/menu/:menuId', ReportController.getMenuReport);
 router.get('/reports/all-menus', ReportController.getAllMenusReport);
 router.get('/reports/search', ReportController.searchCustomer);

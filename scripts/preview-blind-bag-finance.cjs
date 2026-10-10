@@ -1,0 +1,44 @@
+// Synthetic local QA only. The module loader blocks Supabase and real file persistence.
+const express=require('express');
+const path=require('node:path');
+const fs=require('node:fs');
+const {randomUUID}=require('node:crypto');
+const {isolatedModels}=require('./audit-customer-session.cjs');
+const workbooks=require('../services/reportWorkbookService');
+async function main(){
+  const app=isolatedModels();
+  const Products=app.load('models/ProductModel.js'),Bags=app.load('models/BlindBagModel.js');
+  for(const [id,name,price] of [[1,'Son',250000],[2,'Phấn',290000],[3,'Gương',77000]])await Products.updateProduct(id,{name,price,image_url:''});
+  const menu=await app.Menu.createMenu({name:'TEST · Cốp Gấu',totalSlots:10,slotPrice:135000,prizeValue:1200000});
+  for(const old of await app.Menu.getAllMenus())if(old.id!==menu.id)await app.Menu.deleteMenu(old.id);
+  const game=await app.Game.getCurrentGame(menu.id,1);
+  const names=['mayne','freefire','freefire','Kiều','Kiều','khách A','khách A','khách A','khách A','khách A'];
+  for(let i=0;i<names.length;i++)await app.Slot.assignSlot(game.id,i+1,names[i]);
+  await app.Game.finalizeGame(menu.id,{roundNumber:1,settleMode:'split2',winners:['mayne','freefire'],deductSlotCost:true});
+  await app.Game.switchActiveMenu(menu.id);
+  const round=await Bags.create({name:'TEST · Túi mù 3 món',productIds:Array.from({length:45},(_,i)=>i%3+1)});
+  const order=(quantity,customerName)=>Bags.checkout(round.id,{requestId:randomUUID(),quantity,customerName,phone:'',items:[],discount:0});
+  const kieu=await order(1,'Kiều');await order(14,'khách A');
+  for(let i=1;i<=15;i++)await Bags.assign(round.id,{slotNumber:i,productNumbers:[i*3-2,i*3-1,i*3],previousProductNumbers:[]});
+  await Bags.payment(round.id,{orderId:kieu.order.id,paid:true,previousPaid:false});
+  await Bags.buyback(round.id,{requestId:randomUUID(),slotNumber:1,productNumbers:[1,2,3]});
+  const report=await app.load('models/FinanceModel.js').getSummary();
+  const output=path.resolve('outputs/blind-bag-three-products');fs.mkdirSync(output,{recursive:true});
+  fs.writeFileSync(path.join(output,'TEST_Quyet_toan_chung.xlsx'),await workbooks.finance(report).xlsx.writeBuffer());
+  fs.writeFileSync(path.join(output,'TEST_Quyet_toan_chung.json'),JSON.stringify(report,null,2));
+  console.log(JSON.stringify({scope:'Synthetic local QA, no production DB',kieu:report.customers.find(c=>c.customerName==='Kiều'),output}));
+  if(!process.argv.includes('--serve'))return;
+  const server=express();server.use(express.json());
+  const Game=app.load('controllers/GameController.js'),Menu=app.load('controllers/MenuController.js'),Product=app.load('controllers/ProductController.js'),Blind=app.load('controllers/BlindBagController.js'),Reports=app.load('controllers/ReportController.js');
+  server.get('/api/menus',Menu.getMenus);server.get('/api/game',Game.getGame);server.get('/api/game/history',Game.getRoundHistory);
+  server.get('/api/products',Product.getProducts);server.get('/api/shop-config',(req,res)=>res.json({success:true,data:{name:'TEST',bankCode:'QA',accountNumber:'0000',accountOwner:'TEST'}}));
+  server.get('/api/blind-bags',Blind.list);server.post('/api/blind-bags',Blind.create);
+  server.put('/api/blind-bags/:id/assignment',Blind.assign);server.put('/api/blind-bags/:id/payment',Blind.payment);
+  server.post('/api/blind-bags/:id/buyback',Blind.buyback);server.post('/api/blind-bags/:id/buyback/void',Blind.voidBuyback);
+  server.get('/api/reports/finance',Reports.getFinance);server.get('/api/reports/export/finance',Reports.downloadFinance);
+  server.get('/api/reports/all-menus',Reports.getAllMenusReport);server.get('/api/reports/menu/:menuId',Reports.getMenuReport);
+  server.get('/api/reports/search',Reports.searchCustomer);server.get('/api/bills',(req,res)=>res.json({success:true,data:[]}));
+  const port=Number(process.argv.find(a=>a.startsWith('--port='))?.slice(7)||3111);
+  server.use(express.static(path.resolve('views')));server.listen(port,'127.0.0.1',()=>console.log('QA preview http://127.0.0.1:'+port));
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});

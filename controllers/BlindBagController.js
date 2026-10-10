@@ -8,5 +8,8 @@ module.exports = {
   create: handle(req => model.create(req.body)),
   update: handle(req => model.update(req.params.id, req.body)),
   checkout: handle(req => model.checkout(req.params.id, req.body)),
-  assign: handle(req => model.assign(req.params.id, req.body))
+  assign: handle(req => model.assign(req.params.id, req.body)),
+  payment: handle(req => model.payment(req.params.id, req.body)),
+  buyback: handle(req => model.buyback(req.params.id, req.body)),
+  voidBuyback: handle(req => model.voidBuyback(req.params.id, req.body))
 };

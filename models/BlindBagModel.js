@@ -6,7 +6,7 @@ function unwrap({ data, error }) {
   // Never silently fall back to memory when a configured database fails.
   if (error) {
     if (error.code === '23514') {
-      throw Object.assign(new Error('Giá túi mù tùy chỉnh yêu cầu cập nhật cơ sở dữ liệu. Vui lòng chạy migrations/003_blind_bag_custom_price.sql trong Supabase SQL Editor.'), { status: 400 });
+      throw Object.assign(new Error('Cần cập nhật cơ sở dữ liệu Túi mù: chạy migration 003 (giá tùy chỉnh) và 004_blind_bag_three_products.sql (3 món mỗi slot) trong Supabase SQL Editor.'), { status: 400 });
     }
     throw Object.assign(new Error('Không thể lưu/đọc túi mù. Kiểm tra kết nối và chạy migration 001_blind_bags.sql.'), { status: 503 });
   }

@@ -4,6 +4,7 @@
 const ReportModel = require('../models/ReportModel');
 const GameModel = require('../models/GameModel');
 const reportWorkbook = require('../services/reportWorkbookService');
+const FinanceModel = require('../models/FinanceModel');
 const { key } = require('../views/js/settlement-core');
 
 async function sendWorkbook(res, workbook, name) {
@@ -16,6 +17,14 @@ async function sendWorkbook(res, workbook, name) {
 }
 
 const ReportController = {
+  async getFinance(req,res) {
+    try {res.json({success:true,data:await FinanceModel.getSummary()});}
+    catch(err){res.status(503).json({success:false,error:err.message});}
+  },
+  async downloadFinance(req,res) {
+    try {await sendWorkbook(res,reportWorkbook.finance(await FinanceModel.getSummary()),'Quyet_toan_ban_keo_tui_mu_pass');}
+    catch(err){res.status(503).json({success:false,error:err.message});}
+  },
   // Lấy dữ liệu báo cáo thống kê cho 1 Menu cụ thể
   async getMenuReport(req, res) {
     try {

@@ -1,3 +1,25 @@
+.bb-three-rewards { display: grid; gap: 10px; }
+.bb-three-rewards label { display: grid; gap: 4px; font-size: 15px; }
+.bb-three-rewards select { width: 100%; font-size: 15px; min-height: 44px; }
+.bb-three-rewards button { min-height: 44px; font-size: 15px; white-space: normal; }
+.bb-paid-control { display:flex; gap:8px; align-items:center; font-size:15px; margin-top:8px; color:#243b53; cursor:pointer; }
+.bb-paid-control input, .bb-pass-choice input { width:22px; height:22px; flex-shrink:0; }
+.bb-pass-choice { display:flex; align-items:center; gap:14px; padding:14px; border:1px solid #dfd7cb; border-radius:10px; margin-bottom:12px; font-size:16px; }
+.bb-pass-total { font-size:19px; color:#047857; }
+.bb-pass-history { margin-top:20px; padding:20px; font-size:16px; }
+.bb-pass-row { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 0; border-bottom:1px solid #dfd7cb; }
+.bb-finance-panel { margin-bottom:24px; }
+.bb-finance-panel .card-content { padding:20px; font-size:16px; }
+.bb-finance-panel h2 { font-size:22px; }
+.bb-finance-panel p { line-height:1.6; }
+.bb-finance-actions { display:flex; gap:10px; flex-wrap:wrap; }
+.bb-finance-actions a { padding:12px; text-decoration:none; }
+.bb-finance-scroll { overflow-x:auto; margin-top:16px; }
+.bb-finance-scroll table { min-width:900px; }
+.bb-finance-scroll th, .bb-finance-scroll td { font-size:16px; padding:16px; }
+.bb-finance-receive { color:#047857; background:#e3f3ea; }
+.bb-finance-pay { color:#b45309; background:#fff1de; }
+#financeMessage { padding-top:12px; }
 /* =================================================================
    BLIND BAGS (TÚI MÙ) - MODERN LUXURY DESIGN SYSTEM
    Phong cách ấm áp, tinh gọn, trực quan 100%, không rườm rà
@@ -1327,4 +1349,3 @@
     grid-template-columns: 1fr;
   }
 }
-
