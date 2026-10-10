@@ -117,3 +117,50 @@ test('storage failures do not acknowledge or partially record a purchase', async
   assert.equal(round.data.slots.length, 0);
   assert.equal(round.data.orders.length, 0);
 });
+
+test('supports custom round price in creation, dynamic update, and checkout calculations', async () => {
+  const catalog = [{ id: 1, name: 'Son', price: 250000 }];
+  const service = createBlindBagService(createMemoryStore(), { getAll: async () => catalog });
+  // Create with custom price 200,000 đ
+  const round = await service.create({
+    name: 'Đợt giá mềm',
+    price: 200000,
+    productIds: Array(15).fill(1)
+  });
+  assert.equal(round.data.price, 200000);
+
+  // Buy 2 slots at 200,000 đ = 400,000 đ
+  const { order } = await service.checkout(round.id, {
+    requestId: randomUUID(),
+    customerName: 'Khách B',
+    phone: '0988888888',
+    quantity: 2,
+    items: [],
+    discount: 50000
+  });
+  assert.equal(order.slotPrice, 200000);
+  assert.equal(order.subtotal, 400000);
+  assert.equal(order.total, 350000);
+
+  // Update price dynamically to 300,000 đ
+  await service.update(round.id, { price: 300000 });
+  const updated = (await service.list())[0];
+  assert.equal(updated.data.price, 300000);
+
+  // Next purchase uses new price 300,000 đ
+  const { order: order2 } = await service.checkout(round.id, {
+    requestId: randomUUID(),
+    customerName: 'Khách C',
+    phone: '',
+    quantity: 1,
+    items: [],
+    discount: 0
+  });
+  assert.equal(order2.slotPrice, 300000);
+  assert.equal(order2.subtotal, 300000);
+  assert.equal(order2.total, 300000);
+
+  // Rejects negative or non-integer prices
+  await assert.rejects(service.create({ productIds: Array(15).fill(1), price: -1000 }), /không âm/);
+  await assert.rejects(service.update(round.id, { price: 'invalid' }), /không âm/);
+});

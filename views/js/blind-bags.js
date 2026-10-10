@@ -46,7 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="bb-icon-badge"><i class="fa-solid fa-gift"></i></div>
         <div class="bb-heading-group">
           <h2>TÚI MÙ</h2>
-          <span class="bb-chip bb-chip-gold"><i class="fa-solid fa-gem"></i> 414.000 đ / slot</span>
+          <button type="button" class="bb-chip bb-chip-gold bb-price-badge-interactive" id="bbCurrentPriceBadge" onclick="openEditBlindBagPriceModal()" title="Bấm để điều chỉnh giá túi mù đợt này">
+            <i class="fa-solid fa-gem"></i> <span id="bbPriceBadgeText">414.000 đ / slot</span> <i class="fa-solid fa-pen-to-square bb-price-edit-icon"></i>
+          </button>
           <span class="bb-chip bb-chip-emerald"><i class="fa-solid fa-boxes-packing"></i> 15 slot / đợt</span>
         </div>
       </div>
@@ -66,8 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>`;
   tabShop.appendChild(section);
 
-  // Modal tạo đợt mới
+  // Modals
   createBlindBagModalDOM();
+  createBlindBagEditPriceModalDOM();
 
   // Khôi phục pending đơn nếu có
   try {
@@ -107,9 +110,25 @@ function createBlindBagModalDOM() {
         <button class="bb-modal-close-btn" onclick="closeBlindBagCreateModal()">&times;</button>
       </div>
       <div class="bb-modal-body">
-        <div class="bb-input-field">
-          <label for="blindBagName">Tên đợt túi mù</label>
-          <input id="blindBagName" class="modern-input" maxlength="100" placeholder="Ví dụ: Túi mù đợt 1">
+        <div class="bb-input-grid-2">
+          <div class="bb-input-field">
+            <label for="blindBagName">Tên đợt túi mù</label>
+            <input id="blindBagName" class="modern-input" maxlength="100" placeholder="Ví dụ: Túi mù đợt 1">
+          </div>
+          <div class="bb-input-field">
+            <label for="blindBagPrice">Giá mỗi slot (VNĐ)</label>
+            <div class="bb-input-with-suffix">
+              <input id="blindBagPrice" type="number" class="modern-input" min="0" step="1000" value="414000" placeholder="414000" oninput="updateCreatePresetChipsState()">
+              <span class="bb-input-suffix">đ</span>
+            </div>
+            <div class="bb-price-preset-chips" id="bbCreatePresetChips">
+              <button type="button" class="bb-preset-chip" onclick="setCreateModalPrice(100000)">100K</button>
+              <button type="button" class="bb-preset-chip" onclick="setCreateModalPrice(200000)">200K</button>
+              <button type="button" class="bb-preset-chip" onclick="setCreateModalPrice(300000)">300K</button>
+              <button type="button" class="bb-preset-chip active" onclick="setCreateModalPrice(414000)">414K</button>
+              <button type="button" class="bb-preset-chip" onclick="setCreateModalPrice(500000)">500K</button>
+            </div>
+          </div>
         </div>
         <div class="bb-modal-toolbar">
           <div class="bb-modal-quick-actions">
@@ -140,6 +159,146 @@ function createBlindBagModalDOM() {
   modal.addEventListener('click', e => {
     if (e.target === modal) closeBlindBagCreateModal();
   });
+}
+
+function createBlindBagEditPriceModalDOM() {
+  if (document.getElementById('bbEditPriceModal')) return;
+  const modal = document.createElement('div');
+  modal.id = 'bbEditPriceModal';
+  modal.className = 'bb-modal-overlay';
+  modal.innerHTML = `
+    <div class="bb-modal-dialog bb-modal-sm">
+      <div class="bb-modal-header">
+        <h3><i class="fa-solid fa-pen-to-square" style="color: #b45309;"></i> Chỉnh Mức Giá Túi Mù</h3>
+        <button class="bb-modal-close-btn" onclick="closeEditBlindBagPriceModal()">&times;</button>
+      </div>
+      <div class="bb-modal-body">
+        <div class="bb-edit-price-target-info">
+          <span id="bbEditPriceRoundName" class="bb-target-round-name">Túi mù</span>
+          <span id="bbEditPriceCurrentBadge" class="bb-chip bb-chip-gold">Hiện tại: 414.000 đ</span>
+        </div>
+        <div class="bb-input-field" style="margin-top: 10px;">
+          <label for="bbEditPriceInput">Mức giá mới cho mỗi slot</label>
+          <div class="bb-input-with-suffix">
+            <input id="bbEditPriceInput" type="number" class="modern-input" min="0" step="1000" placeholder="Nhập giá mới..." oninput="updateEditPresetChipsState()">
+            <span class="bb-input-suffix">đ</span>
+          </div>
+        </div>
+        <div>
+          <label style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">Chọn nhanh:</label>
+          <div class="bb-price-preset-chips" id="bbEditPresetChips">
+            <button type="button" class="bb-preset-chip" onclick="setEditModalPrice(100000)">100.000 đ</button>
+            <button type="button" class="bb-preset-chip" onclick="setEditModalPrice(200000)">200.000 đ</button>
+            <button type="button" class="bb-preset-chip" onclick="setEditModalPrice(300000)">300.000 đ</button>
+            <button type="button" class="bb-preset-chip" onclick="setEditModalPrice(414000)">414.000 đ</button>
+            <button type="button" class="bb-preset-chip" onclick="setEditModalPrice(500000)">500.000 đ</button>
+          </div>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 4px 0 0; line-height: 1.4;">
+          <i class="fa-solid fa-circle-info"></i> Giá mới sẽ tự động cập nhật giỏ hàng và áp dụng cho các lượt bán slot tiếp theo.
+        </p>
+      </div>
+      <div class="bb-modal-footer">
+        <button class="btn-action-dim" onclick="closeEditBlindBagPriceModal()">Hủy</button>
+        <button id="bbSavePriceBtn" class="btn-neon-gold" onclick="saveBlindBagPrice()">
+          <i class="fa-solid fa-check"></i> Lưu mức giá
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  modal.addEventListener('click', e => {
+    if (e.target === modal) closeEditBlindBagPriceModal();
+  });
+}
+
+function setCreateModalPrice(val) {
+  const input = document.getElementById('blindBagPrice');
+  if (input) input.value = val;
+  updateCreatePresetChipsState();
+}
+
+function updateCreatePresetChipsState() {
+  const input = document.getElementById('blindBagPrice');
+  const val = input ? parseInt(input.value) : 0;
+  document.querySelectorAll('#bbCreatePresetChips .bb-preset-chip').forEach(btn => {
+    const chipVal = parseInt(btn.getAttribute('onclick')?.match(/\d+/)?.[0] || '0');
+    btn.classList.toggle('active', chipVal === val);
+  });
+}
+
+function openEditBlindBagPriceModal() {
+  const round = selectedBlindBag();
+  if (!round) {
+    if (typeof showToast === 'function') showToast('Chưa có đợt túi mù nào để chỉnh giá.');
+    return;
+  }
+  const modal = document.getElementById('bbEditPriceModal');
+  if (!modal) return;
+  const nameEl = document.getElementById('bbEditPriceRoundName');
+  const currentBadge = document.getElementById('bbEditPriceCurrentBadge');
+  const input = document.getElementById('bbEditPriceInput');
+  const currentPrice = Number(round.data.price) || 414000;
+  if (nameEl) nameEl.textContent = round.data.name;
+  if (currentBadge) currentBadge.textContent = `Hiện tại: ${currentPrice.toLocaleString('vi-VN')} đ / slot`;
+  if (input) input.value = currentPrice;
+  updateEditPresetChipsState();
+  modal.classList.add('active');
+  setTimeout(() => input?.focus(), 100);
+}
+
+function closeEditBlindBagPriceModal() {
+  const modal = document.getElementById('bbEditPriceModal');
+  if (modal) modal.classList.remove('active');
+}
+
+function setEditModalPrice(val) {
+  const input = document.getElementById('bbEditPriceInput');
+  if (input) input.value = val;
+  updateEditPresetChipsState();
+}
+
+function updateEditPresetChipsState() {
+  const input = document.getElementById('bbEditPriceInput');
+  const val = input ? parseInt(input.value) : 0;
+  document.querySelectorAll('#bbEditPresetChips .bb-preset-chip').forEach(btn => {
+    const chipVal = parseInt(btn.getAttribute('onclick')?.match(/\d+/)?.[0] || '0');
+    btn.classList.toggle('active', chipVal === val);
+  });
+}
+
+async function saveBlindBagPrice() {
+  if (blindBagBusy) return;
+  const round = selectedBlindBag();
+  if (!round) return;
+  const input = document.getElementById('bbEditPriceInput');
+  const priceVal = input ? parseInt(input.value) : NaN;
+  if (!Number.isSafeInteger(priceVal) || priceVal < 0) {
+    return alert('Vui lòng nhập mức giá hợp lệ (số nguyên không âm).');
+  }
+  blindBagBusy = true;
+  const btn = document.getElementById('bbSavePriceBtn');
+  if (btn) btn.disabled = true;
+  try {
+    await blindBagAPI(`/${round.id}`, { price: priceVal }, 'PUT');
+    round.data.price = priceVal;
+    // Đồng bộ lại giỏ hàng nếu đang chứa item túi mù đợt này
+    const cartItem = cart.find(item => item.blindBagRoundId === round.id);
+    if (cartItem) {
+      cartItem.product.price = priceVal;
+      if (typeof renderCart === 'function') renderCart();
+    }
+    closeEditBlindBagPriceModal();
+    renderBlindBags();
+    const formatted = (typeof formatVND === 'function') ? formatVND(priceVal) : priceVal.toLocaleString('vi-VN') + ' đ';
+    if (typeof showToast === 'function') showToast(`Đã đổi giá túi mù thành ${formatted} / slot!`);
+    if (typeof playSound === 'function') playSound('success');
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    blindBagBusy = false;
+    if (btn) btn.disabled = false;
+  }
 }
 
 function updateBlindBagPendingMessage() {
@@ -202,6 +361,13 @@ function renderBlindBags() {
   if (!host) return;
 
   const round = selectedBlindBag();
+  const roundPrice = round ? (Number(round.data.price) || 414000) : 414000;
+
+  // Cập nhật giá trên huy hiệu tiêu đề
+  const priceBadgeText = document.getElementById('bbPriceBadgeText');
+  if (priceBadgeText) {
+    priceBadgeText.textContent = `${roundPrice.toLocaleString('vi-VN')} đ / slot`;
+  }
 
   // Trường hợp chưa có đợt nào
   if (!round) {
@@ -241,13 +407,20 @@ function renderBlindBags() {
     <!-- HERO CONTROL BAR -->
     <div class="bb-hero-bar">
       <div class="bb-round-selector-box">
-        <label for="blindBagRound">Đợt túi mù đang chọn</label>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
+          <label for="blindBagRound" style="margin: 0;">Đợt túi mù đang chọn</label>
+          <button type="button" class="bb-btn-hero-edit-price" onclick="openEditBlindBagPriceModal()" title="Bấm để điều chỉnh giá slot đợt này">
+            <i class="fa-solid fa-pen-to-square"></i> Đổi giá (${roundPrice.toLocaleString('vi-VN')} đ)
+          </button>
+        </div>
         <select id="blindBagRound" class="modern-input" onchange="selectBlindBag(this.value)">
-          ${blindBagRounds.map(r => `
+          ${blindBagRounds.map(r => {
+            const p = Number(r.data.price) || 414000;
+            return `
             <option value="${blindBagEscape(r.id)}" ${r.id === round.id ? 'selected' : ''}>
-              ${blindBagEscape(r.data.name)} (${r.data.slots.length}/15 slot) · ${new Date(r.created_at).toLocaleDateString('vi-VN')}
-            </option>
-          `).join('')}
+              ${blindBagEscape(r.data.name)} (${p.toLocaleString('vi-VN')} đ · ${r.data.slots.length}/15 slot)
+            </option>`;
+          }).join('')}
         </select>
       </div>
       <div class="bb-hero-stats">
@@ -267,7 +440,7 @@ function renderBlindBags() {
 
   // KHU VỰC BÁN SLOT (Nếu còn slot)
   if (remaining > 0) {
-    const defaultTotal = currentQty * 414000;
+    const defaultTotal = currentQty * roundPrice;
     const formattedTotal = (typeof formatVND === 'function') ? formatVND(defaultTotal) : defaultTotal.toLocaleString('vi-VN') + ' đ';
 
     html += `
@@ -527,6 +700,12 @@ function openBlindBagCreateModal() {
   if (nameInput) {
     nameInput.value = `Túi mù đợt ${blindBagRounds.length + 1}`;
   }
+  const priceInput = document.getElementById('blindBagPrice');
+  if (priceInput) {
+    const prev = selectedBlindBag();
+    priceInput.value = prev ? (Number(prev.data.price) || 414000) : 414000;
+    updateCreatePresetChipsState();
+  }
   prepareBlindBagProducts();
   modal.classList.add('active');
 }
@@ -612,7 +791,9 @@ async function createBlindBag() {
 
   try {
     const name = document.getElementById('blindBagName')?.value.trim() || `Túi mù đợt ${blindBagRounds.length + 1}`;
-    const result = await blindBagAPI('', { name, productIds });
+    const priceInput = document.getElementById('blindBagPrice');
+    const price = priceInput ? (parseInt(priceInput.value) >= 0 ? parseInt(priceInput.value) : 414000) : 414000;
+    const result = await blindBagAPI('', { name, price, productIds });
     blindBagSelectedId = result.data.id;
     closeBlindBagCreateModal();
     await loadBlindBags();
@@ -686,7 +867,9 @@ function updateSellPricePreview() {
   const preview = document.getElementById('bbSellPricePreview');
   if (!qtyInput || !preview) return;
   const qty = parseInt(qtyInput.value) || 1;
-  const total = qty * 414000;
+  const round = selectedBlindBag();
+  const price = Number(round?.data?.price) || 414000;
+  const total = qty * price;
   preview.textContent = (typeof formatVND === 'function') ? formatVND(total) : total.toLocaleString('vi-VN') + ' đ';
 }
 
@@ -737,16 +920,18 @@ async function quickSellBlindBag() {
   syncFromBBNames();
 
   // Đảm bảo giỏ hàng có item túi mù này
+  const slotPrice = Number(round.data.price) || 414000;
   const existing = cart.find(item => item.blindBagRoundId);
   if (existing && existing.blindBagRoundId !== round.id) {
     return alert('Mỗi hóa đơn chỉ mua slot của một đợt túi mù. Hãy xuất hóa đơn hiện tại trước.');
   }
   if (existing) {
     existing.qty = quantity;
+    existing.product.price = slotPrice;
   } else {
     cart.push({
       blindBagRoundId: round.id,
-      product: { id: 'blind-bag-' + round.id, name: `Túi mù · ${round.data.name}`, price: 414000 },
+      product: { id: 'blind-bag-' + round.id, name: `Túi mù · ${round.data.name}`, price: slotPrice },
       qty: quantity
     });
   }
@@ -776,12 +961,14 @@ function addBlindBagToCart() {
 
   syncFromBBNames();
 
+  const slotPrice = Number(round.data.price) || 414000;
   if (existing) {
     existing.qty += quantity;
+    existing.product.price = slotPrice;
   } else {
     cart.push({
       blindBagRoundId: round.id,
-      product: { id: 'blind-bag-' + round.id, name: `Túi mù · ${round.data.name}`, price: 414000 },
+      product: { id: 'blind-bag-' + round.id, name: `Túi mù · ${round.data.name}`, price: slotPrice },
       qty: quantity
     });
   }
@@ -889,11 +1076,12 @@ function showBlindBagOrder(index) {
 }
 
 function renderBlindBagInvoice(round, order) {
+  const slotPrice = Number(order.slotPrice) || Number(round.data.price) || 414000;
   const items = order.items.map(item => ({ product: { name: item.name, price: item.price }, qty: item.quantity }));
   items.push({
     product: {
       name: `Túi mù · ${round.data.name} · Slot ${order.slots.map(n => '#' + n).join(', ')}`,
-      price: 414000
+      price: slotPrice
     },
     qty: order.quantity
   });

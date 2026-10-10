@@ -88,6 +88,59 @@
   color: #fef3c7;
 }
 
+.bb-price-badge-interactive {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #fcd34d;
+  background: #fef3c7;
+  color: #92400e;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  text-decoration: none;
+}
+
+.bb-price-badge-interactive:hover {
+  background: #fde68a;
+  border-color: #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+  transform: translateY(-1px);
+}
+
+.bb-price-edit-icon {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.bb-price-badge-interactive:hover .bb-price-edit-icon {
+  opacity: 1;
+}
+
+.bb-btn-hero-edit-price {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.bb-btn-hero-edit-price:hover {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.15);
+}
+
 .bb-top-actions {
   display: flex;
   align-items: center;
@@ -902,6 +955,90 @@
   overflow: hidden;
   transform: scale(0.96);
   transition: transform 0.2s ease;
+}
+
+.bb-modal-dialog.bb-modal-sm {
+  max-width: 480px;
+}
+
+.bb-input-grid-2 {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .bb-input-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bb-price-preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.bb-preset-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #e7ded4;
+  background: #ffffff;
+  color: var(--text-secondary, #44403c);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bb-preset-chip:hover {
+  border-color: #b45309;
+  color: #92400e;
+  background: #fffbeb;
+}
+
+.bb-preset-chip.active {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.bb-input-with-suffix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.bb-input-with-suffix input {
+  padding-right: 32px;
+  width: 100%;
+}
+
+.bb-input-suffix {
+  position: absolute;
+  right: 12px;
+  font-weight: 700;
+  color: var(--text-muted, #78716c);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.bb-edit-price-target-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #faf7f2;
+  border: 1px solid #e7ded4;
+  border-radius: 8px;
+  gap: 10px;
+}
+
+.bb-target-round-name {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--text-primary, #181514);
 }
 
 .bb-modal-overlay.active .bb-modal-dialog {

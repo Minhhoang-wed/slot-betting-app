@@ -15,6 +15,7 @@ const BlindBagController = require('../controllers/BlindBagController');
 // Túi mù bán lẻ: independent of games, winners and settlement.
 router.get('/blind-bags', BlindBagController.list);
 router.post('/blind-bags', BlindBagController.create);
+router.put('/blind-bags/:id', BlindBagController.update);
 router.post('/blind-bags/:id/checkout', BlindBagController.checkout);
 router.put('/blind-bags/:id/assignment', BlindBagController.assign);
 

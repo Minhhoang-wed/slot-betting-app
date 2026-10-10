@@ -1,7 +1,7 @@
 const { randomUUID } = require('crypto');
 
 const CAPACITY = 15;
-const PRICE = 414000;
+const DEFAULT_PRICE = 414000;
 function check(condition, message, status = 400) {
   if (!condition) throw Object.assign(new Error(message), { status });
 }
@@ -21,6 +21,8 @@ function createBlindBagService(store, products) {
     async create(input) {
       check(Array.isArray(input.productIds) && input.productIds.length === CAPACITY,
         'Mỗi đợt túi mù cần đúng 15 sản phẩm. Có thể chọn nhiều sản phẩm cùng loại.');
+      const price = input.price !== undefined ? Number(input.price) : DEFAULT_PRICE;
+      check(Number.isSafeInteger(price) && price >= 0, 'Giá mỗi slot túi mù phải là số nguyên không âm.');
       const catalog = await products.getAll();
       const pool = input.productIds.map((id, index) => {
         const product = catalog.find(p => String(p.id) === String(id) && p.in_stock !== false);
@@ -29,7 +31,21 @@ function createBlindBagService(store, products) {
       });
       return store.create({ id: randomUUID(), version: 0, created_at: new Date().toISOString(),
         data: { name: String(input.name || 'Túi mù').trim().slice(0, 100) || 'Túi mù',
-          capacity: CAPACITY, price: PRICE, pool, slots: [], orders: [] } });
+          capacity: CAPACITY, price, pool, slots: [], orders: [] } });
+    },
+    update(id, input) {
+      return mutate(id, round => {
+        if (input.price !== undefined) {
+          const price = Number(input.price);
+          check(Number.isSafeInteger(price) && price >= 0, 'Giá mỗi slot túi mù phải là số nguyên không âm.');
+          round.data.price = price;
+        }
+        if (input.name !== undefined) {
+          const name = String(input.name || '').trim().slice(0, 100);
+          if (name) round.data.name = name;
+        }
+        return {};
+      });
     },
     async checkout(id, input) {
       check(typeof input.requestId === 'string' && /^[a-zA-Z0-9-]{16,80}$/.test(input.requestId), 'Mã đơn không hợp lệ.');
@@ -45,6 +61,7 @@ function createBlindBagService(store, products) {
       check(previous, 'Không tìm thấy đợt túi mù.', 404);
       const existing = previous.data.orders.find(o => o.id === input.requestId);
       if (existing) return { round: previous, order: existing };
+      const roundPrice = Number(previous.data.price) || DEFAULT_PRICE;
       const catalog = await products.getAll();
       const items = input.items.map(item => {
         const product = catalog.find(p => String(p.id) === String(item.productId) && p.in_stock !== false);
@@ -53,15 +70,18 @@ function createBlindBagService(store, products) {
         check(Number.isSafeInteger(Number(product.price)) && Number(product.price) >= 0, 'Giá mỹ phẩm không hợp lệ.');
         return { productId: product.id, name: product.name, price: Number(product.price), quantity: item.quantity };
       });
-      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, PRICE * input.quantity);
+      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, roundPrice * input.quantity);
       check(Number.isSafeInteger(subtotal) && input.discount <= subtotal, 'Giảm giá không được vượt tổng tiền hàng.');
       return mutate(id, round => {
         const duplicate = round.data.orders.find(o => o.id === input.requestId);
         if (duplicate) return { order: duplicate };
         check(round.data.slots.length + input.quantity <= CAPACITY, 'Không còn đủ slot túi mù. Vui lòng cập nhật giỏ hàng.', 409);
+        const currentPrice = Number(round.data.price) || roundPrice;
+        const currentSubtotal = items.reduce((sum, item) => sum + item.price * item.quantity, currentPrice * input.quantity);
+        check(input.discount <= currentSubtotal, 'Giảm giá không được vượt tổng tiền hàng.');
         const numbers = Array.from({ length: input.quantity }, (_, i) => round.data.slots.length + i + 1);
-        const order = { id: input.requestId, customerName, phone, items, quantity: input.quantity,
-          slots: numbers, subtotal, discount: input.discount, total: subtotal - input.discount, createdAt: new Date().toISOString() };
+        const order = { id: input.requestId, customerName, phone, items, quantity: input.quantity, slotPrice: currentPrice,
+          slots: numbers, subtotal: currentSubtotal, discount: input.discount, total: currentSubtotal - input.discount, createdAt: new Date().toISOString() };
         round.data.orders.push(order);
         numbers.forEach(number => round.data.slots.push({ number, customerName, phone, orderId: order.id, productNumber: null }));
         return { order };

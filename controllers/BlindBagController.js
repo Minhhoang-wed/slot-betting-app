@@ -6,6 +6,7 @@ const handle = action => async (req, res) => {
 module.exports = {
   list: handle(() => model.list()),
   create: handle(req => model.create(req.body)),
+  update: handle(req => model.update(req.params.id, req.body)),
   checkout: handle(req => model.checkout(req.params.id, req.body)),
   assign: handle(req => model.assign(req.params.id, req.body))
 };
