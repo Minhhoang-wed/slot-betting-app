@@ -52,6 +52,7 @@ router.post('/settle', SettlementController.settle);
 // --- THỐNG KÊ & XUẤT BÁO CÁO FILE EXCEL (CSV UTF-8 BOM) ---
 router.get('/reports/finance', ReportController.getFinance);
 router.get('/reports/export/finance', ReportController.downloadFinance);
+router.get('/reports/export/finance/customer', ReportController.downloadCustomerFinance);
 router.get('/reports/menu/:menuId', ReportController.getMenuReport);
 router.get('/reports/all-menus', ReportController.getAllMenusReport);
 router.get('/reports/search', ReportController.searchCustomer);

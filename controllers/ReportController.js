@@ -5,6 +5,7 @@ const ReportModel = require('../models/ReportModel');
 const GameModel = require('../models/GameModel');
 const reportWorkbook = require('../services/reportWorkbookService');
 const FinanceModel = require('../models/FinanceModel');
+const { forCustomer } = require('../services/customerFinanceService');
 const { key } = require('../views/js/settlement-core');
 
 async function sendWorkbook(res, workbook, name) {
@@ -24,6 +25,17 @@ const ReportController = {
   async downloadFinance(req,res) {
     try {await sendWorkbook(res,reportWorkbook.finance(await FinanceModel.getSummary()),'Quyet_toan_ban_keo_tui_mu_pass');}
     catch(err){res.status(503).json({success:false,error:err.message});}
+  },
+  async downloadCustomerFinance(req,res) {
+    try {
+      const name=req.query.name;
+      if (typeof name!=='string' || !key(name)) return res.status(400).json({success:false,error:'Vui lòng chọn khách cần xuất file.'});
+      const data=forCustomer(await FinanceModel.getSummary(),name);
+      if (!data) return res.status(404).json({success:false,error:'Không tìm thấy khách hàng. Hãy làm mới danh sách và chọn lại.'});
+      const customerName=data.customers[0].customerName;
+      const safeName=customerName.replace(/[\\/:*?"<>|\x00-\x1F]/g,'_').trim().slice(0,80);
+      await sendWorkbook(res,reportWorkbook.finance(data,{customerName}),`Quyet_toan_${safeName}`);
+    } catch(err){res.status(503).json({success:false,error:err.message});}
   },
   // Lấy dữ liệu báo cáo thống kê cho 1 Menu cụ thể
   async getMenuReport(req, res) {

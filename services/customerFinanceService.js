@@ -41,4 +41,13 @@ function summarize(slotReport, blindRounds) {
   const sum=prop=>rows.reduce((n,r)=>n+r[prop],0);
   return {customers:rows,totalCustomers:rows.length,slotNet:sum('slotNet'),bagTotal:sum('bagTotal'),bagPaid:sum('bagPaid'),bagDue:sum('bagDue'),buybackTotal:sum('buybackTotal'),shopPays:sum('shopPays'),customerPays:sum('customerPays')};
 }
-module.exports={summarize};
+function forCustomer(summary, name) {
+  const id=key(name);
+  if (!id) return null;
+  const customer=summary.customers.find(c=>key(c.customerName)===id);
+  if (!customer) return null;
+  const result={customers:[customer],totalCustomers:1};
+  for (const field of ['slotNet','bagTotal','bagPaid','bagDue','buybackTotal','shopPays','customerPays']) result[field]=customer[field];
+  return result;
+}
+module.exports={summarize,forCustomer};

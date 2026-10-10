@@ -17,6 +17,7 @@
 .bb-finance-scroll { overflow-x:auto; margin-top:16px; }
 .bb-finance-scroll table { min-width:900px; }
 .bb-finance-scroll th, .bb-finance-scroll td { font-size:16px; padding:16px; }
+.bb-finance-scroll a { min-height:44px; font-size:15px; padding:10px 14px; text-decoration:none; }
 .bb-finance-receive { color:#047857; background:#e3f3ea; }
 .bb-finance-pay { color:#b45309; background:#fff1de; }
 #financeMessage { padding-top:12px; }
