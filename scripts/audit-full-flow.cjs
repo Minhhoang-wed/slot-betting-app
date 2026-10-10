@@ -30,9 +30,9 @@ function database() {
     Object.assign(game, { status:'finished', winners:p.p_winners, settle_mode:p.p_mode, finished_results:p.p_results });
     return { data: { completedId:game.id, nextId:null }, error:null };
   }, from(table) {
-    let op = 'select', payload, one = false; const filters = [];
+    let op = 'select', payload, one = false, windowRange = null; const filters = [];
     const q = {
-      select() { return q; }, order() { return q; }, limit() { return q; },
+      range(a,b) { windowRange=[a,b]; return q; }, select() { return q; }, order() { return q; }, limit() { return q; },
       eq(k,v) { filters.push(r => r[k] === v); return q; },
       gt(k,v) { filters.push(r => r[k] > v); return q; },
       single() { one = true; return q; }, maybeSingle() { one = true; return q; },
@@ -46,7 +46,7 @@ function database() {
           if (op === 'insert') { rows = (Array.isArray(payload) ? payload : [payload]).map(r => ({ id: 'qa'+(++db.sequence), ...structuredClone(r) })); db[table].push(...rows); }
           if (op === 'update') rows.forEach(r => Object.assign(r, structuredClone(payload)));
           if (op === 'delete') db[table] = db[table].filter(r => !rows.includes(r));
-          rows = structuredClone(rows);
+          rows = structuredClone(windowRange ? rows.slice(windowRange[0],windowRange[1]+1) : rows);
           if (table === 'games') rows.forEach(r => { r.slots = structuredClone(db.slots.filter(s => s.game_id === r.id)); });
           return { data: one ? rows[0] || null : rows, error: null };
         }).then(resolve, reject);
@@ -65,6 +65,7 @@ function instance(db) {
       if (name === 'fs') return { existsSync: () => false, mkdirSync() {}, writeFileSync() {} };
       if (name === 'path') return path;
       if (name === 'crypto') return require('node:crypto');
+      if (name === 'exceljs') return require('exceljs');
       if (name.endsWith('supabase.config')) return { supabase: db.client, isConfigured: () => true };
       if (name.endsWith('shop.config')) return { bankCode:'QA', accountNumber:'0000',accountOwner:'TEST' };
       if (name.startsWith('.')) return load(path.resolve(path.dirname(file), name + '.js'));
@@ -73,7 +74,7 @@ function instance(db) {
     vm.runInThisContext('(function(require,module,exports,__dirname){'+fs.readFileSync(file,'utf8')+'\n})', { filename: file })(requireLocal,module,module.exports,path.dirname(file));
     return module.exports;
   };
-  return { Game: load('models/GameModel.js'), Menu: load('models/MenuModel.js'), Slot: load('models/SlotModel.js'), Controller: load('controllers/GameController.js'), Product:load('models/ProductModel.js'), Bill:load('models/BillModel.js') };
+  return { Game: load('models/GameModel.js'), Menu: load('models/MenuModel.js'), Slot: load('models/SlotModel.js'), Controller: load('controllers/GameController.js'), Product:load('models/ProductModel.js'), Bill:load('models/BillModel.js'), Report:load('models/ReportModel.js'), Settlement:load('models/SettlementModel.js'), load };
 }
 async function main() {
   for (const [mode, count] of [['solo',1],['split2',2],['split3',3]]) {
@@ -173,4 +174,5 @@ async function main() {
   console.log(JSON.stringify(output,null,2));
   if (output.fail) process.exitCode = 1;
 }
-main().catch(e=>{console.error(e);process.exitCode=1;});
+module.exports = { instance };
+if (require.main === module) main().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1391,26 +1391,7 @@ function copyBillText() {
   });
 }
 
-function exportSummaryExcel() {
-  if (!gameState.finishedResults || gameState.finishedResults.length === 0) {
-    alert("Chưa có kết quả để xuất file!");
-    return;
-  }
-  playSound('click');
-  let csv = "Khách Hàng,Số Slot,Chi Tiết Slot,Tiền Mua Slot (VND),Tiền Thưởng (VND),Mỹ Phẩm Mua Kèm,Tiền Mỹ Phẩm (VND),Net Thực Nhận (VND),Ghi Chú\n";
-  gameState.finishedResults.forEach(r => {
-    const attached = getCustomerAttachedProducts(r.playerName);
-    const attachedNames = attached.map(a => `${a.name} x${a.qty}`).join('; ');
-    const attachedCost = attached.reduce((s, a) => s + (a.price * a.qty), 0);
-    csv += `"${r.playerName}",${r.slotCount},"${r.slotsList.join('-')}",${r.buyCost},${r.prizeWon},"${attachedNames}",${attachedCost},${r.netAmount},"${r.netAmount > 0 ? 'Shop tra khach' : 'Khach tra shop'}"\n`;
-  });
-  const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = `Bao_Cao_Keo_Slot_${Date.now()}.csv`;
-  link.click();
-  showToast("Đã xuất file báo cáo Excel (CSV) thành công!");
-}
+function exportSummaryExcel() { return exportCurrentRoundSettlementCsv(); }
 
 // --- TAB 2: COSMETICS CATALOG & CRUD OPERATIONS ---
 async function fetchProductsFromAPI() {
@@ -2625,7 +2606,7 @@ async function loadSingleMenuReport(menuId, query = '') {
           <td>${statusBadge}</td>
           <td class="text-right">
             <div style="display: flex; gap: 4px; justify-content: flex-end;">
-              <button class="btn-neon-blue" style="padding: 4px 8px; font-size: 0.72rem;" onclick="downloadSingleCustomerDetailCsv('${c.customerName}')" title="Xuất file Excel/CSV chi tiết tất cả các chuyến + mỹ phẩm">
+              <button class="btn-neon-blue" style="padding: 4px 8px; font-size: 0.72rem;" onclick="downloadSingleCustomerDetailCsv('${c.customerName}')" title="Xuất file Excel (.xlsx) chi tiết tất cả các chuyến + mỹ phẩm">
                 <i class="fa-solid fa-file-excel"></i> Xuất File
               </button>
               <button class="btn-neon-green" style="padding: 4px 10px; font-size: 0.75rem;" onclick="openBillModal('${c.customerName}')">
@@ -2846,7 +2827,7 @@ async function filterCustomerReports() {
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <button class="btn-neon-gold" onclick="downloadSingleCustomerDetailCsv('${match.customerName}')" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 700;">
-                <i class="fa-solid fa-file-excel"></i> Xuất File Chi Tiết Excel / CSV
+                <i class="fa-solid fa-file-excel"></i> Xuất File Chi Tiết Excel (.xlsx)
               </button>
               <button class="btn-neon-green" onclick="openBillModal('${match.customerName}')" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 700;">
                 <i class="fa-solid fa-receipt"></i> Mở Bill Khách Này
@@ -2876,171 +2857,52 @@ async function filterCustomerReports() {
   loadReports();
 }
 
-async function downloadSingleCustomerDetailCsv(customerName) {
-  if (!customerName) {
-    alert("Vui lòng chỉ định tên khách hàng cần xuất file!");
-    return;
-  }
-  playSound('coin');
-  showToast(`Đang chuẩn bị file chi tiết cho khách [${customerName}]...`);
-
-  // Lấy các sản phẩm mỹ phẩm mà khách đã mua đính kèm
-  const attached = getCustomerAttachedProducts(customerName) || [];
-
+const activeReportDownloads = new Set();
+async function downloadReadableWorkbook(url, filename, options) {
+  if (activeReportDownloads.has(url)) return;
+  activeReportDownloads.add(url);
+  showToast('Đang tạo file Excel, vui lòng đợi...');
   try {
-    const res = await fetch('/api/reports/export/customer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: customerName,
-        attachedProducts: attached
-      })
-    });
-
-    if (!res.ok) {
-      throw new Error(`Lỗi tải file: HTTP ${res.status}`);
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Không tải được file. Vui lòng thử lại.');
     }
-
-    const blob = await res.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const safeName = customerName.replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/g, '_');
-    a.download = `Chi_Tiet_Khach_${safeName}_${Date.now()}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-    showToast(`Đã tải xong file chi tiết của khách [${customerName}]!`);
-  } catch (err) {
-    console.error("Lỗi xuất file khách:", err);
-    // Fallback GET
-    window.location.href = `/api/reports/export/customer?name=${encodeURIComponent(customerName)}`;
-  }
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = filename.replace(/[\\/:*?"<>|]/g, '_') + '.xlsx';
+    document.body.appendChild(link);
+    link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+    showToast('Đã tải file Excel. Mở file để xem tổng tiền và chi tiết.');
+  } catch (error) { showToast(error.message); }
+  finally { activeReportDownloads.delete(url); }
 }
-
-function downloadCurrentFilterMenuCsv() {
-  playSound('coin');
-  if (currentReportFilterMenuId === 'all') {
-    window.location.href = '/api/reports/export/all';
-  } else {
-    window.location.href = `/api/reports/export/menu/${currentReportFilterMenuId}`;
-  }
-  showToast("Đang tải xuống file Báo Cáo Excel (CSV)...");
-}
-
-function downloadAllMenusSummaryCsv() {
-  playSound('coin');
-  window.location.href = '/api/reports/export/all';
-  showToast("Đang tải xuống file Tổng Hợp Tất Cả Menu (CSV)...");
-}
-
-function downloadRoundsDetailCsv() {
-  playSound('coin');
-  window.location.href = '/api/reports/export/rounds';
-  showToast("Đang tải xuống file Chi Tiết Các Chuyến (CSV)...");
-}
-
-function exportCurrentRoundSettlementCsv() {
-  playSound('coin');
-  // Nếu chưa chốt kết quả nhưng đã có người thắng
-  if (!gameState.finishedResults || gameState.finishedResults.length === 0) {
-    if (gameState.winners && gameState.winners.length > 0) {
-      autoCalculateSettlement(true);
-    } else {
-      alert("Vui lòng chọn người thắng hoặc bấm 'Tính Kết Quả & Xuất Báo Cáo' trước khi xuất file!");
-      return;
-    }
-  }
-
-  const results = gameState.finishedResults;
-  if (!results || results.length === 0) {
-    alert("Không có dữ liệu quyết toán để xuất file!");
-    return;
-  }
-
-  const roundNum = gameState.roundNumber || currentRoundNumber || 1;
-  const winnersList = (gameState.winners || []).join(', ') || 'Chưa chốt';
-  const modeName = gameState.settleMode === 'solo' 
-    ? 'Solo Win (1 người trúng trọn)' 
-    : (gameState.settleMode === 'split2' ? 'Chia đôi (2 người)' : 'Chia ba (3 người)');
-
-  let csv = '';
-  csv += `BÁO CÁO QUYẾT TOÁN RÒNG (NET SETTLEMENT) - ${gameState.name.toUpperCase()} (CHUYẾN #${roundNum})\n`;
-  csv += `Thời Gian Xuất: ${new Date().toLocaleString('vi-VN')}\n`;
-  csv += `Đơn Giá Slot: ${Number(gameState.slotPrice).toLocaleString('vi-VN')} đ | Trị Giá Giải Thưởng: ${Number(gameState.prizeValue).toLocaleString('vi-VN')} đ | Chế Độ: ${modeName}\n`;
-  csv += `Người Trúng Kèo: ${winnersList}\n`;
-  csv += `Quy Tắc Vốn: ${deductSlotCost ? 'Cấn trừ vốn cược (Net = Thưởng - Cược - Mỹ Phẩm)' : 'Nhận đủ 100% giải thưởng (Net = Thưởng - Mỹ Phẩm)'}\n\n`;
-
-  // Tiêu đề cột chuẩn
-  csv += `STT,Khách Hàng,Số Lượng Slot,Danh Sách Slot Đã Mua,Đơn Giá Slot (VNĐ),Tiền Cược Slot (VNĐ) [A],Tiền Thưởng Trúng Kèo (VNĐ) [B],Mỹ Phẩm Mua Kèm,Tiền Mỹ Phẩm (VNĐ) [C],Số Tiền Thực Tế (Net) (VNĐ),Trạng Thái Quyết Toán,Ghi Chú Chuyển Khoản\n`;
-
-  let totalSlots = 0;
-  let totalBuyCost = 0;
-  let totalPrizeWon = 0;
-  let totalAttachedCost = 0;
-  let totalNetAmount = 0;
-
-  results.forEach((item, idx) => {
-    totalSlots += item.slotCount;
-    totalBuyCost += item.buyCost;
-    totalPrizeWon += item.prizeWon;
-    totalAttachedCost += (item.attachedTotalCost || 0);
-    totalNetAmount += item.netAmount;
-
-    const slotsText = (item.slotsList || []).map(s => '#' + s).join('; ');
-    let cosmeticsText = '(Không có)';
-    if (item.attachedItems && item.attachedItems.length > 0) {
-      cosmeticsText = item.attachedItems.map(p => `${p.name} (x${p.qty || 1})`).join('; ');
-    }
-
-    const statusText = item.netAmount > 0 
-      ? `Shop trả khách (+${Number(item.netAmount).toLocaleString('vi-VN')} đ)` 
-      : item.netAmount < 0 
-      ? `Khách trả shop (${Number(Math.abs(item.netAmount)).toLocaleString('vi-VN')} đ)` 
-      : `Hòa vốn (0 đ)`;
-
-    const transferNote = `[KEO ${gameState.name.toUpperCase()} C${roundNum}] ${item.playerName} quyet toan`;
-
-    csv += `${idx + 1},"${item.playerName}",${item.slotCount},"${slotsText}",${gameState.slotPrice},${item.buyCost},${item.prizeWon},"${cosmeticsText}",${item.attachedTotalCost || 0},${item.netAmount},"${statusText}","${transferNote}"\n`;
+function downloadSingleCustomerDetailCsv(customerName) {
+  if (!customerName) return showToast('Chọn khách hàng trước khi tải file.');
+  return downloadReadableWorkbook('/api/reports/export/customer?format=xlsx', 'Khach_' + customerName, {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: customerName, attachedProducts: getCustomerAttachedProducts(customerName) || []})
   });
-
-  // Dòng TỔNG CỘNG
-  csv += `TỔNG CỘNG,,${totalSlots},,,${totalBuyCost},${totalPrizeWon},,${totalAttachedCost},${totalNetAmount},,\n\n`;
-
-  // KHUNG TỔNG KẾT TÀI CHÍNH CHUYẾN
-  const spread = totalBuyCost - totalPrizeWon;
-  csv += `BẢNG TỔNG KẾT TÀI CHÍNH CHUYẾN #${roundNum}\n`;
-  csv += `Chỉ Số Tài Chính,Số Tiền (VNĐ)\n`;
-  csv += `Tổng Doanh Thu Slot (A),${totalBuyCost}\n`;
-  csv += `Tổng Tiền Thưởng Phát Ra (B),${totalPrizeWon}\n`;
-  csv += `Tổng Doanh Thu Mỹ Phẩm (C),${totalAttachedCost}\n`;
-  csv += `Chênh Lệch Kèo Cược (A - B),${spread}\n`;
-  csv += `Tổng Quyết Toán Net Chuyến Này,${totalNetAmount}\n`;
-
-  // Tải file trực tiếp về máy với UTF-8 BOM
-  const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  const cleanName = (gameState.name || 'Keo').replace(/[^a-zA-Z0-9_\u00C0-\u1EF9]/g, '_');
-  a.href = url;
-  a.download = `Quyet_Toan_${cleanName}_Chuyen_${roundNum}_${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showToast("Đã tải xuống file Bảng Quyết Toán Chuyến Này (Excel/CSV)!");
 }
-
-async function exportCurrentMenuCsv() {
-  playSound('coin');
-  try {
-    if (gameState.winners && gameState.winners.length > 0) {
-      autoCalculateSettlement(true);
-    }
-  } catch (e) {}
-  window.location.href = `/api/reports/export/menu/${currentActiveMenuId}`;
-  showToast(`Đang tải file Báo Cáo của ${gameState.name}...`);
+function downloadCurrentFilterMenuCsv() {
+  return currentReportFilterMenuId === 'all' ? downloadAllMenusSummaryCsv() :
+    downloadReadableWorkbook('/api/reports/export/menu/' + encodeURIComponent(currentReportFilterMenuId) + '?format=xlsx', 'Bao_cao_menu');
+}
+function downloadAllMenusSummaryCsv() {
+  return downloadReadableWorkbook('/api/reports/export/all?format=xlsx', 'Tong_hop_thu_va_tra');
+}
+function downloadRoundsDetailCsv() {
+  return downloadReadableWorkbook('/api/reports/export/rounds?format=xlsx', 'Lich_su_cac_chuyen');
+}
+function exportCurrentRoundSettlementCsv() {
+  const round = gameState.roundNumber || currentRoundNumber || 1;
+  return downloadReadableWorkbook('/api/reports/export/round?menuId=' + encodeURIComponent(currentActiveMenuId) + '&roundNumber=' + round, 'Quyet_toan_chuyen_' + round);
+}
+function exportCurrentMenuCsv() {
+  return downloadReadableWorkbook('/api/reports/export/menu/' + encodeURIComponent(currentActiveMenuId) + '?format=xlsx', 'Bao_cao_' + gameState.name);
 }
 
 // ================= QUICK SETTINGS & UTILITIES DROPDOWN =================

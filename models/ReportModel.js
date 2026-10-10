@@ -16,15 +16,15 @@ const ReportModel = {
    * Đồng bộ chính xác cả từ finishedResults, slots, winners, deductSlotCost và mỹ phẩm
    * @param {string} menuId 
    */
-  async getCustomerStatsByMenu(menuId) {
-    const menu = await MenuModel.getMenuById(menuId);
+  async getCustomerStatsByMenu(menuId, snapshot = null) {
+    const menu = snapshot?.menu || await MenuModel.getMenuById(menuId);
     if (!menu) throw new Error('Menu không tồn tại!');
 
     // Đảm bảo ván hiện tại của menu này đã được tải/khởi tạo
 
 
-    let allRounds = await GameModel.getAllRounds(menu.id);
-    if (!allRounds || allRounds.length === 0) {
+    let allRounds = snapshot ? snapshot.rounds : await GameModel.getAllRounds(menu.id);
+    if (!snapshot && (!allRounds || allRounds.length === 0)) {
       allRounds = await GameModel.getAllRounds(menuId);
     }
     const customerMap = {};
@@ -52,7 +52,7 @@ const ReportModel = {
           }
 
           const slotCount = res.slotCount || (res.slotsList ? res.slotsList.length : 0);
-          const buyCost = res.buyCost || (slotCount * (round.slotPrice || menu.slot_price));
+          const buyCost = res.buyCost ?? (slotCount * (round.slotPrice ?? menu.slot_price));
           const prizeWon = res.prizeWon || 0;
           const attachedCost = res.attachedTotalCost !== undefined ? res.attachedTotalCost : (
             (res.attachedItems || []).reduce((sum, item) => sum + (Number(item.price) * Number(item.qty || 1)), 0)
@@ -144,6 +144,7 @@ const ReportModel = {
         customerMap[key(name)].roundsDetails.push({
           roundNumber: round.roundNumber,
           roundName: round.name,
+          slotPrice: round.slotPrice,
           slots: slotNums,
           slotCount: participant.slotCount,
           buyCost,
@@ -198,10 +199,11 @@ const ReportModel = {
    */
   async getAllCustomersSummary() {
     const menus = await MenuModel.getAllMenus();
+    const allRounds = await GameModel.getAllRounds();
     const globalCustomerMap = {};
 
     for (const menu of menus) {
-      const { customers } = await this.getCustomerStatsByMenu(menu.id);
+      const { customers } = await this.getCustomerStatsByMenu(menu.id, { menu, rounds:allRounds.filter(r=>r.menuId===menu.id) });
       customers.forEach(c => {
         if (!globalCustomerMap[key(c.customerName)]) {
           globalCustomerMap[key(c.customerName)] = {
@@ -226,7 +228,9 @@ const ReportModel = {
           prizeWon: c.totalPrizeWon,
           attachedCost: c.totalAttachedCost || 0,
           net: c.netAmount,
-          roundsCount: c.roundsCount
+          roundsCount: c.roundsCount,
+          attachedItems: c.attachedItems || [],
+          rounds: c.roundsDetails
         };
 
         entry.totalSlots += c.totalSlots;
@@ -265,31 +269,17 @@ const ReportModel = {
     const matched = allSummary.customers.filter(c => key(c.customerName).includes(query));
 
     // Lấy chi tiết từng chuyến của khách này
-    const results = await Promise.all(matched.map(async c => {
-      const detailedMenus = [];
-      for (const menu of allSummary.menus) {
-        const menuStats = await this.getCustomerStatsByMenu(menu.id);
-        const thisCust = menuStats.customers.find(x => key(x.customerName) === key(c.customerName));
-        if (thisCust) {
-          detailedMenus.push({
-            menuId: menu.id,
-            menuName: menu.name,
-            slotPrice: menu.slot_price,
-            totalSlots: thisCust.totalSlots,
-            totalBuyCost: thisCust.totalBuyCost,
-            totalPrizeWon: thisCust.totalPrizeWon,
-            totalAttachedCost: thisCust.totalAttachedCost || 0,
-            attachedItems: thisCust.attachedItems || [],
-            netAmount: thisCust.netAmount,
-            rounds: thisCust.roundsDetails
-          });
-        }
-      }
+    const results = matched.map(c => {
+      const detailedMenus = Object.values(c.menuBreakdown).map(m=>({
+        menuId:m.menuId,menuName:m.menuName,slotPrice:m.slotPrice,totalSlots:m.slotCount,
+        totalBuyCost:m.buyCost,totalPrizeWon:m.prizeWon,totalAttachedCost:m.attachedCost,
+        netAmount:m.net,attachedItems:m.attachedItems,rounds:m.rounds
+      }));
       return {
         ...c,
         detailedMenus
       };
-    }));
+    });
 
     return results;
   },

@@ -461,7 +461,7 @@
               <button class="btn-neon-round-next" style="padding: 6px 14px; font-size: 0.8rem;" onclick="triggerNextRound()" title="Chốt chuyến hiện tại và tự động mở chuyến mới">
                 <i class="fa-solid fa-forward-step"></i> Chốt & Mở Chuyến Mới
               </button>
-              <button class="btn-neon-green" style="padding: 6px 14px; font-size: 0.8rem;" onclick="exportCurrentRoundSettlementCsv()" title="Tải file Excel/CSV quyết toán chi tiết của chuyến hiện tại">
+              <button class="btn-neon-green" style="padding: 6px 14px; font-size: 0.8rem;" onclick="exportCurrentRoundSettlementCsv()" title="Tải file Excel (.xlsx) quyết toán chi tiết của chuyến hiện tại">
                 <i class="fa-solid fa-file-excel"></i> Xuất Quyết Toán Chuyến Này (Excel)
               </button>
               <button class="btn-ghost-light" style="padding: 6px 14px; font-size: 0.8rem;" onclick="exportCurrentMenuCsv()" title="Tải file báo cáo tổng kết toàn bộ Menu này">
@@ -518,12 +518,12 @@
               <i class="fa-solid fa-file-invoice-dollar"></i> TRUNG TÂM BÁO CÁO & XUẤT DANH SÁCH KHÁCH HÀNG
             </div>
             <h2 class="reports-title">Thống Kê Khách Mua Nhiều Menu & Nhiều Chuyến</h2>
-            <p class="reports-desc">Tra cứu chính xác từng khách đã vào bao nhiêu slot ở từng Menu, tiền cược, tiền trúng thưởng và xuất file Excel (CSV) chuẩn tiếng Việt 100%.</p>
+            <p class="reports-desc">Tra cứu chính xác từng khách đã vào bao nhiêu slot ở từng Menu, tiền cược, tiền trúng thưởng và xuất file Excel (.xlsx) chuẩn tiếng Việt 100%.</p>
           </div>
 
           <div class="reports-quick-actions">
             <button class="btn-neon-green" onclick="downloadCurrentFilterMenuCsv()">
-              <i class="fa-solid fa-file-excel"></i> Xuất File Menu Đang Lọc (CSV)
+              <i class="fa-solid fa-file-excel"></i> Xuất File Menu Đang Lọc (.xlsx)
             </button>
             <button class="btn-neon-purple" onclick="downloadAllMenusSummaryCsv()">
               <i class="fa-solid fa-table-list"></i> Xuất Báo Cáo Tổng Hợp Tất Cả Menu
@@ -606,7 +606,7 @@
             </div>
             <div class="top-bar-actions">
               <button class="btn-ghost-primary" onclick="downloadCurrentFilterMenuCsv()">
-                <i class="fa-solid fa-download"></i> Tải File CSV Menu Này
+                <i class="fa-solid fa-download"></i> Tải Excel Menu Này
               </button>
             </div>
           </div>
@@ -649,7 +649,7 @@
             </div>
             <div class="top-bar-actions">
               <button class="btn-ghost-primary" onclick="downloadAllMenusSummaryCsv()">
-                <i class="fa-solid fa-file-excel"></i> Tải File Tổng Hợp (CSV)
+                <i class="fa-solid fa-file-excel"></i> Tải File Tổng Hợp (.xlsx)
               </button>
             </div>
           </div>
@@ -968,7 +968,7 @@
         <button class="btn-action-green" onclick="downloadBillImage()">
           <i class="fa-solid fa-download"></i> Tải Ảnh Bill (PNG)
         </button>
-        <button id="billGameExport" class="btn-neon-gold" onclick="downloadSingleCustomerDetailCsv(currentBillData ? (currentBillData.customerName || currentBillData.playerName) : '')" title="Xuất file Excel CSV chi tiết tất cả các chuyến">
+        <button id="billGameExport" class="btn-neon-gold" onclick="downloadSingleCustomerDetailCsv(currentBillData ? (currentBillData.customerName || currentBillData.playerName) : '')" title="Xuất file Excel (.xlsx) chi tiết tất cả các chuyến">
           <i class="fa-solid fa-file-excel"></i> Xuất File Khách
         </button>
         <button class="btn-action-dim" onclick="closeBillModal()">Đóng</button>
@@ -1233,7 +1233,7 @@
       </div>
       <div class="modal-bottom-actions">
         <button class="btn-ghost-light" onclick="downloadRoundsDetailCsv()">
-          <i class="fa-solid fa-download"></i> Xuất Lịch Sử (CSV)
+          <i class="fa-solid fa-download"></i> Xuất Lịch Sử (.xlsx)
         </button>
         <button class="btn-action-dim" onclick="closeRoundHistoryModal()">Đóng</button>
       </div>

@@ -624,6 +624,17 @@ const GameModel = {
     }
 
     const menus = await MenuModel.getAllMenus();
+    if (isConfigured() && supabase) {
+      const data = [];
+      for (let offset = 0; ; offset += 500) {
+        const page = await supabase.from('games').select('*, slots(*)').order('id', { ascending:true }).range(offset, offset + 499);
+        if (page.error) throw new Error('Không đọc được lịch sử: ' + page.error.message);
+        data.push(...(page.data || []));
+        if ((page.data || []).length < 500) break;
+      }
+      const byId = new Map(menus.map(m=>[m.id,m]));
+      return (data || []).filter(g=>byId.has(g.menu_id)).map(g=>mapGameRowToRound(g,byId.get(g.menu_id)));
+    }
     let all = [];
     for (const m of menus) {
       const rList = await loadOrInitRoundsForMenu(m, false);

@@ -2,6 +2,18 @@
  * CONTROLLER LAYER: Điều khiển Thống kê dữ liệu & Xuất Báo Cáo File Excel (CSV)
  */
 const ReportModel = require('../models/ReportModel');
+const GameModel = require('../models/GameModel');
+const reportWorkbook = require('../services/reportWorkbookService');
+const { key } = require('../views/js/settlement-core');
+
+async function sendWorkbook(res, workbook, name) {
+  const date = new Date().toLocaleDateString('en-CA', {timeZone:'Asia/Ho_Chi_Minh'});
+  const filename = `${name}_${date}.xlsx`;
+  const bytes = await workbook.xlsx.writeBuffer();
+  res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition',`attachment; filename="Bao_cao_${date}.xlsx"; filename*=UTF-8''${encodeURIComponent(filename)}`);
+  res.send(Buffer.from(bytes));
+}
 
 const ReportController = {
   // Lấy dữ liệu báo cáo thống kê cho 1 Menu cụ thể
@@ -40,6 +52,7 @@ const ReportController = {
   async downloadMenuCsv(req, res) {
     try {
       const { menuId } = req.params;
+      if (req.query?.format === 'xlsx') return await sendWorkbook(res,reportWorkbook.menu(await ReportModel.getCustomerStatsByMenu(menuId)),'Bao_cao_menu');
       const csv = await ReportModel.exportMenuReportCsv(menuId);
       const filename = `Bao_Cao_Menu_${menuId}_${Date.now()}.csv`;
 
@@ -54,6 +67,7 @@ const ReportController = {
   // Tải file CSV báo cáo tổng hợp toàn bộ các Menu
   async downloadAllMenusCsv(req, res) {
     try {
+      if (req.query?.format === 'xlsx') return await sendWorkbook(res,reportWorkbook.all(await ReportModel.getAllCustomersSummary()),'Tong_hop_thu_va_tra');
       const csv = await ReportModel.exportAllMenusSummaryCsv();
       const filename = `Bao_Cao_Tong_Hop_Tat_Ca_Menu_${Date.now()}.csv`;
 
@@ -69,6 +83,7 @@ const ReportController = {
   async downloadRoundsCsv(req, res) {
     try {
       const { menuId } = req.query;
+      if (req.query?.format === 'xlsx') return await sendWorkbook(res,reportWorkbook.history(await GameModel.getAllRounds(menuId || null)),'Lich_su_cac_chuyen');
       const csv = await ReportModel.exportDetailedRoundsCsv(menuId || null);
       const filename = `Chi_Tiet_Cac_Chuyen_${Date.now()}.csv`;
 
@@ -99,6 +114,12 @@ const ReportController = {
       const attachedProducts = req.body && req.body.attachedProducts ? req.body.attachedProducts : [];
       if (!customerName) return res.status(400).json({ success: false, error: 'Thiếu tên khách hàng' });
 
+      if (req.query?.format === 'xlsx') {
+        const matches = await ReportModel.searchCustomer(customerName);
+        const customer = (matches || []).find(c=>key(c.customerName)===key(customerName));
+        return await sendWorkbook(res,reportWorkbook.customer(customer,attachedProducts),`Khach_${customerName}`);
+      }
+
       const csv = await ReportModel.exportCustomerDetailCsv(customerName, attachedProducts);
       const asciiName = customerName
         .normalize('NFD')
@@ -115,6 +136,16 @@ const ReportController = {
     } catch (err) {
       res.status(500).json({ success: false, error: err.message });
     }
+  },
+
+  async downloadRoundWorkbook(req,res) {
+    try {
+      const {menuId,roundNumber}=req.query;
+      if (!menuId || !Number.isInteger(Number(roundNumber)) || Number(roundNumber)<1) throw new Error('Chọn menu và chuyến trước khi xuất file');
+      const game=await GameModel.getCurrentGame(menuId,Number(roundNumber));
+      if (!game.finishedResults?.length) throw new Error('Chưa lưu kết quả chuyến. Hãy chốt chuyến trước khi xuất file');
+      await sendWorkbook(res,reportWorkbook.round(game),`Chuyen_${game.roundNumber}`);
+    }catch(err){res.status(400).json({success:false,error:err.message});}
   }
 };
 

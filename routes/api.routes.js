@@ -55,6 +55,7 @@ router.post('/reports/export/customer', ReportController.downloadCustomerDetailC
 router.get('/reports/export/menu/:menuId', ReportController.downloadMenuCsv);
 router.get('/reports/export/all', ReportController.downloadAllMenusCsv);
 router.get('/reports/export/rounds', ReportController.downloadRoundsCsv);
+router.get('/reports/export/round', ReportController.downloadRoundWorkbook);
 
 // --- BILLS & INVOICE ---
 router.post('/bills', BillController.createBill);
