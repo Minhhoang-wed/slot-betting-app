@@ -195,9 +195,7 @@ const MenuModel = {
    */
   async deleteMenu(id) {
     const menus = await this.getAllMenus();
-    if (menus.length <= 1) {
-      throw new Error('Hệ thống phải có ít nhất 1 Menu kèo!');
-    }
+    if (!menus.some(menu => menu.id === id)) throw new Error('Không tìm thấy Menu');
 
     menusCache = null;
     if (isConfigured() && supabase) {
@@ -207,6 +205,7 @@ const MenuModel = {
     }
 
     inMemoryMenus = inMemoryMenus.filter(m => m.id !== id);
+    require('./GameModel').forgetMenu(id);
     return true;
   }
 };

@@ -1700,6 +1700,11 @@ async function fetchMenus() {
     if (json.success && json.data) {
       menusList = json.data;
       if (!menusList.some(m=>m.id===currentActiveMenuId)) currentActiveMenuId=menusList[0]?.id || null;
+      try {
+        const activeIds = new Set(menusList.map(m=>m.id));
+        for (const storageKey of Object.keys(localStorage)) if (storageKey.startsWith('lucky_slot_history_') && !activeIds.has(storageKey.slice('lucky_slot_history_'.length))) localStorage.removeItem(storageKey);
+      } catch (e) {}
+      updateMenuAvailability();
       renderMenuPills();
       populateReportMenuSelect();
       const badge = document.getElementById("reportCountBadge");
@@ -1707,6 +1712,28 @@ async function fetchMenus() {
     }
   } catch (err) {
     console.error("Lỗi tải danh sách menus:", err);
+  }
+}
+
+function updateMenuAvailability() {
+  const empty = menusList.length === 0;
+  const emptyPanel = document.getElementById('emptyMenuState');
+  if (emptyPanel) emptyPanel.style.display = empty ? 'block' : 'none';
+  for (const id of ['roundsSwitcherDock','gameWorkspace','finalResultCard']) {
+    const panel = document.getElementById(id);
+    if (panel) panel.style.display = empty ? 'none' : '';
+  }
+  document.querySelectorAll('#tabGame .btn-chip-edit-menu, #tabGame .btn-chip-delete-menu').forEach(button=>{button.disabled=empty;});
+  if (empty) {
+    currentActiveMenuId = null;
+    currentRoundNumber = 0;
+    currentRoundsList = [];
+    gameState = {...gameState,id:null,menuId:null,roundNumber:0,name:'',slots:[],totalSlots:0,winners:[],winningSlots:[],finishedResults:null,settlementDirty:false,status:'open'};
+    customerAttachedProducts = {};
+    const badge = document.getElementById('historyCountBadge');
+    if (badge) badge.textContent = '0';
+    const history = document.getElementById('roundHistoryListContainer');
+    if (history) history.innerHTML = '';
   }
 }
 
@@ -1729,7 +1756,7 @@ function renderMenuPills() {
 }
 
 async function selectMenu(menuId) {
-  if (menuId === currentActiveMenuId) return;
+  if (menuId === currentActiveMenuId && gameState.id && gameState.menuId === menuId) return;
   playSound('coin');
 
   // OPTIMISTIC UPDATE: Đổi active pill và cập nhật UI ngay lập tức (0.001s) không để người dùng chờ
@@ -2118,6 +2145,7 @@ async function addNewRoundToMenu() {
 
 async function initAppMenusAndGame() {
   await fetchMenus();
+  if (!menusList.length) return;
   try {
     const res = await fetch(`/api/game?menuId=${currentActiveMenuId}`);
     const json = await res.json();
@@ -2322,10 +2350,7 @@ async function saveMenuForm() {
 }
 
 async function deleteActiveMenu() {
-  if (menusList.length <= 1) {
-    alert("Hệ thống cần tối thiểu 1 Menu kèo, không thể xóa hết!");
-    return;
-  }
+  if (!currentActiveMenuId) return;
 
   const curMenu = menusList.find(m => m.id === currentActiveMenuId);
   const menuName = curMenu ? curMenu.name : currentActiveMenuId;

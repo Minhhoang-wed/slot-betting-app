@@ -252,6 +252,12 @@ async function loadOrInitRoundsForMenu(menu, initialize = true) {
 }
 
 const GameModel = {
+  forgetMenu(menuId) {
+    delete roundsByMenu[menuId];
+    delete activeRoundNumberByMenu[menuId];
+    if (currentActiveMenuId === menuId) currentActiveMenuId = null;
+    saveStorage();
+  },
   getCurrentActiveMenuId() {
     return currentActiveMenuId;
   },

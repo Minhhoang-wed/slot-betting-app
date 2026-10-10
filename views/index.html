@@ -139,7 +139,13 @@
         </div>
 
         <!-- DOCK 2: CÁC CHUYẾN CỦA MENU NÀY (HIỂN THỊ 2-3 CHUYẾN TRỰC TIẾP & MỞ CHUYẾN MỚI) -->
-        <div class="rounds-switcher-dock">
+        <div class="surface-card" id="emptyMenuState" style="display: none; text-align: center; padding: 40px 24px;">
+          <h2 class="card-heading">Chưa có menu kèo</h2>
+          <p class="card-caption" style="white-space: normal; margin: 12px 0 20px;">Tạo menu mới để bắt đầu một đợt mới.</p>
+          <button type="button" class="btn-neon-gold" onclick="openAddMenuModal()"><i class="fa-solid fa-plus"></i> Tạo menu mới</button>
+        </div>
+
+        <div class="rounds-switcher-dock" id="roundsSwitcherDock">
           <div class="rounds-dock-left">
             <div class="dock-label">
               <i class="fa-solid fa-circle-play text-accent"></i>
@@ -170,7 +176,7 @@
         </div>
 
         <!-- MAIN 2-COLUMN WORKSPACE -->
-        <div class="workspace-grid">
+        <div class="workspace-grid" id="gameWorkspace">
 
           <!-- LEFT COLUMN: THIẾT LẬP KÈO & SƠ ĐỒ BÀN 12 SLOT (ĐÃ GỘP HERO JACKPOT) -->
           <div class="surface-card">
@@ -1211,7 +1217,7 @@
 
   <script src="/js/settlement-core.js?v=3.0"></script>
   <script src="/js/customer-search.js"></script>
-<script src="js/app.js?v=3.0"></script>
+<script src="js/app.js?v=3.1"></script>
   <script src="js/blind-bags.js?v=3"></script>
   <script src="js/blind-bag-finance.js?v=3"></script>
 </body>
