@@ -92,6 +92,8 @@ const ReportModel = {
       const roundPlayers = groups(round);
 
       const roundWinners = (round.winners || []).map(key);
+      const awards = roundWinners.length ? allocate(Number(round.prizeValue), roundWinners,
+        roundWinners.map(id => Math.round((roundPlayers.get(id)?.slotCount || 0) * 100))) : {};
 
       [...roundPlayers].forEach(([id, participant]) => {
         const name=participant.name,slotNums=participant.slots;
@@ -113,10 +115,10 @@ const ReportModel = {
         }
 
         const buyCost = participant.totalCost;
-        const isWinner = roundWinners.includes(name.toLowerCase());
+        const isWinner = roundWinners.includes(id);
         let prizeWon = 0;
         if (isWinner && roundWinners.length > 0) {
-          prizeWon = allocate(Number(round.prizeValue), roundWinners)[key(name)] || 0;
+          prizeWon = awards[id] || 0;
         }
 
         // Lấy mỹ phẩm đính kèm nếu có trong round

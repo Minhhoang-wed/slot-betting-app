@@ -337,7 +337,7 @@
                 <span class="icon-circle icon-gold"><i class="fa-solid fa-crown"></i></span>
                 <div>
                   <h2 class="card-heading">Trung Tâm Quyết Toán & Chia Giải</h2>
-                  <p class="card-caption">Host chọn 1 người Win hoặc chia đều 2 / 3 người theo yêu cầu</p>
+                  <p class="card-caption">Chọn 1, 2 hoặc 3 người thắng. Tiền giải chia theo số slot của người thắng</p>
                 </div>
               </div>
               <span class="badge-counter-gold" id="playerCountBadge">0 Người Chơi</span>
@@ -384,8 +384,8 @@
                   <div class="mode-card" id="modeCardSplit2" onclick="selectSettleMode('split2')">
                     <div class="mode-icon-badge"><i class="fa-solid fa-people-arrows"></i></div>
                     <div class="mode-info">
-                      <span class="mode-name">Chia Đôi (Chia 2)</span>
-                      <span class="mode-sub" id="split2AmountText">Mỗi người nhận: 675.000 đ</span>
+                      <span class="mode-name">2 người thắng</span>
+                      <span class="mode-sub" id="split2AmountText">Chia theo số slot của 2 người thắng</span>
                     </div>
                     <div class="mode-radio-check"><i class="fa-solid fa-check"></i></div>
                   </div>
@@ -394,8 +394,8 @@
                   <div class="mode-card" id="modeCardSplit3" onclick="selectSettleMode('split3')">
                     <div class="mode-icon-badge"><i class="fa-solid fa-users-rays"></i></div>
                     <div class="mode-info">
-                      <span class="mode-name">Chia Ba (Chia 3)</span>
-                      <span class="mode-sub" id="split3AmountText">Mỗi người nhận: 450.000 đ</span>
+                      <span class="mode-name">3 người thắng</span>
+                      <span class="mode-sub" id="split3AmountText">Chia theo số slot của 3 người thắng</span>
                     </div>
                     <div class="mode-radio-check"><i class="fa-solid fa-check"></i></div>
                   </div>
@@ -1202,8 +1202,8 @@
           <label>Chế Độ Quyết Toán Thắng Giải</label>
           <select id="roundModalSettleMode" class="modern-select">
             <option value="solo">🏆 Solo Win (1 Người Thắng Trọn Giải)</option>
-            <option value="split2">⚡ Chia Đôi (2 Người Thắng Chia Đều)</option>
-            <option value="split3">✨ Chia Ba (3 Người Thắng Chia Đều)</option>
+            <option value="split2">⚡ 2 Người Thắng (Chia Theo Slot)</option>
+            <option value="split3">✨ 3 Người Thắng (Chia Theo Slot)</option>
           </select>
         </div>
       </div>
@@ -1243,9 +1243,9 @@
   <!-- Toast Notification -->
   <div id="toast" class="modern-toast"></div>
 
-  <script src="/js/settlement-core.js"></script>
+  <script src="/js/settlement-core.js?v=2.8"></script>
   <script src="/js/customer-search.js"></script>
-<script src="js/app.js?v=2.7"></script>
+<script src="js/app.js?v=2.8"></script>
   <script src="js/blind-bags.js?v=1"></script>
 </body>
 </html>

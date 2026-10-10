@@ -61,7 +61,12 @@ async function main(){
           const cost=f.names.filter(n=>core.key(n)===core.key(row.playerName)).length*f.price;
           assert.equal(row.buyCost,cost);
           const winnerIndex=selected.indexOf(core.key(row.playerName));
-          const prize=winnerIndex>=0?Math.floor(f.prize/count)+(winnerIndex<f.prize%count?1:0):0;
+          const counts=selected.map(name=>f.names.filter(n=>core.key(n)===name).length);
+          const total=counts.reduce((sum,n)=>sum+n,0);
+          const amounts=counts.map(n=>Math.floor(f.prize*n/total));
+          const ranking=counts.map((n,i)=>({i,remainder:f.prize*n%total})).sort((a,b)=>b.remainder-a.remainder||a.i-b.i);
+          for(let i=0,left=f.prize-amounts.reduce((sum,n)=>sum+n,0);i<left;i++)amounts[ranking[i].i]++;
+          const prize=winnerIndex>=0?amounts[winnerIndex]:0;
           assert.equal(row.netAmount,prize-(prize && !deduct?0:cost));
         }
       }
@@ -85,13 +90,13 @@ async function main(){
     const summary=await instance(backing).Report.getAllCustomersSummary();
     assert.equal(summary.grandTotalSlots,56);assert.equal(summary.grandTotalBuyCost,6762000);assert.equal(summary.grandTotalPrizeWon,6290000);
     const report=instance(backing).Report,[kieu]=await report.searchCustomer('KIỀU');
-    assert.equal(kieu.totalSlots,13);assert.equal(kieu.totalBuyCost,1459000);assert.equal(kieu.totalPrizeWon,3435000);assert.equal(kieu.netAmount,1976000);
+    assert.equal(kieu.totalSlots,13);assert.equal(kieu.totalBuyCost,1459000);assert.equal(kieu.totalPrizeWon,3471000);assert.equal(kieu.netAmount,2012000);
     const csv=await report.exportCustomerDetailCsv('KIỀU');
-    assert.ok(csv.includes('TỔNG CỘNG KÈO SLOT,,,13,,,1459000,3435000,'));assert.ok(csv.includes('NET = B - A - C),+1976000,'));
+    assert.ok(csv.includes('TỔNG CỘNG KÈO SLOT,,,13,,,1459000,3471000,'));assert.ok(csv.includes('NET = B - A - C),+2012000,'));
     fs.writeFileSync(path.join(output,'TEST_Kieu_6_menu.csv'),csv);
     fs.writeFileSync(path.join(output,'TEST_Lich_su.csv'),await report.exportDetailedRoundsCsv());
     fs.writeFileSync(path.join(output,'TEST_Tong_hop.csv'),await report.exportAllMenusSummaryCsv());
-    const result={scope:'Synthetic winners; actual application models/controllers and PostgreSQL SQL; no production writes',checks,totalSlots:56,totalBuyCost:6762000,totalPrize:6290000,kieu:{slots:13,buyCost:1459000,prize:3435000,net:1976000},finishedRounds:(await instance(backing).Game.getRoundHistory()).length};
+    const result={scope:'Synthetic winners; actual application models/controllers and PostgreSQL SQL; no production writes',checks,totalSlots:56,totalBuyCost:6762000,totalPrize:6290000,kieu:{slots:13,buyCost:1459000,prize:3471000,net:2012000},finishedRounds:(await instance(backing).Game.getRoundHistory()).length};
     assert.equal(result.finishedRounds,6);
     fs.writeFileSync(path.join(output,'ket-qua.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
     if(process.argv.includes('--serve')){

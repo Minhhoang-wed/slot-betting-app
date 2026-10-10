@@ -1,9 +1,18 @@
 (function (root) {
   const key = name => String(name || '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('vi');
-  function allocate(total, winners) {
+  function allocate(total, winners, weights = winners.map(() => 1)) {
     if (!Number.isSafeInteger(total) || total < 0) throw new Error('Giải thưởng phải là số đồng nguyên không âm');
-    const base = Math.floor(total / winners.length), remainder = total % winners.length;
-    return Object.fromEntries(winners.map((name, i) => [key(name), base + (i < remainder ? 1 : 0)]));
+    if (!winners.length || weights.length !== winners.length || weights.some(w => !Number.isSafeInteger(w) || w <= 0)) throw new Error('Số slot người thắng không hợp lệ');
+    const denominator = weights.reduce((sum, w) => sum + BigInt(w), 0n);
+    const shares = weights.map((w, i) => {
+      const numerator = BigInt(total) * BigInt(w);
+      return { i, amount: Number(numerator / denominator), remainder: numerator % denominator };
+    });
+    // Largest remainders receive the leftover đồng; ties follow winner selection order.
+    const ranked = [...shares].sort((a, b) => a.remainder === b.remainder ? a.i - b.i : a.remainder > b.remainder ? -1 : 1);
+    const leftover = total - shares.reduce((sum, share) => sum + share.amount, 0);
+    for (let i = 0; i < leftover; i++) ranked[i].amount++;
+    return Object.fromEntries(shares.map((share, i) => [key(winners[i]), share.amount]));
   }
   function groups(game) {
     const grouped = new Map();
@@ -31,7 +40,7 @@
     const players = groups(game);
     const ids = winners.map(key);
     if (new Set(ids).size !== count || ids.some(id => !players.has(id))) throw new Error('Người nhận giải phải khác nhau và có ghế trong chuyến');
-    const awards = allocate(Number(game.prizeValue), winners);
+    const awards = allocate(Number(game.prizeValue), winners, ids.map(id => Math.round(players.get(id).slotCount * 100)));
     return [...players].map(([id, p]) => {
       const items = Object.entries(attached).filter(([name]) => key(name) === id).flatMap(([,items]) => items);
       const attachedTotalCost = items.reduce((sum, it) => sum + Number(it.price) * Number(it.qty || 1), 0);
@@ -39,7 +48,7 @@
       const buyCost = p.totalCost, isWinner = ids.includes(id), prizeWon = awards[id] || 0;
       const netAmount = (isWinner && !deduct ? prizeWon : prizeWon - buyCost) - attachedTotalCost;
       return { playerName: p.name, slotCount: p.slotCount, slotsList: p.slots, buyCost, prizeWon, netAmount, isWinner,
-        deducted: isWinner && deduct, attachedItems: items, attachedTotalCost, settleType: netAmount > 0 ? 'shop_pays_player' : 'player_pays_shop' };
+        prizeRule: 'winner_slots', deducted: isWinner && deduct, attachedItems: items, attachedTotalCost, settleType: netAmount > 0 ? 'shop_pays_player' : 'player_pays_shop' };
     });
   }
   const api = { key, allocate, groups, calculate };

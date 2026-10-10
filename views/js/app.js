@@ -307,12 +307,10 @@ async function updateGameConfig() {
 
 function updateSplitAmounts() {
   const solo = formatVND(gameState.prizeValue);
-  const split2 = formatVND(gameState.prizeValue / 2);
-  const split3 = formatVND(gameState.prizeValue / 3);
   const soloEl = document.getElementById("soloAmountText");
   if (soloEl) soloEl.innerText = solo;
-  document.getElementById("split2AmountText").innerText = `Mỗi người nhận: ${split2}`;
-  document.getElementById("split3AmountText").innerText = `Mỗi người nhận: ${split3}`;
+  document.getElementById("split2AmountText").innerText = 'Chia theo số slot của 2 người thắng';
+  document.getElementById("split3AmountText").innerText = 'Chia theo số slot của 3 người thắng';
 }
 
 async function resetCurrentGame() {
@@ -762,9 +760,8 @@ function autoCalculateSettlement(silent = true) {
   let settlementList;
   try { settlementList = SettlementCore.calculate(gameState, gameState.settleMode, gameState.winners, deductSlotCost, customerAttachedProducts); }
   catch (error) { if (!silent) alert(error.message); return false; }
-  const prizePerWinner = Math.floor(gameState.prizeValue / gameState.winners.length);
   gameState.finishedResults = settlementList;
-  renderSettlementTableUI(settlementList, prizePerWinner);
+  renderSettlementTableUI(settlementList);
   if (silent) return true; // Preview only; explicit confirmation persists results.
   return saveSettlement();
 }
@@ -801,7 +798,7 @@ async function finalizeGameResults() {
   document.getElementById("finalResultCard").scrollIntoView({ behavior: 'smooth' });
 }
 
-function renderSettlementTableUI(settlementList, prizePerWinner = null) {
+function renderSettlementTableUI(settlementList) {
   const tbody = document.getElementById("finalSettlementTableBody");
   if (!tbody || !settlementList) return;
   tbody.innerHTML = "";
@@ -863,14 +860,9 @@ function renderSettlementTableUI(settlementList, prizePerWinner = null) {
 
   const summaryBar = document.getElementById("summaryMetaBar");
   if (summaryBar) {
-    const winners = gameState.winners || [];
-    let modeText = '';
-    if (gameState.settleMode === 'solo') {
-      modeText = `Solo Win: <b>${winners[0] || 'Chưa chốt'}</b> trúng trọn ${formatVND(gameState.prizeValue)}`;
-    } else {
-      const splitAmount = prizePerWinner || (winners.length > 0 ? Math.floor(gameState.prizeValue / winners.length) : 0);
-      modeText = `Chia Thưởng (${winners.length} người): Mỗi người nhận <b>${formatVND(splitAmount)}</b> (${winners.join(', ')})`;
-    }
+    const winningRows = settlementList.filter(row => row.isWinner);
+    const label = winningRows.every(row => row.prizeRule === 'winner_slots') ? 'Thưởng theo số slot người thắng' : 'Tiền thưởng đã lưu';
+    const modeText = `${label}: ` + winningRows.map(row => `<b>${escapeCustomerSearchText(row.playerName)}</b> (${row.slotCount} slot): <b>${formatVND(row.prizeWon)}</b>`).join(' · ');
 
     summaryBar.innerHTML = `
       <div><i class="fa-solid fa-circle-check text-green"></i> Đã quyết toán xong: <b>${gameState.name}</b> (Chuyến #${gameState.roundNumber || currentRoundNumber})</div>
