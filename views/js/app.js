@@ -1852,6 +1852,10 @@ function applyGameData(data) {
   if (prizeValueInput) prizeValueInput.value = gameState.prizeValue;
   const totalSlotsSelect = document.getElementById("totalSlotsSelect");
   if (totalSlotsSelect) totalSlotsSelect.value = gameState.totalSlots;
+  const slotBoardHeading = document.getElementById('slotBoardHeading');
+  if (slotBoardHeading) slotBoardHeading.textContent = `Bàn Kèo ${gameState.totalSlots} Slot Trực Quan`;
+  const slotBoardPositions = document.getElementById('slotBoardPositions');
+  if (slotBoardPositions) slotBoardPositions.textContent = `SƠ ĐỒ BÀN ĐẤU (${gameState.totalSlots} VỊ TRÍ)`;
 
   // Cập nhật settle mode radio
   const modeRadio = document.querySelector(`input[name="settleModeRadio"][value="${gameState.settleMode}"]`);
