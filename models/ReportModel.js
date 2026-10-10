@@ -264,9 +264,9 @@ const ReportModel = {
    */
   async searchCustomer(customerName) {
     if (!customerName) return null;
-    const query = key(customerName);
+    const search = require('../views/js/customer-search');
     const allSummary = await this.getAllCustomersSummary();
-    const matched = allSummary.customers.filter(c => key(c.customerName).includes(query));
+    const matched = allSummary.customers.filter(c => search.matches(c.customerName, customerName));
 
     // Lấy chi tiết từng chuyến của khách này
     const results = matched.map(c => {

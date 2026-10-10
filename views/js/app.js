@@ -2574,7 +2574,7 @@ async function loadSingleMenuReport(menuId, query = '') {
       if (!window._allCustomersDataMap) window._allCustomersDataMap = new Map();
       filtered.forEach(c => window._allCustomersDataMap.set((c.customerName || '').toLowerCase(), c));
       if (query) {
-        filtered = filtered.filter(c => (c.customerName || '').toLowerCase().includes(query));
+        filtered = filtered.filter(c => CustomerSearch.matches(c.customerName, query));
       }
 
       if (query && badgeEl) badgeEl.innerText=`${filtered.length} khách khớp lọc / ${(data.customers || []).length} khách toàn menu`;
@@ -2665,7 +2665,7 @@ async function loadAllMenusReport(query = '') {
       if (!window._allCustomersDataMap) window._allCustomersDataMap = new Map();
       (data.customers || []).forEach(c => window._allCustomersDataMap.set((c.customerName || '').toLowerCase(), c));
       if (query) {
-        filtered = filtered.filter(c => c.customerName.toLowerCase().includes(query));
+        filtered = filtered.filter(c => CustomerSearch.matches(c.customerName, query));
       }
 
       if (filtered.length === 0) {
@@ -2764,27 +2764,72 @@ async function clearCustomerSearch() {
   }
 }
 
-async function filterCustomerReports() {
-  const query = (document.getElementById("reportSearchCustomerInput")?.value || "").trim();
-  const insightBox = document.getElementById("customerQuickInsight");
-  const clearBtn = document.getElementById("clearCustomerSearchBtn");
-  if (clearBtn) clearBtn.style.display = query ? "flex" : "none";
-
+let customerSearchRevision = 0;
+let customerSearchTimer = null;
+let customerSearchController = null;
+function filterCustomerReports() {
+  const query = (document.getElementById('reportSearchCustomerInput')?.value || '').trim();
+  const insightBox = document.getElementById('customerQuickInsight');
+  const clearBtn = document.getElementById('clearCustomerSearchBtn');
+  const revision = ++customerSearchRevision;
+  clearTimeout(customerSearchTimer);
+  customerSearchController?.abort();
+  window._lastSearchedCustomerData = null;
+  if (clearBtn) clearBtn.style.display = query ? 'flex' : 'none';
   if (!query) {
-    window._lastSearchedCustomerData = null;
-    if (insightBox) insightBox.style.display = "none";
+    if (insightBox) { insightBox.replaceChildren(); insightBox.style.display = 'none'; }
     loadReports();
     return;
   }
-
+  if (insightBox) { insightBox.style.display = 'block'; insightBox.textContent = 'Đang tìm khách hàng...'; }
+  customerSearchTimer = setTimeout(() => runCustomerSearch(query, revision), 250);
+}
+async function runCustomerSearch(query, revision) {
+  customerSearchController = new AbortController();
+  loadReports();
   try {
-    const res = await fetch(`/api/reports/search?name=${encodeURIComponent(query)}`);
-    const json = await res.json();
-    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
-    if (json.success && json.data && json.data.length > 0) {
-      const match = json.data[0];
-      window._lastSearchedCustomerData = match;
-      if (insightBox) {
+    const response = await fetch('/api/reports/search?name=' + encodeURIComponent(query), {signal: customerSearchController.signal});
+    const json = await response.json();
+    if (revision !== customerSearchRevision) return;
+    if (!response.ok || !json.success) throw new Error(json.error || 'Không tải được danh sách khách.');
+    renderCustomerSearchMatches(json.data || [], query);
+  } catch (error) {
+    if (revision !== customerSearchRevision || error.name === 'AbortError') return;
+    const box = document.getElementById('customerQuickInsight');
+    if (box) box.textContent = 'Không tải được danh sách khách. Vui lòng gõ lại để thử.';
+  }
+}
+function renderCustomerSearchMatches(customers, query) {
+  const box = document.getElementById('customerQuickInsight');
+  if (!box) return;
+  box.replaceChildren(); box.style.display = 'block';
+  const heading = document.createElement('p');
+  heading.className = 'customer-search-heading';
+  heading.setAttribute('role', 'status');
+  heading.textContent = customers.length ? 'Tìm thấy ' + customers.length + ' khách. Chọn tên để xem chi tiết:' : 'Không tìm thấy khách phù hợp với “' + query + '”.';
+  box.appendChild(heading);
+  const list = document.createElement('div'); list.className = 'customer-search-list';
+  const detail = document.createElement('div'); detail.className = 'customer-search-detail';
+  for (const customer of customers) {
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'customer-search-choice';
+    const name = document.createElement('strong'); name.textContent = customer.customerName;
+    const info = document.createElement('span'); info.textContent = customer.totalSlots + ' slot · Thưởng: ' + formatVND(customer.totalPrizeWon);
+    button.append(name, info); button.setAttribute('aria-pressed', 'false');
+    button.addEventListener('click', () => {
+      list.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', 'false'));
+      button.setAttribute('aria-pressed', 'true');
+      window._lastSearchedCustomerData = customer;
+      renderCustomerSearchDetail(customer, detail);
+    });
+    list.appendChild(button);
+  }
+  box.append(list, detail);
+  if (customers.length === 1) list.querySelector('button').click();
+}
+function escapeCustomerSearchText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+}
+function renderCustomerSearchDetail(match, insightBox) {
         insightBox.style.display = "flex";
 
         let menusBreakdownText = "";
@@ -2792,7 +2837,7 @@ async function filterCustomerReports() {
           menusBreakdownText = match.detailedMenus.map(m => `
             <div style="background: var(--bg-surface-elevated); padding: 8px 12px; border-radius: 8px; margin-top: 6px; border-left: 3px solid #0369a1;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <b class="text-accent" style="font-size: 0.95rem;">${m.menuName}</b>
+                <b class="text-accent" style="font-size: 0.95rem;">${escapeCustomerSearchText(m.menuName)}</b>
                 <span class="badge-gold-neon">${m.totalSlots} slot (${m.rounds.length} chuyến)</span>
               </div>
               <div class="text-xs text-muted" style="margin-bottom: 4px; line-height: 1.5;">
@@ -2806,7 +2851,8 @@ async function filterCustomerReports() {
         }
 
         // Kiểm tra mỹ phẩm mua kèm
-        const attachedItems = getCustomerAttachedProducts(match.customerName) || [];
+        const localItems = getCustomerAttachedProducts(match.customerName) || [];
+        const attachedItems = localItems.length ? localItems : (match.attachedItems || []);
         const attachedTotalCost = attachedItems.reduce((s, it) => s + (it.price * it.qty), 0);
         let attachedText = "";
         if (attachedItems.length > 0) {
@@ -2814,7 +2860,7 @@ async function filterCustomerReports() {
             <div style="background: rgba(200, 135, 74, 0.1); border: 1px solid rgba(200, 135, 74, 0.3); padding: 8px 12px; border-radius: 8px; margin-top: 6px;">
               <div class="text-xs text-accent font-bold"><i class="fa-solid fa-bag-shopping"></i> MỸ PHẨM MUA KÈM (${attachedItems.length} MÓN):</div>
               <div class="text-xs mt-1" style="line-height: 1.5;">
-                ${attachedItems.map(it => `<span>• ${it.name} x${it.qty} = <b class="text-gold">${formatVND(it.price * it.qty)}</b></span>`).join('<br>')}
+                ${attachedItems.map(it => `<span>• ${escapeCustomerSearchText(it.name)} x${it.qty} = <b class="text-gold">${formatVND(it.price * it.qty)}</b></span>`).join('<br>')}
               </div>
               <div class="text-xs text-gold font-bold mt-1">Tổng tiền hàng mỹ phẩm: ${formatVND(attachedTotalCost)}</div>
             </div>
@@ -2822,18 +2868,18 @@ async function filterCustomerReports() {
         }
 
         // Tính Net cuối cùng sau khi cấn trừ mỹ phẩm
-        const finalNetWithProducts = match.netAmount - attachedTotalCost;
+        const finalNetWithProducts = match.netAmount + (match.totalAttachedCost || 0) - attachedTotalCost;
 
         insightBox.innerHTML = `
           <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; width: 100%;">
             <div class="font-bold text-gold" style="font-size: 1.15rem;">
-              <i class="fa-solid fa-user-check"></i> Tra Cứu Khách Hàng: <b>[${match.customerName}]</b>
+              <i class="fa-solid fa-user-check"></i> Tra Cứu Khách Hàng: <b>[${escapeCustomerSearchText(match.customerName)}]</b>
             </div>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <button class="btn-neon-gold" onclick="downloadSingleCustomerDetailCsv('${match.customerName}')" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 700;">
+              <button class="btn-neon-gold" id="customerSearchExport" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 700;">
                 <i class="fa-solid fa-file-excel"></i> Xuất File Chi Tiết Excel (.xlsx)
               </button>
-              <button class="btn-neon-green" onclick="openBillModal('${match.customerName}')" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 700;">
+              <button class="btn-neon-green" id="customerSearchBill" style="padding: 6px 14px; font-size: 0.85rem; font-weight: 700;">
                 <i class="fa-solid fa-receipt"></i> Mở Bill Khách Này
               </button>
             </div>
@@ -2850,15 +2896,8 @@ async function filterCustomerReports() {
             ${attachedText}
           </div>
         `;
-      }
-    } else {
-      if (insightBox) insightBox.style.display = "none";
-    }
-  } catch (e) {
-    console.error("Lỗi search customer:", e);
-  }
-
-  loadReports();
+  insightBox.querySelector('#customerSearchExport').addEventListener('click', () => downloadSingleCustomerDetailCsv(match.customerName));
+  insightBox.querySelector('#customerSearchBill').addEventListener('click', () => openBillModal(match.customerName));
 }
 
 const activeReportDownloads = new Set();

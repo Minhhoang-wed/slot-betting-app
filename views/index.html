@@ -17,7 +17,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
-  <link rel="stylesheet" href="css/style.css?v=2.5">
+  <link rel="stylesheet" href="css/style.css?v=2.6">
   <link rel="stylesheet" href="css/blind-bags.css?v=2.0">
 </head>
 <body class="theme-lovable">
@@ -541,7 +541,7 @@
               <label class="filter-label"><i class="fa-solid fa-user-tag text-gold"></i> Tra cứu nhanh Khách Hàng:</label>
               <div class="input-with-icon search-input-box">
                 <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="reportSearchCustomerInput" class="modern-input search-input" placeholder="Gõ tên khách (Ví dụ: Người A, Chị Lan...) để tra cứu ngay..." oninput="filterCustomerReports()" autocomplete="off">
+                <input type="text" id="reportSearchCustomerInput" class="modern-input search-input" placeholder="Gõ một chữ hoặc tên khách, ví dụ: k, Kiều, kieu..." oninput="filterCustomerReports()" autocomplete="off" aria-label="Tìm khách hàng">
                 <button type="button" id="clearCustomerSearchBtn" class="search-clear-btn" style="display: none;" onclick="clearCustomerSearch()" title="Xóa tìm kiếm">&times;</button>
               </div>
             </div>
@@ -1244,7 +1244,8 @@
   <div id="toast" class="modern-toast"></div>
 
   <script src="/js/settlement-core.js"></script>
-<script src="js/app.js?v=2.6"></script>
+  <script src="/js/customer-search.js"></script>
+<script src="js/app.js?v=2.7"></script>
   <script src="js/blind-bags.js?v=1"></script>
 </body>
 </html>
