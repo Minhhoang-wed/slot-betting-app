@@ -177,13 +177,37 @@ function changeFinancePeriod() {
 }
 function createFinancePanel() {
   const panel=document.createElement('section');panel.id='financePanel';panel.className='surface-card bb-finance-panel';
-  panel.innerHTML=`<div class="card-top-bar"><div><h2>Quyết toán chung: Bàn kèo + Túi mù + Pass</h2><p>Số cuối = Số dư bàn kèo − Hóa đơn Túi mù còn thiếu + Tiền pass.</p></div><div class="bb-finance-actions"><a id="financeExportAll" class="btn-neon-green" aria-disabled="true">Xuất Excel theo ngày</a><button class="btn-ghost-primary" onclick="loadFinanceSummary()">Làm mới</button></div></div><div class="card-content"><div class="finance-filters"><div><label for="financePeriodSelect">Ngày giao dịch</label><select id="financePeriodSelect" class="modern-input" onchange="changeFinancePeriod()"><option value="today">Hôm nay</option><option value="yesterday">Hôm qua</option><option value="custom">Chọn ngày</option><option value="all">Tất cả các ngày</option></select></div><div><label for="financeDateInput" class="sr-only">Chọn ngày cần xem</label><input type="date" id="financeDateInput" class="modern-input" hidden onchange="loadFinanceSummary()"></div><div><label for="financeSearch">Tìm tên khách</label><input id="financeSearch" class="modern-input" placeholder="Ví dụ: kiều, KIEU, k..." oninput="renderFinanceSummary()"></div></div><p class="finance-period-label" id="financePeriodLabel">Đang tải giao dịch hôm nay...</p><p class="finance-help">Ngày mở chuyến / ngày mua túi mù / ngày thu lại pass, theo giờ Việt Nam. Chỉ tính giao dịch của ngày chọn, không gồm công nợ ngày khác. Trạng thái trả tiền là trạng thái hiện tại; chuyến chưa chốt còn tạm tính.</p><div id="financeMessage" role="status"></div><div class="bb-finance-scroll"><table class="bb-table"><thead><tr><th>Khách hàng</th><th>Số dư bàn kèo</th><th>Túi mù còn thiếu</th><th>Tiền pass</th><th>SHOP TRẢ KHÁCH</th><th>KHÁCH TRẢ SHOP</th><th>CHI TIẾT / FILE</th></tr></thead><tbody id="financeBody"></tbody></table></div></div>`;
+  panel.innerHTML=`
+    <div class="card-top-bar finance-heading">
+      <div class="finance-heading-title">
+        <span class="finance-heading-icon" aria-hidden="true"><i class="fa-solid fa-wallet"></i></span>
+        <div><span class="finance-eyebrow">BÀN KÈO · TÚI MÙ · SHOP THU LẠI ĐỒ</span><h2>Tổng kết tiền khách hàng</h2><p>Xem rõ shop cần trả bao nhiêu và khách còn nợ bao nhiêu.</p></div>
+      </div>
+      <div class="bb-finance-actions"><a id="financeExportAll" class="btn-neon-green" aria-disabled="true"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> Xuất Excel cả danh sách</a><button class="btn-ghost-primary" onclick="loadFinanceSummary()"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Làm mới</button></div>
+    </div>
+    <div class="card-content">
+      <div class="finance-filters">
+        <div><label for="financePeriodSelect">1. Chọn ngày cần xem</label><select id="financePeriodSelect" class="modern-input" onchange="changeFinancePeriod()"><option value="today">Hôm nay</option><option value="yesterday">Hôm qua</option><option value="custom">Chọn ngày</option><option value="all">Tất cả các ngày</option></select></div>
+        <div><label for="financeDateInput" class="sr-only">Chọn ngày cần xem</label><input type="date" id="financeDateInput" class="modern-input" hidden onchange="loadFinanceSummary()"></div>
+        <div><label for="financeSearch">2. Tìm khách hàng</label><input id="financeSearch" class="modern-input" placeholder="Nhập tên hoặc một chữ, ví dụ: kiều, k..." oninput="renderFinanceSummary()"></div>
+      </div>
+      <p class="finance-period-label" id="financePeriodLabel">Đang tải giao dịch hôm nay...</p>
+      <div id="financeTransferSummary" class="finance-transfer-summary" hidden aria-label="Tổng tiền của khách đang hiển thị">
+        <div class="finance-transfer-card finance-transfer-out"><span class="finance-transfer-direction" aria-hidden="true">↗</span><div><h3>Shop cần trả khách</h3><strong id="financeShopPaysTotal">—</strong><p id="financeShopPaysCount"></p></div></div>
+        <div class="finance-transfer-card finance-transfer-in"><span class="finance-transfer-direction" aria-hidden="true">↙</span><div><h3>Khách cần trả shop</h3><strong id="financeCustomerPaysTotal">—</strong><p id="financeCustomerPaysCount"></p></div></div>
+      </div>
+      <p class="finance-scope-note">Số tiền theo ngày đang chọn. Chuyến bàn kèo chưa chốt vẫn là tạm tính.</p>
+      <div class="finance-list-heading"><h3>Chi tiết từng khách</h3><span>Nhấn “Xem chi tiết” để kiểm tra từng giao dịch.</span></div>
+      <div id="financeMessage" role="status"></div>
+      <div class="bb-finance-scroll"><table class="bb-table"><thead><tr><th>Khách hàng</th><th class="finance-final-out">Shop cần trả khách</th><th class="finance-final-in">Khách cần trả shop</th><th>Số dư bàn kèo</th><th>Nợ túi mù</th><th>Tiền shop thu đồ pass</th><th>Chi tiết / File</th></tr></thead><tbody id="financeBody"></tbody></table></div>
+      <details class="finance-explanation"><summary>Cách tính số tiền và ngày giao dịch</summary><p>Tiền cuối của khách = số dư bàn kèo − tiền túi mù còn nợ + tiền shop thu lại đồ pass. Số dương là shop trả khách; số âm là khách trả shop. Hóa đơn đã thanh toán không bị trừ lại.</p><p>Ngày giao dịch là ngày mở chuyến, ngày mua túi mù hoặc ngày shop thu lại đồ, theo giờ Việt Nam. Chỉ gồm giao dịch của ngày đã chọn; chọn “Tất cả các ngày” để xem tổng của mọi ngày. Trạng thái thanh toán là trạng thái hiện tại.</p></details>
+    </div>`;
   document.getElementById('tabReports')?.prepend(panel);
   const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   document.getElementById('financeDateInput').value=today;
   document.getElementById('financeBody').addEventListener('click',event=>{const button=event.target.closest('[data-finance-detail]');if(button)openFinanceDetail(Number(button.dataset.financeDetail));});
   createFinanceDetailModal();
-  const shortcut=document.createElement('a');shortcut.href='#financePanel';shortcut.className='btn-neon-green';shortcut.textContent='Xem quyết toán chung / Xuất Excel';shortcut.onclick=()=>{switchTab('reports');loadFinanceSummary();panel.scrollIntoView({behavior:'smooth',block:'start'});};
+  const shortcut=document.createElement('a');shortcut.href='#financePanel';shortcut.className='btn-neon-green';shortcut.textContent='Tổng kết tiền khách / Xuất Excel';shortcut.onclick=()=>{switchTab('reports');loadFinanceSummary();panel.scrollIntoView({behavior:'smooth',block:'start'});};
   document.getElementById('blindBagSection').querySelector('.bb-top-actions').prepend(shortcut);
 }
 async function loadFinanceSummary() {
@@ -207,7 +231,16 @@ function renderFinanceSummary() {
   const host=document.getElementById('financeBody');if(!host)return;
   const query=document.getElementById('financeSearch').value;
   const rows=financeRows.filter(c=>CustomerSearch.matches(c.customerName,query));
-  host.innerHTML=rows.length?rows.map(c=>`<tr><td><b>${blindBagEscape(c.customerName)}</b></td><td>${formatVND(c.slotNet)}</td><td>${formatVND(c.bagDue)}</td><td>${formatVND(c.buybackTotal)}</td><td class="bb-finance-receive"><b>${formatVND(c.shopPays)}</b></td><td class="bb-finance-pay"><b>${formatVND(c.customerPays)}</b></td><td><div class="finance-row-actions"><button class="btn-ghost-primary" data-finance-detail="${financeRows.indexOf(c)}" aria-label="Xem chi tiết ${blindBagEscape(c.customerName)}">Xem chi tiết</button><a class="btn-ghost-primary" href="${blindBagEscape(financeExportURL(c.customerName))}" aria-label="Xuất Excel riêng cho ${blindBagEscape(c.customerName)}">Xuất Excel riêng</a></div></td></tr>`).join(''):`<tr><td colspan="7">${financeLoaded?'Không có giao dịch phù hợp trong '+blindBagEscape(financePeriod.label.toLowerCase())+'.':'Chưa tải xong dữ liệu.'}</td></tr>`;
+  const summary=document.getElementById('financeTransferSummary');
+  if(summary) {
+    summary.hidden=!financeLoaded;
+    document.getElementById('financeShopPaysTotal').textContent=formatVND(rows.reduce((sum,c)=>sum+c.shopPays,0));
+    document.getElementById('financeCustomerPaysTotal').textContent=formatVND(rows.reduce((sum,c)=>sum+c.customerPays,0));
+    const scope=rows.length+' khách đang hiển thị';
+    document.getElementById('financeShopPaysCount').textContent=rows.filter(c=>c.shopPays>0).length+' khách cần nhận tiền · '+scope;
+    document.getElementById('financeCustomerPaysCount').textContent=rows.filter(c=>c.customerPays>0).length+' khách còn nợ · '+scope;
+  }
+  host.innerHTML=rows.length?rows.map(c=>`<tr><td data-label="Khách hàng" class="finance-customer-name"><b>${blindBagEscape(c.customerName)}</b></td><td data-label="Shop cần trả khách" class="finance-final-amount ${c.shopPays?'bb-finance-receive':''}"><b>${c.shopPays?formatVND(c.shopPays):'—'}</b></td><td data-label="Khách cần trả shop" class="finance-final-amount ${c.customerPays?'bb-finance-pay':''}"><b>${c.customerPays?formatVND(c.customerPays):'—'}</b></td><td data-label="Số dư bàn kèo">${formatVND(c.slotNet)}</td><td data-label="Nợ túi mù">${formatVND(c.bagDue)}</td><td data-label="Tiền shop thu đồ pass">${formatVND(c.buybackTotal)}</td><td data-label="Chi tiết / File"><div class="finance-row-actions"><button class="btn-ghost-primary" data-finance-detail="${financeRows.indexOf(c)}" aria-label="Xem chi tiết ${blindBagEscape(c.customerName)}">Xem chi tiết</button><a class="btn-ghost-primary" href="${blindBagEscape(financeExportURL(c.customerName))}" aria-label="Xuất Excel riêng cho ${blindBagEscape(c.customerName)}">Xuất Excel riêng</a></div></td></tr>`).join(''):`<tr><td colspan="7">${financeLoaded?'Không có giao dịch phù hợp trong '+blindBagEscape(financePeriod.label.toLowerCase())+'.':'Chưa tải xong dữ liệu.'}</td></tr>`;
 }
 function createFinanceDetailModal() {
   const modal=document.createElement('dialog');modal.id='financeDetailModal';modal.className='finance-detail-dialog';modal.setAttribute('aria-labelledby','financeDetailTitle');
