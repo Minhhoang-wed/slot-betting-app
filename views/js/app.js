@@ -830,6 +830,7 @@ let currentBillData = null;
 
 async function openBillModal(playerName, optionalData = null) {
   if (!playerName) return;
+  resetBlindBagBillPayment();
   document.querySelector('#billModal .attach-product-bar').style.display = '';
   document.getElementById('billGameExport').style.display = '';
   document.getElementById('billContextLabel').textContent = 'Kèo Đấu:';
@@ -1269,6 +1270,7 @@ function saveAndOpenBillForCustomer() {
 }
 
 function closeBillModal() {
+  resetBlindBagBillPayment();
   playSound('click');
   document.getElementById("billModal").classList.remove("show");
 }
@@ -1297,7 +1299,8 @@ function copyBillText() {
     const bill = currentBillData;
     const text = `${shopSettings.name}\nHÓA ĐƠN BÁN LẺ\nKhách hàng: ${bill.customerName}\n` +
       bill.retailItems.map(item => `${item.product.name} × ${item.qty}: ${formatVND(item.product.price * item.qty)}`).join('\n') +
-      `\nGiảm giá: ${formatVND(bill.discount)}\nTổng thanh toán: ${formatVND(-bill.netAmount)}`;
+      `\nGiảm giá: ${formatVND(bill.discount)}\nTổng hóa đơn: ${formatVND(-bill.netAmount)}` +
+      (bill.blindBagPayment ? `\nTrạng thái: ${bill.blindBagPayment.paid ? 'ĐÃ THANH TOÁN' : 'CHƯA THANH TOÁN / CÒN NỢ'}\nCòn nợ: ${formatVND(bill.blindBagPayment.paid ? 0 : -bill.netAmount)}` : '');
     navigator.clipboard.writeText(text).then(() => showToast('Đã sao chép hóa đơn.'), () => alert('Không thể sao chép. Vui lòng cho phép truy cập clipboard.'));
     return;
   }
@@ -1587,6 +1590,7 @@ async function checkoutShopBill() {
 }
 
 function displayShopBill(items, customerName, discount, order = null) {
+  resetBlindBagBillPayment();
   playSound('coin');
   const subtotal = items.reduce((acc, item) => acc + (item.product.price * item.qty), 0);
   const total = Math.max(0, subtotal - discount);

@@ -1389,3 +1389,18 @@
     grid-template-columns: 1fr;
   }
 }
+/* Invoice payment controls stay outside the downloaded receipt. */
+.bb-bill-payment-controls[hidden], .bb-bill-payment-status[hidden] { display: none; }
+.bb-bill-payment-controls { padding: 16px; margin-bottom: 18px; border: 1px solid #d6d3d1; border-radius: 12px; background: #fff; }
+.bb-bill-payment-controls h3 { margin: 0 0 8px; font-size: 18px; color: #292524; }
+.bb-bill-payment-controls p { margin: 8px 0 0; font-size: 14px; line-height: 1.5; color: #57534e; }
+.bb-bill-payment-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.bb-bill-payment-buttons button { flex: 1 1 230px; min-height: 48px; padding: 10px 12px; font: inherit; font-size: 15px; font-weight: 700; border: 2px solid #d6d3d1; border-radius: 8px; background: #fff; color: #44403c; cursor: pointer; }
+.bb-bill-payment-buttons button:disabled { cursor: default; opacity: 1; }
+#bbBillUnpaid[aria-pressed="true"] { border-color: #b45309; background: #fff7ed; color: #9a3412; }
+#bbBillPaid[aria-pressed="true"] { border-color: #047857; background: #ecfdf5; color: #065f46; }
+.bb-bill-payment-buttons button:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.bb-bill-payment-status { margin: 16px 0; padding: 12px; border: 1px solid; border-radius: 8px; text-align: center; font-size: 15px; font-weight: 700; }
+.bb-bill-payment-status.is-paid { color: #065f46; background: #ecfdf5; border-color: #6ee7b7; }
+.bb-bill-payment-status.is-unpaid { color: #9a3412; background: #fff7ed; border-color: #fdba74; }
+.bb-bill-payment-controls p.bb-payment-error { color: #b91c1c; }

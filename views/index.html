@@ -18,7 +18,7 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <link rel="stylesheet" href="css/style.css?v=3.2">
-  <link rel="stylesheet" href="css/blind-bags.css?v=3.3">
+  <link rel="stylesheet" href="css/blind-bags.css?v=3.4">
 </head>
 <body class="theme-lovable">
   <!-- Dynamic Ambient Glow Background -->
@@ -860,6 +860,16 @@
           </div>
         </div>
         
+        <section id="bbBillPaymentControls" class="bb-bill-payment-controls" hidden aria-label="Thanh toán hóa đơn túi mù">
+          <h3>Xác nhận tiền túi mù</h3>
+          <p>Áp dụng cho toàn bộ hóa đơn này, gồm cả mỹ phẩm mua kèm nếu có.</p>
+          <div class="bb-bill-payment-buttons">
+            <button type="button" id="bbBillUnpaid" onclick="setBlindBagBillPayment(false)" aria-pressed="false">Chưa thanh toán / Còn nợ</button>
+            <button type="button" id="bbBillPaid" onclick="setBlindBagBillPayment(true)" aria-pressed="false">Đã thanh toán tiền túi mù</button>
+          </div>
+          <p id="bbBillPaymentMessage" role="status" aria-live="polite"></p>
+        </section>
+
         <!-- THẺ HÓA ĐƠN ĐỈNH CAO (CANVAS CAPTURE FRIENDLY) -->
         <div id="printableBill" class="vip-receipt-ticket">
           <!-- Header -->
@@ -890,6 +900,8 @@
               <span class="t-val font-bold text-gold" id="billSlotsList">Slot #2, Slot #5</span>
             </div>
           </div>
+
+          <div id="bbBillPaymentStatus" class="bb-bill-payment-status" hidden></div>
 
           <!-- Table of items (Cả Kèo Slot + Mỹ Phẩm mua kèm) -->
           <div class="ticket-items-box">
@@ -1217,9 +1229,9 @@
 
   <script src="/js/settlement-core.js?v=3.0"></script>
   <script src="/js/customer-search.js"></script>
-<script src="js/app.js?v=3.2"></script>
-  <script src="js/blind-bags.js?v=4"></script>
-  <script src="js/blind-bag-finance.js?v=6"></script>
+<script src="js/app.js?v=3.3"></script>
+  <script src="js/blind-bags.js?v=5"></script>
+  <script src="js/blind-bag-finance.js?v=7"></script>
   <script src="js/blind-bag-crud.js?v=1"></script>
 </body>
 </html>

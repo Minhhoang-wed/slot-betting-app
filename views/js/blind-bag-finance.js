@@ -1,3 +1,89 @@
+let bbBillPaymentContext = null;
+
+function resetBlindBagBillPayment() {
+  bbBillPaymentContext = null;
+  document.getElementById('bbBillPaymentControls').hidden = true;
+  document.getElementById('bbBillPaymentStatus').hidden = true;
+}
+
+function showBlindBagBillPayment(round, order) {
+  bbBillPaymentContext = { roundId: round.id, orderId: order.id, paid: !!order.paid, total: order.total, saving: false };
+  renderBlindBagBillPayment();
+}
+
+function renderBlindBagBillPayment(message = '', failed = false) {
+  const context = bbBillPaymentContext;
+  if (!context) return;
+  document.getElementById('bbBillPaymentControls').hidden = false;
+  const paidButton = document.getElementById('bbBillPaid');
+  const unpaidButton = document.getElementById('bbBillUnpaid');
+  for (const [button, active] of [[paidButton, context.paid], [unpaidButton, !context.paid]]) {
+    button.setAttribute('aria-pressed', String(active));
+    button.disabled = context.saving || context.unavailable || active;
+  }
+  const notice = document.getElementById('bbBillPaymentMessage');
+  notice.textContent = message || (context.paid ? 'Đã lưu: hóa đơn này không còn tính vào tiền nợ túi mù.' : 'Hóa đơn này đang tính vào tiền khách còn nợ shop.');
+  notice.classList.toggle('bb-payment-error', failed);
+  const status = document.getElementById('bbBillPaymentStatus');
+  status.hidden = false;
+  status.className = 'bb-bill-payment-status ' + (context.paid ? 'is-paid' : 'is-unpaid');
+  status.textContent = context.paid ? 'ĐÃ THANH TOÁN · Còn nợ: 0 đ' : 'CHƯA THANH TOÁN / CÒN NỢ: ' + formatVND(context.total);
+  if (currentBillData) currentBillData.blindBagPayment = { paid: context.paid };
+  document.getElementById('billNetTitle').textContent = context.paid ? 'TỔNG TIỀN ĐÃ THANH TOÁN' : 'TỔNG TIỀN CÒN NỢ';
+  document.getElementById('billNetAmount').textContent = formatVND(context.total);
+  document.getElementById('billNetExplain').textContent = context.paid ? 'Shop đã xác nhận nhận đủ tiền hóa đơn này. Khách không cần chuyển thêm.' : 'Chưa ghi nhận thanh toán. Khách vui lòng chuyển tiền theo mã VietQR bên dưới.';
+  document.getElementById('billQrSection').style.display = context.paid ? 'none' : 'flex';
+}
+
+function syncBlindBagBillPayment() {
+  const context = bbBillPaymentContext;
+  if (!context || context.saving) return;
+  const round = blindBagRounds.find(r => r.id === context.roundId);
+  const order = round?.data.orders.find(o => o.id === context.orderId);
+  if (!order) {
+    context.unavailable = true;
+    renderBlindBagBillPayment('Hóa đơn đã xóa hoặc thay đổi. Đóng bill và mở lại từ danh sách người mua.', true);
+    return;
+  }
+  // Slot CRUD can split or rename an invoice. Reopen it so all receipt fields stay consistent.
+  renderBlindBagInvoice(round, order);
+}
+
+async function setBlindBagBillPayment(paid) {
+  const context = bbBillPaymentContext;
+  if (!context || context.saving || context.unavailable || context.paid === paid) return;
+  if (blindBagBusy) {
+    renderBlindBagBillPayment('Đang xử lý giao dịch khác. Vui lòng thử lại sau.', true);
+    return;
+  }
+  context.saving = true;
+  blindBagBusy = true;
+  renderBlindBagBillPayment('Đang lưu trạng thái thanh toán...');
+  try {
+    const result = await blindBagAPI(`/${context.roundId}/payment`, {
+      orderId: context.orderId, paid, previousPaid: context.paid
+    }, 'PUT');
+    // Update only after the server confirms persistence, and only the invoice still open.
+    context.paid = !!result.data.order.paid;
+    context.total = result.data.order.total;
+    blindBagRounds = blindBagRounds.map(r => r.id === context.roundId ? result.data.round : r);
+    if (bbBillPaymentContext === context) renderBlindBagBillPayment('Đã lưu trạng thái thanh toán.');
+    showToast(paid ? 'Đã ghi nhận khách thanh toán tiền túi mù.' : 'Đã ghi nhận hóa đơn chưa thanh toán / còn nợ.');
+  } catch (error) {
+    if (bbBillPaymentContext === context) renderBlindBagBillPayment('Chưa xác nhận được trạng thái: ' + error.message + ' Bấm lại để kiểm tra / lưu.', true);
+  } finally {
+    context.saving = false;
+    blindBagBusy = false;
+    if (bbBillPaymentContext === context) {
+      document.getElementById('bbBillPaid').disabled = context.paid;
+      document.getElementById('bbBillUnpaid').disabled = !context.paid;
+    }
+    renderBlindBags();
+    await loadFinanceSummary();
+    if (document.getElementById('reportSearchCustomerInput')?.value?.trim()) filterCustomerReports();
+  }
+}
+
 async function saveBlindBagRewards(slotNumber) {
   if (blindBagBusy) return;
   const round=selectedBlindBag(),slot=round.data.slots.find(s=>s.number===slotNumber);

@@ -333,6 +333,7 @@ async function loadBlindBags() {
   try {
     const result = await blindBagAPI();
     blindBagRounds = result.data;
+    syncBlindBagBillPayment();
     if (!selectedBlindBag()) blindBagSelectedId = blindBagRounds[0]?.id || '';
     if (message) {
       if (!result.persistent) {
@@ -1107,4 +1108,5 @@ function renderBlindBagInvoice(round, order) {
   if (slotsListEl) {
     slotsListEl.innerText = order.slots.map(n => '#' + n).join(', ') + ` (${order.quantity} slot túi mù)`;
   }
+  showBlindBagBillPayment(round, order);
 }
