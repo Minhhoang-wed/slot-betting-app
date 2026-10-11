@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
       <div class="bb-top-actions">
+        <button class="btn-ghost-primary" onclick="openBlindBagTrash()">Đợt đã xóa</button>
         <button class="btn-neon-gold" onclick="openBlindBagCreateModal()">
           <i class="fa-solid fa-plus"></i> Tạo đợt mới
         </button>
@@ -285,7 +286,8 @@ async function saveBlindBagPrice() {
   const btn = document.getElementById('bbSavePriceBtn');
   if (btn) btn.disabled = true;
   try {
-    await blindBagAPI(`/${round.id}`, { price: priceVal }, 'PUT');
+    const saved=await blindBagAPI(`/${round.id}`, { price: priceVal, previousVersion:round.version }, 'PUT');
+    round.version=saved.data.round.version;
     round.data.price = priceVal;
     // Đồng bộ lại giỏ hàng nếu đang chứa item túi mù đợt này
     const cartItem = cart.find(item => item.blindBagRoundId === round.id);
@@ -443,6 +445,11 @@ function renderBlindBags() {
           <div class="bb-progress-fill" style="width: ${percent}%;"></div>
         </div>
       </div>
+    </div>
+    <div class="bb-crud-actions">
+      <button class="btn-ghost-primary" onclick="openBlindBagRoundEditor()">Sửa tên / giá đợt</button>
+      <button class="bb-crud-delete" onclick="openBlindBagRoundDelete()">Xóa đợt này</button>
+      <button class="btn-ghost-primary" onclick="openBlindBagSlotTrash()">Slot đã xóa (${(round.data.deletedSlots || []).length})</button>
     </div>`;
 
   // KHU VỰC BÁN SLOT (Nếu còn slot)
@@ -632,7 +639,7 @@ function renderSingleSlotCard(slotNum, slot, round) {
   if (!slot) {
     // Ô chưa bán (Trống)
     return `
-      <div class="bb-slot-card" onclick="quickSelectSlot(${slotNum})" title="Bấm để chọn mua slot #${slotNum}">
+      <div class="bb-slot-card" title="Ô slot #${slotNum} chưa có khách">
         <div class="bb-slot-card-top">
           <span class="bb-slot-number-badge">#${slotNum}</span>
           <span class="bb-slot-status-pill bb-status-pill-empty">Trống</span>
@@ -640,7 +647,7 @@ function renderSingleSlotCard(slotNum, slot, round) {
         <div class="bb-slot-empty-body">
           <div class="bb-slot-mystery-icon"><i class="fa-solid fa-gift"></i></div>
           <div class="bb-slot-empty-label">Chưa bán</div>
-          <button type="button" class="bb-slot-quick-pick-btn" onclick="event.stopPropagation(); quickSelectSlot(${slotNum})">
+          <button type="button" class="bb-slot-quick-pick-btn" onclick="openBlindBagSlotEditor(${slotNum})">
             + Mua ô này
           </button>
         </div>
@@ -679,6 +686,10 @@ function renderSingleSlotCard(slotNum, slot, round) {
           ${slot.phone ? `<div class="bb-slot-buyer-phone"><i class="fa-solid fa-phone"></i> ${blindBagEscape(slot.phone)}</div>` : ''}
         </div>
         ${rewardSection}
+        <div class="bb-crud-actions bb-slot-crud">
+          <button class="btn-ghost-primary" aria-label="Sửa slot #${slotNum}" onclick="openBlindBagSlotEditor(${slotNum})">Sửa slot</button>
+          <button class="bb-crud-delete" aria-label="Xóa slot #${slotNum}" onclick="openBlindBagSlotDelete(${slotNum})">Xóa slot</button>
+        </div>
       </div>
     </div>`;
 }

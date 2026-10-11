@@ -1359,6 +1359,16 @@
   }
 }
 
+.bb-crud-actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+.bb-slot-crud { margin-bottom: 0; }
+.bb-crud-actions button { min-height: 42px; padding: 10px 14px; font-size: 14px; }
+.bb-crud-delete { border: 1px solid #fca5a5; border-radius: 8px; background: #fff; color: #b91c1c; padding: 10px 14px; cursor: pointer; font: inherit; font-weight: 700; }
+.bb-crud-dialog { max-width: 600px; }
+.bb-crud-dialog p { font-size: 15px; line-height: 1.65; margin: 12px 0; }
+.bb-crud-field { display: block; margin-bottom: 16px; font-size: 16px; font-weight: 700; }
+.bb-crud-field input { display: block; margin-top: 8px; min-height: 44px; width: 100%; box-sizing: border-box; }
+.bb-crud-trash-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #e7e5e4; line-height: 1.6; }
+#bbCrudMessage { color: #b91c1c; font-weight: 700; }
 @media (max-width: 480px) {
   .bb-slot-grid {
     grid-template-columns: repeat(2, 1fr);
