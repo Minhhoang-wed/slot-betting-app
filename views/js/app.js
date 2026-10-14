@@ -17,17 +17,39 @@ async function reloadCurrentRound() {
  if(currentActiveMenuId===menuId&&currentRoundNumber===roundNumber)applyGameData(json.data);}catch(e){showToast('Không tải được dữ liệu. Hãy thử lại.');}
 }
 let slotMutationPending = false;
-async function mutateSlots(url, payload) {
+async function mutateSlots(url, payload, optimisticFn = null) {
  if (!currentRoundReady()) return false;
  if (slotMutationPending) return false;
  slotMutationPending = true;
  const menuId = currentActiveMenuId, roundNumber = currentRoundNumber;
+ const rollbackState = optimisticFn ? structuredClone(gameState) : null;
+
+ if (optimisticFn) {
+   try {
+     optimisticFn();
+     renderSlotBoard();
+     renderPlayerTable();
+     renderWinnerCheckboxes();
+     updateHeroStats();
+     updateSplitAmounts();
+   } catch (e) {
+     console.warn("Optimistic update error:", e);
+   }
+ }
+
  try {
-  await apiJson(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ...payload, gameId:gameState.id,menuId,roundNumber }) });
-  const json = await apiJson('/api/game?menuId='+encodeURIComponent(menuId)+'&roundNumber='+roundNumber);
-  if (currentActiveMenuId === menuId && currentRoundNumber === roundNumber) applyGameData(json.data);
+  const json = await apiJson(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ ...payload, gameId:gameState.id,menuId,roundNumber }) });
+  if (json.game && json.game.slots) {
+    if (currentActiveMenuId === menuId && currentRoundNumber === roundNumber) applyGameData(json.game);
+  } else {
+    const res = await apiJson('/api/game?menuId='+encodeURIComponent(menuId)+'&roundNumber='+roundNumber);
+    if (currentActiveMenuId === menuId && currentRoundNumber === roundNumber) applyGameData(res.data);
+  }
   showToast('Đã lưu thay đổi'); return true;
- } catch(e) { alert('Chưa hoàn tất: '+e.message); return false; }
+ } catch(e) {
+  if (rollbackState) applyGameData(rollbackState);
+  alert('Chưa hoàn tất: '+e.message); return false;
+ }
  finally { slotMutationPending = false; }
 }
 async function apiJson(url, options) {
@@ -385,7 +407,10 @@ function renderQuickSlotSuggestions() {
         return;
       }
       playSound('coin');
-      mutateSlots('/api/game/slot', { slotNumber:s.id, playerName:name, shares:[] });
+      mutateSlots('/api/game/slot', { slotNumber:s.id, playerName:name, shares:[] }, () => {
+        const slot = gameState.slots.find(x => x.id === s.id);
+        if (slot) { slot.owner = name; slot.shares = []; }
+      });
     };
     container.appendChild(btn);
   });
@@ -453,35 +478,56 @@ function closeSlotModal() {
   if (modal) modal.classList.remove("show");
 }
 
-async function saveSlotModal() {
- const slotNumber=Number(document.getElementById('currentActionSlotId').value);
- const playerName=document.getElementById('slotModalPlayerName').value.trim();
- if(!playerName)return alert('Nhập tên khách');
- let shares;
- try {const text=document.getElementById('slotModalShares').value.trim();shares=text?text.split(';').map(part=>{const [name,percent]=part.split('=');return {name:name.trim(),percent:Number(percent)};}):[];
-  SettlementCore.groups({slotPrice:gameState.slotPrice,slots:[{id:slotNumber,owner:playerName,shares}]});
- }catch(e){return alert(e.message);}
- if(await mutateSlots('/api/game/slot',{slotNumber,playerName,shares}))closeSlotModal();
-}
-async function releaseCurrentSlot() {
- const slotNumber=Number(document.getElementById('currentActionSlotId').value);
- if(await mutateSlots('/api/game/slot',{slotNumber,playerName:null}))closeSlotModal();
-}
+ async function saveSlotModal() {
+  const slotNumber=Number(document.getElementById('currentActionSlotId').value);
+  const playerName=document.getElementById('slotModalPlayerName').value.trim();
+  if(!playerName)return alert('Nhập tên khách');
+  let shares;
+  try {const text=document.getElementById('slotModalShares').value.trim();shares=text?text.split(';').map(part=>{const [name,percent]=part.split('=');return {name:name.trim(),percent:Number(percent)};}):[];
+   SettlementCore.groups({slotPrice:gameState.slotPrice,slots:[{id:slotNumber,owner:playerName,shares}]});
+  }catch(e){return alert(e.message);}
+  closeSlotModal();
+  mutateSlots('/api/game/slot',{slotNumber,playerName,shares}, () => {
+    const slot = gameState.slots.find(x => x.id === slotNumber);
+    if (slot) { slot.owner = playerName; slot.shares = shares; }
+  });
+ }
+ async function releaseCurrentSlot() {
+  const slotNumber=Number(document.getElementById('currentActionSlotId').value);
+  closeSlotModal();
+  mutateSlots('/api/game/slot',{slotNumber,playerName:null}, () => {
+    const slot = gameState.slots.find(x => x.id === slotNumber);
+    if (slot) { slot.owner = null; slot.shares = []; }
+  });
+ }
 
-async function addSingleSlot() { await mutateSlots('/api/game/slot/add', {}); }
+ async function addSingleSlot() {
+   await mutateSlots('/api/game/slot/add', {}, () => {
+     const newId = gameState.slots.length + 1;
+     gameState.slots.push({ id: newId, owner: null, shares: [] });
+     gameState.totalSlots = gameState.slots.length;
+   });
+ }
 
-async function removeSingleSlot() {
- if (gameState.slots.length <= 1) return alert('Bàn cần ít nhất một ghế');
- if (gameState.slots.at(-1).owner && !confirm('Ghế cuối có khách. Xóa ghế này?')) return;
- await mutateSlots('/api/game/slot/remove', {});
-}
+ async function removeSingleSlot() {
+  if (gameState.slots.length <= 1) return alert('Bàn cần ít nhất một ghế');
+  if (gameState.slots.at(-1).owner && !confirm('Ghế cuối có khách. Xóa ghế này?')) return;
+  await mutateSlots('/api/game/slot/remove', {}, () => {
+    gameState.slots.pop();
+    gameState.totalSlots = gameState.slots.length;
+  });
+ }
 
-async function quickRegisterSlots() {
- const playerName = document.getElementById('regPlayerName').value.trim();
- const slotCount = Number(document.getElementById('regSlotCount').value);
- if (!playerName || !Number.isInteger(slotCount) || slotCount < 1) return alert('Nhập tên và số ghế hợp lệ');
- if (await mutateSlots('/api/game/quick-register', { playerName, slotCount })) document.getElementById('regPlayerName').value = '';
-}
+ async function quickRegisterSlots() {
+  const playerName = document.getElementById('regPlayerName').value.trim();
+  const slotCount = Number(document.getElementById('regSlotCount').value);
+  if (!playerName || !Number.isInteger(slotCount) || slotCount < 1) return alert('Nhập tên và số ghế hợp lệ');
+  document.getElementById('regPlayerName').value = '';
+  await mutateSlots('/api/game/quick-register', { playerName, slotCount }, () => {
+    const freeSlots = gameState.slots.filter(s => !s.owner).slice(0, slotCount);
+    freeSlots.forEach(s => { s.owner = playerName; s.shares = []; });
+  });
+ }
 
 function getGroupedPlayerData() {
  return [...SettlementCore.groups(gameState).values()];
@@ -546,7 +592,16 @@ function renderPlayerTable() {
 }
 
 async function removePlayer(playerName) {
- if (confirm('Hủy toàn bộ ghế của ' + playerName + '?')) await mutateSlots('/api/game/remove-player', { playerName });
+ if (confirm('Hủy toàn bộ ghế của ' + playerName + '?')) {
+   await mutateSlots('/api/game/remove-player', { playerName }, () => {
+     gameState.slots.forEach(s => {
+       if (s.owner && s.owner.trim().toLowerCase() === playerName.trim().toLowerCase()) {
+         s.owner = null;
+         s.shares = [];
+       }
+     });
+   });
+ }
 }
 
 function updateHeroStats() {
@@ -601,7 +656,7 @@ function setDeductSlotCost(val) {
   if (val) {
     if (btnTrue) btnTrue.classList.add("active");
     if (btnFalse) btnFalse.classList.remove("active");
-    if (explain) explain.innerHTML = `Tiền người thắng nhận = Tiền thưởng − tiền của <b>tất cả slot đã mua</b> − hàng mua kèm.`;
+    if (explain) explain.innerHTML = `Tiền người thắng nhận = Hoa hậu − tiền của <b>tất cả slot đã mua</b> − hàng mua kèm.`;
   } else {
     if (btnTrue) btnTrue.classList.remove("active");
     if (btnFalse) btnFalse.classList.add("active");
@@ -692,7 +747,7 @@ function autoCalculateSettlement(silent = true) {
         <tr>
           <td colspan="9" class="text-center text-muted py-5">
             <i class="fa-solid fa-ticket text-xl mb-2 text-accent"></i>
-            <p>Chọn các slot thắng trên phiếu để xem tiền thưởng và tiền cần thanh toán.</p>
+            <p>Chọn các slot thắng trên phiếu để xem hoa hậu và tiền cần thanh toán.</p>
           </td>
         </tr>
       `;
@@ -1053,7 +1108,7 @@ function recalculateAndRenderBill() {
       if (m.totalPrizeWon > 0) {
         rowsHtml += `
           <tr>
-            <td style="padding-left: 18px;"><i class="fa-solid fa-crown text-gold"></i> Thưởng trúng (${m.menuName})</td>
+            <td style="padding-left: 18px;"><i class="fa-solid fa-crown text-gold"></i> Hoa hậu (${m.menuName})</td>
             <td class="text-right font-bold text-green">+${formatVND(m.totalPrizeWon)}</td>
           </tr>
         `;
@@ -1074,7 +1129,7 @@ function recalculateAndRenderBill() {
     if (prizeWon > 0) {
       rowsHtml += `
         <tr>
-          <td><i class="fa-solid fa-crown text-gold"></i> Tiền thưởng trúng kèo</td>
+          <td><i class="fa-solid fa-crown text-gold"></i> Hoa hậu trúng kèo</td>
           <td class="text-right font-bold text-green">+${formatVND(prizeWon)}</td>
         </tr>
       `;
@@ -1127,14 +1182,14 @@ function recalculateAndRenderBill() {
     netTitle.innerText = "CHÚC MỪNG! SHOP SẼ CHUYỂN KHOẢN CHO BẠN";
     netAmount.innerText = `+${formatVND(finalNet)}`;
     netExplain.innerText = attachedTotalCost > 0 
-      ? `(Đã cấn trừ tiền slot & ${formatVND(attachedTotalCost)} tiền mỹ phẩm mua kèm). Shop chuyển khoản phần thưởng còn lại!`
-      : (deducted ? "(Đã trừ tiền mua slot). Shop sẽ chủ động chuyển số tiền này cho bạn!" : "Bạn nhận trọn vẹn 100% tiền thưởng!");
+      ? `(Đã cấn trừ tiền slot & ${formatVND(attachedTotalCost)} tiền mỹ phẩm mua kèm). Shop chuyển khoản phần hoa hậu còn lại!`
+      : (deducted ? "(Đã trừ tiền mua slot). Shop sẽ chủ động chuyển số tiền này cho bạn!" : "Bạn nhận trọn vẹn 100% hoa hậu!");
     qrSection.style.display = "none";
   } else {
     netBox.className = "ticket-net-highlight";
     netTitle.innerText = "HÒA TIỀN (0 đ)";
     netAmount.innerText = "0 đ";
-    netExplain.innerText = "Tiền thưởng và tiền mua hàng cấn trừ vừa khớp 100%.";
+    netExplain.innerText = "Hoa hậu và tiền mua hàng cấn trừ vừa khớp 100%.";
     qrSection.style.display = "none";
   }
 
@@ -1317,7 +1372,7 @@ function copyBillText() {
   text += `🎟️ Slot tham gia: ${slots}\n`;
   text += `💰 Tiền mua slot: -${formatVND(currentBillData.buyCost)}\n`;
   if (currentBillData.prizeWon > 0) {
-    text += `👑 Tiền thưởng trúng: +${formatVND(currentBillData.prizeWon)}\n`;
+    text += `👑 Hoa hậu: +${formatVND(currentBillData.prizeWon)}\n`;
   }
   
   if (attached.length > 0) {
@@ -1338,7 +1393,7 @@ function copyBillText() {
   } else if (net > 0) {
     text += `🎉 SHOP SẼ CHUYỂN KHOẢN CHO BẠN: +${formatVND(net)}${attachedTotal > 0 ? ' (Đã cấn trừ tiền slot & tiền mỹ phẩm mua kèm)' : (currentBillData.deducted ? ' (Đã cấn trừ tiền slot)' : ' (Nhận đủ 100% giải)')}\n`;
   } else {
-    text += `👉 Kết quả: Hòa vốn (0 đ - Tiền trúng thưởng đã cấn trừ đủ tiền slot và tiền hàng)\n`;
+    text += `👉 Kết quả: Hòa vốn (0 đ - Hoa hậu đã cấn trừ đủ tiền slot và tiền hàng)\n`;
   }
   text += `\nCảm ơn bạn đã tham gia và ủng hộ Shop! ❤️`;
 
@@ -1539,7 +1594,7 @@ function changeCartQty(idx, delta) {
   if (cart[idx]) {
     if (cart[idx].blindBagRoundId && delta > 0) {
       const round = blindBagRounds.find(r => r.id === cart[idx].blindBagRoundId);
-      if (!round || cart[idx].qty + delta > 15 - round.data.slots.length) return alert('Không còn đủ slot túi mù.');
+      if (!round || cart[idx].qty + delta > 15 - round.data.slots.length) return alert('Không còn đủ slot túi mè.');
     }
     cart[idx].qty += delta;
     if (cart[idx].qty <= 0) cart.splice(idx, 1);
@@ -1829,7 +1884,7 @@ function applyGameData(data) {
   document.getElementById('btnDeductTrue')?.classList.toggle('active', deductSlotCost);
   document.getElementById('btnDeductFalse')?.classList.toggle('active', !deductSlotCost);
   const deductText=document.getElementById('deductExplainText');
-  if(deductText)deductText.innerHTML=deductSlotCost ? 'Tiền người thắng nhận = Tiền thưởng − tiền của <b>tất cả slot đã mua</b> − hàng mua kèm.' : 'Không trừ lại tiền slot của người thắng. Chỉ dùng khi <b>người thắng đã trả tiền slot</b>; người không thắng vẫn tính tiền slot.';
+  if(deductText)deductText.innerHTML=deductSlotCost ? 'Tiền người thắng nhận = Hoa hậu − tiền của <b>tất cả slot đã mua</b> − hàng mua kèm.' : 'Không trừ lại tiền slot của người thắng. Chỉ dùng khi <b>người thắng đã trả tiền slot</b>; người không thắng vẫn tính tiền slot.';
 
   gameState.slots = (data.slots || []).map(s => ({
     id: s.slot_number,
@@ -2056,7 +2111,7 @@ async function saveRoundForm() {
   const settleMode = document.getElementById("roundModalSettleMode").value;
 
   if (!name || isNaN(slotPrice) || isNaN(prizeValue)) {
-    alert("Vui lòng điền đầy đủ Tên Chuyến, Giá mỗi slot và Tổng giải thưởng!");
+    alert("Vui lòng điền đầy đủ Tên Chuyến, Giá mỗi slot và Tổng hoa hậu!");
     return;
   }
 
@@ -2306,8 +2361,15 @@ async function saveMenuForm() {
   const description = document.getElementById("newMenuDescription").value.trim();
 
   if (!name || !slotPrice || !prizeValue) {
-    alert("Vui lòng điền đầy đủ Tên Menu, Giá mỗi slot và Tổng giải thưởng!");
+    alert("Vui lòng điền đầy đủ Tên Menu, Giá mỗi slot và Tổng hoa hậu!");
     return;
+  }
+
+  const saveBtn = document.getElementById("btnSaveMenu");
+  const origBtnText = saveBtn ? saveBtn.innerHTML : '';
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Đang lưu...`;
   }
 
   playSound('coin');
@@ -2321,11 +2383,13 @@ async function saveMenuForm() {
         body: JSON.stringify({ name, slotPrice, totalSlots, prizeValue, description })
       });
       const json = await res.json();
-    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
+      if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
       if (json.success) {
         showToast(`Đã cập nhật Menu [${name}] thành công!`);
         closeMenuModal();
-        await fetchMenus();
+        const cur = menusList.find(m => m.id === editId);
+        if (cur) Object.assign(cur, { name, slot_price: slotPrice, total_slots: totalSlots, prize_value: prizeValue, description });
+        renderMenuPills();
         await selectMenu(editId);
       } else {
         alert(json.error || 'Lỗi cập nhật menu');
@@ -2338,11 +2402,18 @@ async function saveMenuForm() {
         body: JSON.stringify({ name, slotPrice, totalSlots, prizeValue, description })
       });
       const json = await res.json();
-    if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
+      if (!res.ok || !json.success) throw new Error(json.error || "Không tải/lưu được dữ liệu");
       if (json.success && json.data) {
         showToast(`Đã tạo Menu [${json.data.name}] thành công!`);
         closeMenuModal();
-        await fetchMenus();
+        const existingIdx = menusList.findIndex(m => m.id === json.data.id);
+        if (existingIdx >= 0) menusList[existingIdx] = json.data;
+        else menusList.push(json.data);
+        updateMenuAvailability();
+        renderMenuPills();
+        populateReportMenuSelect();
+        const badge = document.getElementById("reportCountBadge");
+        if (badge) badge.innerText = `${menusList.length} Menu`;
         await selectMenu(json.data.id);
       } else {
         alert(json.error || 'Lỗi tạo menu');
@@ -2351,6 +2422,11 @@ async function saveMenuForm() {
   } catch (err) {
     console.error(err);
     alert('Lỗi lưu menu: ' + err.message);
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerHTML = origBtnText;
+    }
   }
 }
 
@@ -2427,8 +2503,8 @@ async function openRoundHistoryModal() {
               <span class="font-bold text-accent">${r.name}</span>
             </div>
             <div class="text-xs text-muted">
-              <span>Đã cược: <b>${occupied}/${r.totalSlots} slot</b></span> • 
-              <span>Giải thưởng: <b class="text-gold">${formatVND(r.prizeValue)}</b></span> • 
+              <span>Đã vào: <b>${occupied}/${r.totalSlots} slot</b></span> • 
+              <span>Hoa hậu: <b class="text-gold">${formatVND(r.prizeValue)}</b></span> • 
               <span>Nhận giải: <b class="text-green font-bold">${winnersText}</b></span>
             </div>
           </div>
@@ -2462,8 +2538,8 @@ async function openRoundHistoryModal() {
                   <span class="font-bold text-accent">${r.name}</span>
                 </div>
                 <div class="text-xs text-muted">
-                  <span>Đã cược: <b>${occupied}/${r.totalSlots} slot</b></span> • 
-                  <span>Giải thưởng: <b class="text-gold">${formatVND(r.prizeValue)}</b></span> • 
+                  <span>Đã vào: <b>${occupied}/${r.totalSlots} slot</b></span> • 
+                  <span>Hoa hậu: <b class="text-gold">${formatVND(r.prizeValue)}</b></span> • 
                   <span>Nhận giải: <b class="text-green font-bold">${winnersText}</b></span>
                 </div>
               </div>
@@ -2646,7 +2722,7 @@ async function loadAllMenusReport(query = '') {
       menus.forEach(m => {
         headHtml += `<th>${m.name}<br><span class="text-xs text-muted">(${formatVND(m.slot_price)})</span></th>`;
       });
-      headHtml += `<th>Tổng Slot</th><th>Tổng Tiền Cược</th><th>Tổng Tiền Thưởng</th><th>Net Ròng</th><th>Quyết Toán</th><th class="text-right">Thao Tác</th></tr>`;
+      headHtml += `<th>Tổng Slot</th><th>Tổng Vào</th><th>Hoa Hậu</th><th>Net Ròng</th><th>Quyết Toán</th><th class="text-right">Thao Tác</th></tr>`;
       thead.innerHTML = headHtml;
 
       const tbody = document.getElementById("matrixTableBody");
@@ -2806,7 +2882,7 @@ function renderCustomerSearchMatches(customers, query) {
     const name = document.createElement('strong'); name.textContent = customer.customerName;
     const info = document.createElement('span');
     const finance = customer.finance;
-    info.textContent = finance ? (finance.customerPays ? 'Khách trả shop: ' + formatVND(finance.customerPays) : finance.shopPays ? 'Shop trả khách: ' + formatVND(finance.shopPays) : 'Không còn chênh lệch') : customer.totalSlots + ' slot · Thưởng: ' + formatVND(customer.totalPrizeWon);
+    info.textContent = finance ? (finance.customerPays ? 'Khách trả shop: ' + formatVND(finance.customerPays) : finance.shopPays ? 'Shop trả khách: ' + formatVND(finance.shopPays) : 'Không còn chênh lệch') : customer.totalSlots + ' slot · Hoa hậu: ' + formatVND(customer.totalPrizeWon);
     button.append(name, info); button.setAttribute('aria-pressed', 'false');
     button.addEventListener('click', () => {
       list.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', 'false'));
@@ -2828,16 +2904,16 @@ function renderCustomerCombinedBalance(match) {
   const final = f.customerPays ? 'KHÁCH CẦN TRẢ SHOP' : f.shopPays ? 'SHOP CẦN TRẢ KHÁCH' : 'KHÔNG CÒN CHÊNH LỆCH';
   const amount = f.customerPays || f.shopPays || 0;
   return `<section class="customer-combined-balance" aria-label="Quyết toán chung của khách">
-    <h3>TIỀN CUỐI CÙNG: Bàn kèo + Túi mù + Pass</h3>
+    <h3>TIỀN CUỐI CÙNG: Bàn kèo + Túi mè + Pass</h3>
     <p class="customer-combined-scope">Tất cả các menu, tất cả các ngày · Theo dữ liệu đã lưu</p>
     <div class="customer-combined-parts">
       <div><span>1. Số dư Bàn kèo</span><strong>${formatVND(f.slotNet)}</strong><small>Đã tính tiền slot và hàng kèm theo từng chuyến</small></div>
-      <div><span>2. Trừ tiền Túi mù còn thiếu</span><strong>− ${formatVND(f.bagDue)}</strong><small>Đã trả: ${formatVND(f.bagPaid)} / Tổng hóa đơn: ${formatVND(f.bagTotal)}</small></div>
+      <div><span>2. Trừ tiền Túi mè còn thiếu</span><strong>− ${formatVND(f.bagDue)}</strong><small>Đã trả: ${formatVND(f.bagPaid)} / Tổng hóa đơn: ${formatVND(f.bagTotal)}</small></div>
       <div><span>3. Cộng tiền shop thu đồ pass</span><strong>+ ${formatVND(f.buybackTotal)}</strong><small>Chỉ cộng phiếu pass còn hiệu lực</small></div>
     </div>
     <div class="customer-combined-final ${f.customerPays ? 'customer-combined-pay' : 'customer-combined-receive'}"><span>${final}</span><strong>${formatVND(amount)}</strong></div>
     <p class="customer-combined-equation">${formatVND(f.slotNet)} − ${formatVND(f.bagDue)} + ${formatVND(f.buybackTotal)} = ${formatVND(f.netAmount)}</p>
-    <p class="customer-combined-note">Hóa đơn Túi mù chưa xác nhận trả tiền vẫn được tính là còn thiếu. Chuyến Bàn kèo chưa chốt còn tạm tính. Muốn xem riêng hôm nay / hôm qua, dùng phần Quyết toán chung phía trên.</p>
+    <p class="customer-combined-note">Hóa đơn Túi mè chưa xác nhận trả tiền vẫn được tính là còn thiếu. Chuyến Bàn kèo chưa chốt còn tạm tính. Muốn xem riêng hôm nay / hôm qua, dùng phần Quyết toán chung phía trên.</p>
   </section>`;
 }
 function renderCustomerSearchDetail(match, insightBox) {
@@ -2855,7 +2931,7 @@ function renderCustomerSearchDetail(match, insightBox) {
                 ${m.rounds.map(r => `<span>• <b>Chuyến #${r.roundNumber}</b>: ${r.slotCount} slot (ô #${r.slots.join('-')}) ${r.isWinner ? '<span class="text-green font-bold">🏆 Thắng ' + formatVND(r.prizeWon) + '</span>' : ''}</span>`).join('<br>')}
               </div>
               <div class="text-xs" style="color: var(--text-secondary);">
-                Cược: <b class="text-gold">${formatVND(m.totalBuyCost)}</b> | Thưởng: <b class="text-green">${formatVND(m.totalPrizeWon)}</b> | Net: <b class="${m.netAmount >= 0 ? 'text-green' : 'text-red'}">${m.netAmount > 0 ? '+' : ''}${formatVND(m.netAmount)}</b>
+                Tổng vào: <b class="text-gold">${formatVND(m.totalBuyCost)}</b> | Hoa hậu: <b class="text-green">${formatVND(m.totalPrizeWon)}</b> | Net: <b class="${m.netAmount >= 0 ? 'text-green' : 'text-red'}">${m.netAmount > 0 ? '+' : ''}${formatVND(m.netAmount)}</b>
               </div>
             </div>
           `).join('');
@@ -2893,8 +2969,8 @@ function renderCustomerSearchDetail(match, insightBox) {
           </div>
           ${renderCustomerCombinedBalance(match)}
           <div style="margin-top: 8px; display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.92rem; width: 100%;">
-            <span>Tổng cược slot: <b class="text-gold">${formatVND(match.totalBuyCost)}</b> (${match.totalSlots} slot)</span>
-            <span>Tổng trúng thưởng: <b class="text-green">${formatVND(match.totalPrizeWon)}</b></span>
+            <span>Tổng vào: <b class="text-gold">${formatVND(match.totalBuyCost)}</b> (${match.totalSlots} slot)</span>
+            <span>Hoa hậu: <b class="text-green">${formatVND(match.totalPrizeWon)}</b></span>
             <span>Mỹ phẩm kèm: <b class="text-accent">${formatVND(attachedTotalCost)}</b></span>
             <span>Số dư riêng Bàn kèo: <b>${formatVND(match.netAmount)}</b></span>
           </div>

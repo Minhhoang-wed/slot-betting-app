@@ -16,7 +16,7 @@ async function main(){
   for(let i=0;i<names.length;i++)await app.Slot.assignSlot(game.id,i+1,names[i]);
   await app.Game.finalizeGame(menu.id,{roundNumber:1,settleMode:'split2',winners:['mayne','freefire'],deductSlotCost:true});
   await app.Game.switchActiveMenu(menu.id);
-  const round=await Bags.create({name:'TEST · Túi mù 3 món',productIds:Array.from({length:45},(_,i)=>i%3+1)});
+  const round=await Bags.create({name:'TEST · Túi mè 3 món',productIds:Array.from({length:45},(_,i)=>i%3+1)});
   const order=(quantity,customerName)=>Bags.checkout(round.id,{requestId:randomUUID(),quantity,customerName,phone:'',items:[],discount:0});
   const kieu=await order(1,'Kiều');await order(14,'khách A');
   for(let i=1;i<=15;i++)await Bags.assign(round.id,{slotNumber:i,productNumbers:[i*3-2,i*3-1,i*3],previousProductNumbers:[]});

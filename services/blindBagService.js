@@ -9,7 +9,7 @@ function check(condition, message, status = 400) {
 }
 function createBlindBagService(store, products) {
   function expectVersion(round,input) {
-    check(Number.isInteger(input.previousVersion) && input.previousVersion===round.version,'Đợt túi mù vừa thay đổi. Hãy tải lại trước khi sửa/xóa.',409);
+    check(Number.isInteger(input.previousVersion) && input.previousVersion===round.version,'Đợt túi mè vừa thay đổi. Hãy tải lại trước khi sửa/xóa.',409);
   }
   // Extract one seat without moving retail goods or losing the order discount.
   function extractSlotOrder(round,slot) {
@@ -29,8 +29,8 @@ function createBlindBagService(store, products) {
   async function mutate(id, action, allowDeleted=false) {
     for (let attempt = 0; attempt < 8; attempt++) {
       const round = await store.get(id);
-      check(round, 'Không tìm thấy đợt túi mù.', 404);
-      check(allowDeleted || !round.data.deletedAt,'Đợt túi mù đã xóa. Hãy khôi phục để thao tác.',409);
+      check(round, 'Không tìm thấy đợt túi mè.', 404);
+      check(allowDeleted || !round.data.deletedAt,'Đợt túi mè đã xóa. Hãy khôi phục để thao tác.',409);
       const version = round.version;
       const result = action(round);
       if (await store.save(round, version)) return { round, ...result };
@@ -41,9 +41,9 @@ function createBlindBagService(store, products) {
     async list({deleted=false}={}) {return (await store.list()).filter(r=>!!r.data.deletedAt===deleted);},
     async create(input) {
       check(Array.isArray(input.productIds) && input.productIds.length === CAPACITY * 3,
-        'Mỗi đợt túi mù cần đúng 45 sản phẩm (15 slot × 3 món). Có thể chọn nhiều sản phẩm cùng loại.');
+        'Mỗi đợt túi mè cần đúng 45 sản phẩm (15 slot × 3 món). Có thể chọn nhiều sản phẩm cùng loại.');
       const price = input.price !== undefined ? Number(input.price) : DEFAULT_PRICE;
-      check(Number.isSafeInteger(price) && price >= 0, 'Giá mỗi slot túi mù phải là số nguyên không âm.');
+      check(Number.isSafeInteger(price) && price >= 0, 'Giá mỗi slot túi mè phải là số nguyên không âm.');
       const catalog = await products.getAll();
       const pool = input.productIds.map((id, index) => {
         const product = catalog.find(p => String(p.id) === String(id) && p.in_stock !== false);
@@ -51,7 +51,7 @@ function createBlindBagService(store, products) {
         return { number: index + 1, productId: product.id, name: product.name };
       });
       return store.create({ id: randomUUID(), version: 0, created_at: new Date().toISOString(),
-        data: { name: String(input.name || 'Túi mù').trim().slice(0, 100) || 'Túi mù',
+        data: { name: String(input.name || 'Túi mè').trim().slice(0, 100) || 'Túi mè',
           capacity: CAPACITY, productsPerSlot: 3, price, pool, slots: [], orders: [], returns: [] } });
     },
     update(id, input) {
@@ -59,12 +59,12 @@ function createBlindBagService(store, products) {
         if(input.previousVersion!==undefined)expectVersion(round,input);
         if (input.price !== undefined) {
           const price = Number(input.price);
-          check(Number.isSafeInteger(price) && price >= 0, 'Giá mỗi slot túi mù phải là số nguyên không âm.');
+          check(Number.isSafeInteger(price) && price >= 0, 'Giá mỗi slot túi mè phải là số nguyên không âm.');
           round.data.price = price;
         }
         if (input.name !== undefined) {
           const name = String(input.name || '').trim().slice(0, 100);
-          check(name,'Vui lòng nhập tên đợt túi mù.');
+          check(name,'Vui lòng nhập tên đợt túi mè.');
           round.data.name = name;
         }
         return {};
@@ -131,8 +131,8 @@ function createBlindBagService(store, products) {
       check(Number.isSafeInteger(input.discount) && input.discount >= 0, 'Giảm giá phải là số nguyên không âm.');
       // Retry an already committed order even if a catalog item was subsequently removed.
       const previous = await store.get(id);
-      check(previous, 'Không tìm thấy đợt túi mù.', 404);
-      check(!previous.data.deletedAt,'Đợt túi mù đã xóa.',409);
+      check(previous, 'Không tìm thấy đợt túi mè.', 404);
+      check(!previous.data.deletedAt,'Đợt túi mè đã xóa.',409);
       const existing = previous.data.orders.find(o => o.id === input.requestId);
       if (existing) return { round: previous, order: existing };
       check(!(previous.data.deletedSlots || []).some(e=>e.sourceOrderId===input.requestId || e.order.id===input.requestId),'Đơn này đã bị xóa. Hãy tạo đơn mới.',409);
@@ -152,7 +152,7 @@ function createBlindBagService(store, products) {
         const duplicate = round.data.orders.find(o => o.id === input.requestId);
         if (duplicate) return { order: duplicate };
         check(!(round.data.deletedSlots || []).some(e=>e.sourceOrderId===input.requestId || e.order.id===input.requestId),'Đơn này đã bị xóa. Hãy tạo đơn mới.',409);
-        check(round.data.slots.length + input.quantity <= CAPACITY, 'Không còn đủ slot túi mù. Vui lòng cập nhật giỏ hàng.', 409);
+        check(round.data.slots.length + input.quantity <= CAPACITY, 'Không còn đủ slot túi mè. Vui lòng cập nhật giỏ hàng.', 409);
         const currentPrice = Number(round.data.price ?? roundPrice);
         const currentSubtotal = items.reduce((sum, item) => sum + item.price * item.quantity, currentPrice * input.quantity);
         check(input.discount <= currentSubtotal, 'Giảm giá không được vượt tổng tiền hàng.');
@@ -199,8 +199,8 @@ function createBlindBagService(store, products) {
       check(typeof input.requestId === 'string' && /^[a-zA-Z0-9-]{16,80}$/.test(input.requestId), 'Mã phiếu pass không hợp lệ.');
       check(Array.isArray(input.productNumbers) && input.productNumbers.length > 0 && new Set(input.productNumbers).size === input.productNumbers.length && input.productNumbers.every(Number.isInteger), 'Chọn các món khách muốn pass.');
       const existing = await store.get(id);
-      check(existing, 'Không tìm thấy đợt túi mù.', 404);
-      check(!existing.data.deletedAt,'Đợt túi mù đã xóa.',409);
+      check(existing, 'Không tìm thấy đợt túi mè.', 404);
+      check(!existing.data.deletedAt,'Đợt túi mè đã xóa.',409);
       const old = (existing.data.returns || []).find(r => r.id === input.requestId);
       if (old) return { round: existing, receipt: old };
       const catalog = await products.getAll();

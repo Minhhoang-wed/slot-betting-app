@@ -533,9 +533,12 @@ const GameModel = {
         if (!error && data) {
           const menu = await MenuModel.getMenuById(data.menu_id);
           if (menu) {
-            await loadOrInitRoundsForMenu(menu);
-            const found = (roundsByMenu[menu.id] || []).find(r => r.id === gameId);
-            if (found) return found;
+            const round = mapGameRowToRound(data, menu);
+            if (!roundsByMenu[menu.id]) roundsByMenu[menu.id] = [];
+            const idx = roundsByMenu[menu.id].findIndex(r => r.id === round.id);
+            if (idx >= 0) roundsByMenu[menu.id][idx] = round;
+            else roundsByMenu[menu.id].push(round);
+            return round;
           }
         }
       } catch (e) { if (isConfigured()) throw e;}

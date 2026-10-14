@@ -1,5 +1,5 @@
 // =================================================================
-// TÚI MÙ (BLIND BAGS) - RETAIL MYSTERY BOX SYSTEM
+// TÚI MÈ (BLIND BAGS) - RETAIL MYSTERY BOX SYSTEM
 // Trực quan, dễ dùng, không chữ thừa, tích hợp xuất bill VietQR
 // =================================================================
 
@@ -29,7 +29,7 @@ async function blindBagAPI(path = '', body, method = 'POST') {
   });
   const json = await response.json();
   if (!response.ok || !json.success) {
-    throw Object.assign(new Error(json.error || 'Không thể tải túi mù.'), { status: response.status });
+    throw Object.assign(new Error(json.error || 'Không thể tải túi mè.'), { status: response.status });
   }
   return json;
 }
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabShop = document.getElementById('tabShop');
   if (!tabShop) return;
 
-  // Khung giao diện chính Túi mù
+  // Khung giao diện chính Túi mè
   const section = document.createElement('section');
   section.className = 'surface-card blind-bag-panel';
   section.id = 'blindBagSection';
@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="top-bar-title">
         <div class="bb-icon-badge"><i class="fa-solid fa-gift"></i></div>
         <div class="bb-heading-group">
-          <h2>TÚI MÙ</h2>
-          <button type="button" class="bb-chip bb-chip-gold bb-price-badge-interactive" id="bbCurrentPriceBadge" onclick="openEditBlindBagPriceModal()" title="Bấm để điều chỉnh giá túi mù đợt này">
+          <h2>TÚI MÈ</h2>
+          <button type="button" class="bb-chip bb-chip-gold bb-price-badge-interactive" id="bbCurrentPriceBadge" onclick="openEditBlindBagPriceModal()" title="Bấm để điều chỉnh giá túi mè đợt này">
             <i class="fa-solid fa-gem"></i> <span id="bbPriceBadgeText">414.000 đ / slot</span> <i class="fa-solid fa-pen-to-square bb-price-edit-icon"></i>
           </button>
           <span class="bb-chip bb-chip-emerald"><i class="fa-solid fa-boxes-packing"></i> 15 slot / đợt</span>
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Tải dữ liệu ban đầu
   loadBlindBags();
 
-  // Đồng bộ tên khách hàng giữa giỏ hàng shop và ô nhập túi mù
+  // Đồng bộ tên khách hàng giữa giỏ hàng shop và ô nhập túi mè
   const shopCustomerName = document.getElementById('shopCustomerName');
   if (shopCustomerName) {
     shopCustomerName.addEventListener('input', () => {
@@ -112,14 +112,14 @@ function createBlindBagModalDOM() {
   modal.innerHTML = `
     <div class="bb-modal-dialog">
       <div class="bb-modal-header">
-        <h3><i class="fa-solid fa-gift" style="color: #b45309;"></i> Tạo Đợt Túi Mù Mới (15 Slot)</h3>
+        <h3><i class="fa-solid fa-gift" style="color: #b45309;"></i> Tạo Đợt Túi Mè Mới (15 Slot)</h3>
         <button class="bb-modal-close-btn" onclick="closeBlindBagCreateModal()">&times;</button>
       </div>
       <div class="bb-modal-body">
         <div class="bb-input-grid-2">
           <div class="bb-input-field">
-            <label for="blindBagName">Tên đợt túi mù</label>
-            <input id="blindBagName" class="modern-input" maxlength="100" placeholder="Ví dụ: Túi mù đợt 1">
+            <label for="blindBagName">Tên đợt túi mè</label>
+            <input id="blindBagName" class="modern-input" maxlength="100" placeholder="Ví dụ: Túi mè đợt 1">
           </div>
           <div class="bb-input-field">
             <label for="blindBagPrice">Giá mỗi slot (VNĐ)</label>
@@ -175,12 +175,12 @@ function createBlindBagEditPriceModalDOM() {
   modal.innerHTML = `
     <div class="bb-modal-dialog bb-modal-sm">
       <div class="bb-modal-header">
-        <h3><i class="fa-solid fa-pen-to-square" style="color: #b45309;"></i> Chỉnh Mức Giá Túi Mù</h3>
+        <h3><i class="fa-solid fa-pen-to-square" style="color: #b45309;"></i> Chỉnh Mức Giá Túi Mè</h3>
         <button class="bb-modal-close-btn" onclick="closeEditBlindBagPriceModal()">&times;</button>
       </div>
       <div class="bb-modal-body">
         <div class="bb-edit-price-target-info">
-          <span id="bbEditPriceRoundName" class="bb-target-round-name">Túi mù</span>
+          <span id="bbEditPriceRoundName" class="bb-target-round-name">Túi mè</span>
           <span id="bbEditPriceCurrentBadge" class="bb-chip bb-chip-gold">Hiện tại: 414.000 đ</span>
         </div>
         <div class="bb-input-field" style="margin-top: 10px;">
@@ -236,7 +236,7 @@ function updateCreatePresetChipsState() {
 function openEditBlindBagPriceModal() {
   const round = selectedBlindBag();
   if (!round) {
-    if (typeof showToast === 'function') showToast('Chưa có đợt túi mù nào để chỉnh giá.');
+    if (typeof showToast === 'function') showToast('Chưa có đợt túi mè nào để chỉnh giá.');
     return;
   }
   const modal = document.getElementById('bbEditPriceModal');
@@ -289,7 +289,7 @@ async function saveBlindBagPrice() {
     const saved=await blindBagAPI(`/${round.id}`, { price: priceVal, previousVersion:round.version }, 'PUT');
     round.version=saved.data.round.version;
     round.data.price = priceVal;
-    // Đồng bộ lại giỏ hàng nếu đang chứa item túi mù đợt này
+    // Đồng bộ lại giỏ hàng nếu đang chứa item túi mè đợt này
     const cartItem = cart.find(item => item.blindBagRoundId === round.id);
     if (cartItem) {
       cartItem.product.price = priceVal;
@@ -299,7 +299,7 @@ async function saveBlindBagPrice() {
     renderBlindBags();
     loadFinanceSummary();
     const formatted = (typeof formatVND === 'function') ? formatVND(priceVal) : priceVal.toLocaleString('vi-VN') + ' đ';
-    if (typeof showToast === 'function') showToast(`Đã đổi giá túi mù thành ${formatted} / slot!`);
+    if (typeof showToast === 'function') showToast(`Đã đổi giá túi mè thành ${formatted} / slot!`);
     if (typeof playSound === 'function') playSound('success');
   } catch (err) {
     alert(err.message);
@@ -320,7 +320,7 @@ function updateBlindBagPendingMessage() {
     <div class="bb-round-full-banner mb-3" style="background:#fffbeb; border-color:#f59e0b;">
       <div class="bb-round-full-banner-left">
         <i class="fa-solid fa-clock-rotate-left"></i>
-        <span>Đang có đơn túi mù chờ xác nhận xuất hóa đơn.</span>
+        <span>Đang có đơn túi mè chờ xác nhận xuất hóa đơn.</span>
       </div>
       <button class="btn-neon-gold" onclick="checkoutBlindBagCart()">
         <i class="fa-solid fa-receipt"></i> Kiểm tra / Xuất lại hóa đơn
@@ -339,7 +339,7 @@ async function loadBlindBags() {
       if (!result.persistent) {
         message.style.display = 'block';
         message.className = 'bb-chip bb-chip-gold mb-3';
-        message.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Chế độ thử nghiệm: dữ liệu túi mù lưu trong RAM.';
+        message.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Chế độ thử nghiệm: dữ liệu túi mè lưu trong RAM.';
       } else {
         message.style.display = 'none';
       }
@@ -384,10 +384,10 @@ function renderBlindBags() {
     host.innerHTML = `
       <div class="bb-empty-state">
         <i class="fa-solid fa-gift"></i>
-        <h3>Chưa có đợt túi mù nào</h3>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">Hãy tạo đợt túi mù 15 slot để bắt đầu bán lẻ cho khách hàng.</p>
+        <h3>Chưa có đợt túi mè nào</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Hãy tạo đợt túi mè 15 slot để bắt đầu bán lẻ cho khách hàng.</p>
         <button class="btn-neon-gold" onclick="openBlindBagCreateModal()" style="margin-top: 8px;">
-          <i class="fa-solid fa-plus"></i> Tạo đợt túi mù ngay
+          <i class="fa-solid fa-plus"></i> Tạo đợt túi mè ngay
         </button>
       </div>`;
     return;
@@ -418,7 +418,7 @@ function renderBlindBags() {
     <div class="bb-hero-bar">
       <div class="bb-round-selector-box">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 4px;">
-          <label for="blindBagRound" style="margin: 0;">Đợt túi mù đang chọn</label>
+          <label for="blindBagRound" style="margin: 0;">Đợt túi mè đang chọn</label>
           <button type="button" class="bb-btn-hero-edit-price" onclick="openEditBlindBagPriceModal()" title="Bấm để điều chỉnh giá slot đợt này">
             <i class="fa-solid fa-pen-to-square"></i> Đổi giá (${roundPrice.toLocaleString('vi-VN')} đ)
           </button>
@@ -701,7 +701,7 @@ function openBlindBagCreateModal() {
   if (!modal) return;
   const nameInput = document.getElementById('blindBagName');
   if (nameInput) {
-    nameInput.value = `Túi mù đợt ${blindBagRounds.length + 1}`;
+    nameInput.value = `Túi mè đợt ${blindBagRounds.length + 1}`;
   }
   const priceInput = document.getElementById('blindBagPrice');
   if (priceInput) {
@@ -766,7 +766,7 @@ function autoFillRandomProducts() {
 function autoFillPreviousProducts() {
   const previousRound = selectedBlindBag() || blindBagRounds[0];
   if (!previousRound || !previousRound.data.pool) {
-    return alert('Chưa có đợt túi mù trước đó để sao chép.');
+    return alert('Chưa có đợt túi mè trước đó để sao chép.');
   }
   const selects = [...document.querySelectorAll('#blindBagProductPool select')];
   selects.forEach((select, idx) => {
@@ -793,14 +793,14 @@ async function createBlindBag() {
   if (createBtn) createBtn.disabled = true;
 
   try {
-    const name = document.getElementById('blindBagName')?.value.trim() || `Túi mù đợt ${blindBagRounds.length + 1}`;
+    const name = document.getElementById('blindBagName')?.value.trim() || `Túi mè đợt ${blindBagRounds.length + 1}`;
     const priceInput = document.getElementById('blindBagPrice');
     const price = priceInput ? (parseInt(priceInput.value) >= 0 ? parseInt(priceInput.value) : 414000) : 414000;
     const result = await blindBagAPI('', { name, price, productIds });
     blindBagSelectedId = result.data.id;
     closeBlindBagCreateModal();
     await loadBlindBags();
-    if (typeof showToast === 'function') showToast('Tạo đợt túi mù 15 slot thành công!');
+    if (typeof showToast === 'function') showToast('Tạo đợt túi mè 15 slot thành công!');
     if (typeof playSound === 'function') playSound('coin');
   } catch (error) {
     alert(error.message);
@@ -890,7 +890,7 @@ function quickSelectSlot(slotNum) {
 function blindBagCartLocked() {
   if (!blindBagBusy && !blindBagPending) return false;
   if (typeof showToast === 'function') {
-    showToast('Đang có đơn túi mù chờ xử lý. Vui lòng xác nhận trước.');
+    showToast('Đang có đơn túi mè chờ xử lý. Vui lòng xác nhận trước.');
   }
   return true;
 }
@@ -899,9 +899,9 @@ function blindBagCartLocked() {
 async function quickSellBlindBag() {
   if (blindBagCartLocked()) return;
   const round = selectedBlindBag();
-  if (!round) return alert('Chưa chọn đợt túi mù.');
+  if (!round) return alert('Chưa chọn đợt túi mè.');
   const remaining = 15 - round.data.slots.length;
-  if (remaining <= 0) return alert('Đợt túi mù này đã bán đủ 15 slot.');
+  if (remaining <= 0) return alert('Đợt túi mè này đã bán đủ 15 slot.');
 
   const nameInput = document.getElementById('bbCustomerName');
   const phoneInput = document.getElementById('bbCustomerPhone');
@@ -922,11 +922,11 @@ async function quickSellBlindBag() {
   // Đồng bộ sang giỏ hàng
   syncFromBBNames();
 
-  // Đảm bảo giỏ hàng có item túi mù này
+  // Đảm bảo giỏ hàng có item túi mè này
   const slotPrice = Number(round.data.price ?? 414000);
   const existing = cart.find(item => item.blindBagRoundId);
   if (existing && existing.blindBagRoundId !== round.id) {
-    return alert('Mỗi hóa đơn chỉ mua slot của một đợt túi mù. Hãy xuất hóa đơn hiện tại trước.');
+    return alert('Mỗi hóa đơn chỉ mua slot của một đợt túi mè. Hãy xuất hóa đơn hiện tại trước.');
   }
   if (existing) {
     existing.qty = quantity;
@@ -934,7 +934,7 @@ async function quickSellBlindBag() {
   } else {
     cart.push({
       blindBagRoundId: round.id,
-      product: { id: 'blind-bag-' + round.id, name: `Túi mù · ${round.data.name}`, price: slotPrice },
+      product: { id: 'blind-bag-' + round.id, name: `Túi mè · ${round.data.name}`, price: slotPrice },
       qty: quantity
     });
   }
@@ -950,13 +950,13 @@ function addBlindBagToCart() {
   const round = selectedBlindBag();
   if (!round) return;
   const remaining = 15 - round.data.slots.length;
-  if (remaining <= 0) return alert('Đợt túi mù này đã đủ 15 slot.');
+  if (remaining <= 0) return alert('Đợt túi mè này đã đủ 15 slot.');
 
   const qtyInput = document.getElementById('blindBagQty');
   const quantity = Number(qtyInput ? qtyInput.value : 1);
   const existing = cart.find(item => item.blindBagRoundId);
   if (existing && existing.blindBagRoundId !== round.id) {
-    return alert('Mỗi hóa đơn chỉ mua slot của một đợt túi mù. Hãy xuất hóa đơn hiện tại trước.');
+    return alert('Mỗi hóa đơn chỉ mua slot của một đợt túi mè. Hãy xuất hóa đơn hiện tại trước.');
   }
   if (!Number.isInteger(quantity) || quantity < 1 || quantity + (existing?.qty || 0) > remaining) {
     return alert('Số lượng vượt quá số slot còn lại.');
@@ -971,12 +971,12 @@ function addBlindBagToCart() {
   } else {
     cart.push({
       blindBagRoundId: round.id,
-      product: { id: 'blind-bag-' + round.id, name: `Túi mù · ${round.data.name}`, price: slotPrice },
+      product: { id: 'blind-bag-' + round.id, name: `Túi mè · ${round.data.name}`, price: slotPrice },
       qty: quantity
     });
   }
   if (typeof renderCart === 'function') renderCart();
-  if (typeof showToast === 'function') showToast(`Đã thêm ${quantity} slot túi mù vào giỏ hàng.`);
+  if (typeof showToast === 'function') showToast(`Đã thêm ${quantity} slot túi mè vào giỏ hàng.`);
   if (typeof playSound === 'function') playSound('click');
 }
 
@@ -1014,7 +1014,7 @@ async function checkoutBlindBagCart() {
     if (!bag) return;
     const customerName = document.getElementById('shopCustomerName')?.value.trim() || document.getElementById('bbCustomerName')?.value.trim();
     const discount = Number(document.getElementById('cartDiscount')?.value || 0);
-    if (!customerName) return alert('Vui lòng nhập tên người mua túi mù.');
+    if (!customerName) return alert('Vui lòng nhập tên người mua túi mè.');
     if (!Number.isSafeInteger(discount) || discount < 0) return alert('Giảm giá phải là số nguyên không âm.');
 
     blindBagPending = {
@@ -1054,7 +1054,7 @@ async function checkoutBlindBagCart() {
     if (discountEl) discountEl.value = 0;
     if (typeof renderCart === 'function') renderCart();
     renderBlindBagInvoice(round, order);
-    if (typeof showToast === 'function') showToast('Đã ghi nhận người mua và xuất hóa đơn túi mù!');
+    if (typeof showToast === 'function') showToast('Đã ghi nhận người mua và xuất hóa đơn túi mè!');
     if (typeof playSound === 'function') playSound('coin');
   } catch (error) {
     if (error.status >= 400 && error.status < 500) {
@@ -1083,7 +1083,7 @@ function renderBlindBagInvoice(round, order) {
   const items = order.items.map(item => ({ product: { name: item.name, price: item.price }, qty: item.quantity }));
   items.push({
     product: {
-      name: `Túi mù · ${round.data.name} · Slot ${order.slots.map(n => '#' + n).join(', ')}`,
+      name: `Túi mè · ${round.data.name} · Slot ${order.slots.map(n => '#' + n).join(', ')}`,
       price: slotPrice
     },
     qty: order.quantity
@@ -1094,19 +1094,19 @@ function renderBlindBagInvoice(round, order) {
   }
 
   if (typeof currentBillData !== 'undefined' && currentBillData) {
-    currentBillData.gameName = `Mỹ phẩm & Túi mù · ${round.data.name}`;
+    currentBillData.gameName = `Mỹ phẩm & Túi mè · ${round.data.name}`;
     currentBillData.slotsList = order.slots;
   }
 
   const titleEl = document.getElementById('billTitle');
-  if (titleEl) titleEl.innerText = 'HÓA ĐƠN MỸ PHẨM & TÚI MÙ';
+  if (titleEl) titleEl.innerText = 'HÓA ĐƠN MỸ PHẨM & TÚI MÈ';
   const labelEl = document.getElementById('billQuantityLabel');
-  if (labelEl) labelEl.textContent = 'Slot túi mù:';
+  if (labelEl) labelEl.textContent = 'Slot túi mè:';
   const gameNameEl = document.getElementById('billGameName');
-  if (gameNameEl) gameNameEl.innerText = round.data.name + ' · Túi mù bán lẻ';
+  if (gameNameEl) gameNameEl.innerText = round.data.name + ' · Túi mè bán lẻ';
   const slotsListEl = document.getElementById('billSlotsList');
   if (slotsListEl) {
-    slotsListEl.innerText = order.slots.map(n => '#' + n).join(', ') + ` (${order.quantity} slot túi mù)`;
+    slotsListEl.innerText = order.slots.map(n => '#' + n).join(', ') + ` (${order.quantity} slot túi mè)`;
   }
   showBlindBagBillPayment(round, order);
 }

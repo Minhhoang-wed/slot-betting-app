@@ -30,7 +30,7 @@ function summarize(slotReport, blindRounds, {date='all'}={}) {
       const customer=get(order.customerName),amount=Number(order.total);
       customer.bagTotal+=amount;
       if (order.paid) customer.bagPaid+=amount;else customer.bagDue+=amount;
-      customer.events.push({type:'Mua túi mù và hàng kèm',context:round.data.name,slots:order.slots.join(', '),name:'Hóa đơn túi mù và hàng kèm',quantity:order.quantity,amount,status:order.paid?'Đã trả tiền':'Chưa xác nhận trả tiền',occurredAt:order.createdAt,items:order.items || [],discount:order.discount || 0});
+      customer.events.push({type:'Mua túi mè và hàng kèm',context:round.data.name,slots:order.slots.join(', '),name:'Hóa đơn túi mè và hàng kèm',quantity:order.quantity,amount,status:order.paid?'Đã trả tiền':'Chưa xác nhận trả tiền',occurredAt:order.createdAt,items:order.items || [],discount:order.discount || 0});
     }
     for (const slot of round.data.slots) {
       if(!assignedNumbers(slot).length)continue;

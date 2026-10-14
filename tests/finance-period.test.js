@@ -13,7 +13,7 @@ function fixture(){
     {createdAt:yesterday,finishedAt:today,roundNumber:1,status:'finished',slots:[1,2,3],slotCount:3,buyCost:405000,prizeWon:0,net:-405000},
     {createdAt:today,roundNumber:2,status:'open',slots:[4],winningSlotsList:[4],slotCount:1,buyCost:135000,prizeWon:600000,net:465000}]} }},
     {customerName:'Không có ngày',netAmount:-90000,menuBreakdown:{m:{menuName:'Cũ',rounds:[{roundNumber:1,status:'open',slots:[1],slotCount:1,net:-90000}]}}}]};
-  const bags=[{data:{name:'Túi mù',orders:[
+  const bags=[{data:{name:'Túi mè',orders:[
     {id:'old',customerName:'KIỀU',createdAt:yesterday,total:414000,paid:false,quantity:1,slots:[1]},
     {id:'new',customerName:'Kiều',createdAt:today,total:1000000,paid:true,quantity:1,slots:[2]}],
     slots:[{number:1,customerName:'Kiều',orderId:'old',productNumbers:[1]},{number:2,customerName:'Kiều',orderId:'new',productNumbers:[2]}],

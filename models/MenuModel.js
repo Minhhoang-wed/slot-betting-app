@@ -49,13 +49,16 @@ let inMemoryMenus = [
 ];
 
 let menusCache = null;
+let menusCacheTime = 0;
+const MENUS_CACHE_TTL = 5000;
 
 const MenuModel = {
   /**
    * Lấy danh sách tất cả các Menu (Có Cache tối ưu siêu tốc < 1ms)
    */
   async getAllMenus(forceRefresh = false) {
-    if (!isConfigured() && !forceRefresh && menusCache && menusCache.length > 0) {
+    const now = Date.now();
+    if (!forceRefresh && menusCache && (now - menusCacheTime < MENUS_CACHE_TTL)) {
       return menusCache;
     }
 
@@ -77,6 +80,7 @@ const MenuModel = {
             description: m.description,
             created_at: m.created_at
           }));
+          menusCacheTime = now;
           return menusCache;
         }
       } catch (err) { if (isConfigured()) throw err;
@@ -84,6 +88,7 @@ const MenuModel = {
       }
     }
     menusCache = inMemoryMenus;
+    menusCacheTime = now;
     return menusCache;
   },
 
@@ -130,6 +135,10 @@ const MenuModel = {
 
         if (!error && data) {
           menusCache = null;
+          menusCacheTime = 0;
+          try {
+            await supabase.rpc('create_slot_round', { p_menu_id: data.id, p_options: { initializeOnly: true } });
+          } catch (e) {}
           return {
             id: data.id,
             code: data.code,
@@ -148,6 +157,7 @@ const MenuModel = {
 
     inMemoryMenus.push(newMenu);
     menusCache = null;
+    menusCacheTime = 0;
     return newMenu;
   },
 
@@ -169,6 +179,7 @@ const MenuModel = {
       throw new Error('Giá hoặc số ghế không hợp lệ');
     }
     menusCache = null;
+    menusCacheTime = 0;
     if (isConfigured() && supabase) {
       try {
         const { data, error } = await supabase
@@ -198,6 +209,7 @@ const MenuModel = {
     if (!menus.some(menu => menu.id === id)) throw new Error('Không tìm thấy Menu');
 
     menusCache = null;
+    menusCacheTime = 0;
     if (isConfigured() && supabase) {
       try {
         await supabase.from('menus').delete().eq('id', id);

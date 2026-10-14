@@ -12,7 +12,7 @@ const MenuController = require('../controllers/MenuController');
 const ReportController = require('../controllers/ReportController');
 const BlindBagController = require('../controllers/BlindBagController');
 
-// Túi mù bán lẻ: independent of games, winners and settlement.
+// Túi mè bán lẻ: independent of games, winners and settlement.
 router.get('/blind-bags', BlindBagController.list);
 router.post('/blind-bags', BlindBagController.create);
 router.put('/blind-bags/:id', BlindBagController.update);
@@ -51,7 +51,7 @@ router.post('/game/quick-register', GameController.quickRegister);
 router.post('/game/remove-player', GameController.removePlayer);
 router.post('/game/finalize', GameController.finalizeGame);
 
-// --- SETTLEMENT (CHỐT WINNER & CHIA THƯỞNG 2/3) ---
+// --- SETTLEMENT (CHỐT WINNER & CHIA HOA HẬU 2/3) ---
 router.post('/settle', SettlementController.settle);
 
 // --- THỐNG KÊ & XUẤT BÁO CÁO FILE EXCEL (CSV UTF-8 BOM) ---

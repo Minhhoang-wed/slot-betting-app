@@ -14,7 +14,7 @@ Chỉ chạy file migration 002 này. **Không chạy `schema.sql`** vì file đ
 - Tạo chuyến thử, gán khách, đổi giá riêng của chuyến rồi tải lại: giá và khách phải còn.
 - Chốt chuyến bằng nút tính kết quả: chuyến phải xuất hiện trong lịch sử sau khi tải lại và mở bằng phiên trình duyệt khác.
 - Chuyển sang chuyến tiếp theo: lịch sử chuyến cũ phải còn. Gửi lại yêu cầu mở chuyến tiếp theo không tạo thêm chuyến trùng.
-- Xuất CSV khách: tiền ghế, tiền thưởng và số dư phải khớp kết quả đã lưu.
+- Xuất CSV khách: tổng vào, hoa hậu và số dư phải khớp kết quả đã lưu.
 - Nếu DB lỗi, giao diện phải báo lỗi; không được hiện lưu thành công.
 
 Ghế chung phải nhập tỷ lệ rõ ràng, ví dụ `Ngọc=50; Bàn Tay=50`. Tên có dấu cộng nhưng không có tỷ lệ vẫn là một tên nhóm, không tự chia.

@@ -303,7 +303,7 @@ const ReportModel = {
 
   /**
    * Tạo chuỗi CSV UTF-8 (có BOM \uFEFF) cho 1 Menu cụ thể
-   * Thiết kế 1 bảng thống nhất chuẩn kế toán: STT, Khách, Slots, Tiền Cược, Thưởng, Mỹ Phẩm, Net, Quyết Toán
+   * Thiết kế 1 bảng thống nhất chuẩn kế toán: STT, Khách, Slots, Tổng Vào, Hoa Hậu, Mỹ Phẩm, Net, Quyết Toán
    */
   async exportMenuReportCsv(menuId) {
     const data = await this.getCustomerStatsByMenu(menuId);
@@ -314,11 +314,11 @@ const ReportModel = {
     // Header báo cáo
     csv += `BÁO CÁO QUYẾT TOÁN TÀI CHÍNH KÈO - ${menu.name.toUpperCase()}\n`;
     csv += `Thời Gian Xuất: ${new Date().toLocaleString('vi-VN')}\n`;
-    csv += `Đơn Giá Mỗi Slot: ${Number(menu.slot_price).toLocaleString('vi-VN')} đ | Trị Giá Giải Thưởng: ${Number(menu.prize_value).toLocaleString('vi-VN')} đ\n`;
+    csv += `Đơn Giá Mỗi Slot: ${Number(menu.slot_price).toLocaleString('vi-VN')} đ | Trị Giá Hoa Hậu: ${Number(menu.prize_value).toLocaleString('vi-VN')} đ\n`;
     csv += `Tổng Chuyến: ${summary.totalRounds} (Đã chốt: ${summary.completedRounds}) | Tổng Khách Hàng: ${summary.totalCustomers}\n\n`;
 
     // TIÊU ĐỀ CỘT CHUẨN
-    csv += `STT,Khách Hàng,Số Lượng Slot,Chi Tiết Slot Đã Mua,Đơn Giá Slot (VNĐ),Tổng Tiền Cược (VNĐ) [A],Tiền Thưởng Trúng Kèo (VNĐ) [B],Mỹ Phẩm Mua Kèm,Tiền Mỹ Phẩm (VNĐ) [C],Net Thực Tế (VNĐ) [B - A - C],Trạng Thái Quyết Toán,Ghi Chú Chuyển Khoản\n`;
+    csv += `STT,Khách Hàng,Số Lượng Slot,Chi Tiết Slot Đã Mua,Đơn Giá Slot (VNĐ),Tổng Vào (VNĐ) [A],Hoa Hậu Trúng Kèo (VNĐ) [B],Mỹ Phẩm Mua Kèm,Tiền Mỹ Phẩm (VNĐ) [C],Net Thực Tế (VNĐ) [B - A - C],Trạng Thái Quyết Toán,Ghi Chú Chuyển Khoản\n`;
 
     data.customers.forEach((c, idx) => {
       const roundsSummary = c.roundsDetails.map(r => `Chuyến ${r.roundNumber} (${r.slotCount} slot: #${r.slots.join('-')})`).join('; ');
@@ -348,9 +348,9 @@ const ReportModel = {
     csv += `BẢNG TỔNG KẾT TÀI CHÍNH MENU - ${menu.name.toUpperCase()}\n`;
     csv += `Chỉ Số Tài Chính,Số Tiền (VNĐ)\n`;
     csv += `Tổng Doanh Thu Slot (A),${summary.grandTotalBuyCost}\n`;
-    csv += `Tổng Tiền Thưởng Phát Ra (B),${summary.grandTotalPrizeWon}\n`;
+    csv += `Tổng Hoa Hậu Phát Ra (B),${summary.grandTotalPrizeWon}\n`;
     csv += `Tổng Doanh Thu Mỹ Phẩm (C),${summary.grandTotalAttachedCost}\n`;
-    csv += `Chênh Lệch Kèo Cược (A - B),${spread}\n`;
+    csv += `Chênh Lệch Kèo (A - B),${spread}\n`;
     csv += `Tổng Quyết Toán Net Toàn Menu,${summary.grandNetAmount}\n`;
 
     return '\uFEFF' + csv;
@@ -366,14 +366,14 @@ const ReportModel = {
     let csv = '';
     csv += `BÁO CÁO TỔNG HỢP TOÀN BỘ CÁC MENU LIVESTREAM\n`;
     csv += `Thời Gian Xuất: ${new Date().toLocaleString('vi-VN')}\n`;
-    csv += `Tổng Khách Hàng: ${data.totalCustomers} | Tổng Slot Toàn Bộ: ${data.grandTotalSlots} | Tổng Tiền Cược: ${data.grandTotalBuyCost.toLocaleString('vi-VN')} đ | Tổng Mỹ Phẩm: ${data.grandTotalAttachedCost.toLocaleString('vi-VN')} đ | Net Ròng Toàn Bộ: ${data.grandNetAmount.toLocaleString('vi-VN')} đ\n\n`;
+    csv += `Tổng Khách Hàng: ${data.totalCustomers} | Tổng Slot Toàn Bộ: ${data.grandTotalSlots} | Tổng Vào: ${data.grandTotalBuyCost.toLocaleString('vi-VN')} đ | Tổng Mỹ Phẩm: ${data.grandTotalAttachedCost.toLocaleString('vi-VN')} đ | Net Ròng Toàn Bộ: ${data.grandNetAmount.toLocaleString('vi-VN')} đ\n\n`;
 
     // Cột tiêu đề
     let header = `STT,Khách Hàng`;
     menus.forEach(m => {
       header += `,"${m.name} (Số Slot)"`;
     });
-    header += `,Tổng Slot Toàn Bộ,Tổng Tiền Cược (VNĐ) [A],Tổng Tiền Thưởng (VNĐ) [B],Tổng Tiền Mỹ Phẩm (VNĐ) [C],Net Ròng Thực Tế (VNĐ) [B - A - C],Quyết Toán Cuối Cùng\n`;
+    header += `,Tổng Slot Toàn Bộ,Tổng Vào (VNĐ) [A],Tổng Hoa Hậu (VNĐ) [B],Tổng Tiền Mỹ Phẩm (VNĐ) [C],Net Ròng Thực Tế (VNĐ) [B - A - C],Quyết Toán Cuối Cùng\n`;
     csv += header;
 
     data.customers.forEach((c, idx) => {
@@ -407,10 +407,10 @@ const ReportModel = {
     const spread = data.grandTotalBuyCost - data.grandTotalPrizeWon;
     csv += `=== BẢNG TỔNG KẾT TÀI CHÍNH TOÀN BỘ LIVESTREAM ===\n`;
     csv += `Hạng Mục,Số Tiền (VNĐ),Diễn Giải Chi Tiết\n`;
-    csv += `1. Tổng Doanh Thu Slot (A),${data.grandTotalBuyCost},"Tổng tiền cược thu từ ${data.grandTotalSlots} slot"\n`;
-    csv += `2. Tổng Tiền Thưởng Phát Ra (B),${data.grandTotalPrizeWon},"Tổng giải thưởng trao qua tất cả các menu"\n`;
+    csv += `1. Tổng Doanh Thu Slot (A),${data.grandTotalBuyCost},"Tổng vào thu từ ${data.grandTotalSlots} slot"\n`;
+    csv += `2. Tổng Hoa Hậu Phát Ra (B),${data.grandTotalPrizeWon},"Tổng hoa hậu trao qua tất cả các menu"\n`;
     csv += `3. Tổng Doanh Thu Mỹ Phẩm (C),${data.grandTotalAttachedCost},"Tổng tiền mỹ phẩm bán kèm cho khách"\n`;
-    csv += `4. Chênh Lệch Kèo (A - B),${spread},"${spread >= 0 ? 'Shop thặng dư cược' : 'Shop bù giải thưởng'}"\n`;
+    csv += `4. Chênh Lệch Kèo (A - B),${spread},"${spread >= 0 ? 'Shop thặng dư vào' : 'Shop bù hoa hậu'}"\n`;
     csv += `5. Tổng Net Ròng Toàn Buổi,${data.grandNetAmount},"${data.grandNetAmount > 0 ? 'Shop chi trả ròng cho khách' : 'Shop thực thu ròng từ khách'}"\n`;
 
     return '\uFEFF' + csv;
@@ -454,7 +454,7 @@ const ReportModel = {
 
     // PHẦN 1: KÈO CƯỢC SLOT
     csv += `=== PHẦN 1: CHI TIẾT KÈO SLOT THEO TỪNG MENU & TỪNG CHUYẾN ===\n`;
-    csv += `STT,Menu Kèo,Chuyến Tham Gia,Số Slot Đã Vào,Chi Tiết Slot,Đơn Giá Slot (VNĐ),Tiền Cược (VNĐ) [A],Tiền Thưởng (VNĐ) [B],Kết Quả Chuyến\n`;
+    csv += `STT,Menu Kèo,Chuyến Tham Gia,Số Slot Đã Vào,Chi Tiết Slot,Đơn Giá Slot (VNĐ),Tổng Vào (VNĐ) [A],Hoa Hậu (VNĐ) [B],Kết Quả Chuyến\n`;
 
     let totalSlotCount = 0;
     let totalSlotCost = 0;
@@ -509,8 +509,8 @@ const ReportModel = {
 
     csv += `=== PHẦN 3: ĐỐI SOÁT TỔNG HỢP TÀI CHÍNH CUỐI CÙNG ===\n`;
     csv += `Hạng Mục Tài Chính,Số Tiền (VNĐ),Ghi Chú Đối Soát\n`;
-    csv += `1. Tổng tiền mua slot (A),-${totalSlotCost},"Tổng cộng ${totalSlotCount} slot qua tất cả các chuyến"\n`;
-    csv += `2. Tổng tiền thưởng trúng kèo (B),+${totalPrizeWon},"Đã cộng dồn tất cả các giải thắng"\n`;
+    csv += `1. Tổng vào slot (A),-${totalSlotCost},"Tổng cộng ${totalSlotCount} slot qua tất cả các chuyến"\n`;
+    csv += `2. Tổng hoa hậu trúng kèo (B),+${totalPrizeWon},"Đã cộng dồn tất cả các giải thắng"\n`;
     csv += `3. Tổng tiền mỹ phẩm mua kèm (C),-${totalProductCost},"Tổng cộng ${allAttached.length} món hàng"\n`;
     csv += `SỐ DƯ RÒNG CUỐI CÙNG (NET = B - A - C),${finalNet > 0 ? '+' : ''}${finalNet},"${finalStatus}"\n`;
 

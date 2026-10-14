@@ -247,7 +247,7 @@
               <div class="inline-config-bar">
                 <div class="config-grid-row">
                   <div class="config-input-group flex-2">
-                    <label><i class="fa-solid fa-tag"></i> Tên Kèo / Phần Thưởng:</label>
+                    <label><i class="fa-solid fa-tag"></i> Tên Kèo / Hoa Hậu:</label>
                     <input type="text" id="gameName" class="modern-input" value="Kèo Set Mỹ Phẩm YSL + Serum Cao Cấp" onchange="updateGameConfig()">
                   </div>
                   <div class="config-input-group flex-1">
@@ -277,7 +277,7 @@
                     </div>
                   </div>
                   <div class="config-input-group flex-1">
-                    <label><i class="fa-solid fa-trophy"></i> Tổng Giải Thưởng (VNĐ):</label>
+                    <label><i class="fa-solid fa-trophy"></i> Tổng Hoa Hậu (VNĐ):</label>
                     <div class="luxury-stepper-box">
                       <button type="button" class="stepper-btn stepper-btn-minus" onclick="stepNumberInput('prizeValueInput', -50000)" title="Giảm 50.000 đ">
                         <i class="fa-solid fa-minus"></i>
@@ -358,7 +358,7 @@
                     <tr>
                       <th>Khách Hàng</th>
                       <th>Slot Đã Giữ</th>
-                      <th>Tổng Tiền Cược</th>
+                      <th>Tổng Vào</th>
                       <th class="text-right">Hành Động</th>
                     </tr>
                   </thead>
@@ -382,15 +382,15 @@
                 <div class="winning-slots-grid" id="winnerCheckboxesList" aria-label="Danh sách slot để chọn thắng"></div>
                 <div class="winning-prize-preview" aria-live="polite">
                   <div><span>Tổng giải của chuyến</span><strong id="winningPrizeTotal">0 đ</strong></div>
-                  <div><span>Tiền thưởng / slot thắng</span><strong id="winningPrizePerSlot">Chọn slot để tính</strong></div>
+                  <div><span>Hoa hậu / slot thắng</span><strong id="winningPrizePerSlot">Chọn slot để tính</strong></div>
                 </div>
                 <p class="winning-slot-example">Ví dụ: 1.200.000đ ÷ 3 slot thắng = 400.000đ/slot. Khách thắng 2 slot nhận 800.000đ. Slot chung chia theo tỷ lệ sở hữu.</p>
 
-                <!-- TÙY CHỌN CẤN TRỪ TIỀN CƯỢC -->
+                <!-- TÙY CHỌN CẤN TRỪ TỔNG VÀO -->
                 <div class="deduct-toggle-bar">
                   <div class="deduct-toggle-info">
                     <span class="deduct-title"><span class="winning-step-number">2</span> Tiền slot của người thắng</span>
-                    <span class="deduct-desc" id="deductExplainText">Tiền người thắng nhận = Tiền thưởng − tiền của <b>tất cả slot đã mua</b> − hàng mua kèm.</span>
+                    <span class="deduct-desc" id="deductExplainText">Tiền người thắng nhận = Hoa hậu − tiền của <b>tất cả slot đã mua</b> − hàng mua kèm.</span>
                   </div>
                   <div class="deduct-btns">
                     <button type="button" id="btnDeductTrue" class="btn-deduct-toggle active" onclick="setDeductSlotCost(true)">
@@ -423,8 +423,8 @@
             <div class="header-badge-title">
               <span class="gold-trophy-circle"><i class="fa-solid fa-file-invoice-dollar"></i></span>
               <div>
-                <h2 class="settle-title">TIỀN THƯỞNG & TIỀN CẦN THANH TOÁN</h2>
-                <p class="settle-desc">Tiền thưởng theo slot thắng. Tiền slot tính trên toàn bộ slot đã mua. Dòng màu xanh: shop trả khách; dòng màu đỏ: khách trả shop.</p>
+                <h2 class="settle-title">HOA HẬU & TIỀN CẦN THANH TOÁN</h2>
+                <p class="settle-desc">Hoa hậu theo slot thắng. Tiền slot tính trên toàn bộ slot đã mua. Dòng màu xanh: shop trả khách; dòng màu đỏ: khách trả shop.</p>
               </div>
             </div>
 
@@ -456,8 +456,8 @@
                     <th>Khách Hàng</th>
                     <th>Slot Đã Mua</th>
                     <th>Slot Thắng</th>
-                    <th>Tiền Cược (A)</th>
-                    <th>Tiền Thưởng (B)</th>
+                    <th>Tổng Vào (A)</th>
+                    <th>Hoa Hậu (B)</th>
                     <th>Mỹ Phẩm Kèm (C)</th>
                     <th>Thực Nhận / Cần Trả (Net)</th>
                     <th>Trạng Thái Quyết Toán</th>
@@ -468,7 +468,7 @@
                   <tr>
                     <td colspan="9" class="text-center text-muted py-5">
                       <i class="fa-solid fa-hourglass-start text-xl mb-2 text-muted"></i>
-                      <p>Chọn các <b>slot thắng</b> trên phiếu để xem trước tiền thưởng và tiền cần thanh toán.</p>
+                      <p>Chọn các <b>slot thắng</b> trên phiếu để xem trước hoa hậu và tiền cần thanh toán.</p>
                     </td>
                   </tr>
                 </tbody>
@@ -490,7 +490,7 @@
               <i class="fa-solid fa-file-invoice-dollar"></i> TRUNG TÂM BÁO CÁO & XUẤT DANH SÁCH KHÁCH HÀNG
             </div>
             <h2 class="reports-title">Thống Kê Khách Mua Nhiều Menu & Nhiều Chuyến</h2>
-            <p class="reports-desc">Tra cứu chính xác từng khách đã vào bao nhiêu slot ở từng Menu, tiền cược, tiền trúng thưởng và xuất file Excel (.xlsx) chuẩn tiếng Việt 100%.</p>
+            <p class="reports-desc">Tra cứu chính xác từng khách đã vào bao nhiêu slot ở từng Menu, tổng vào, hoa hậu và xuất file Excel (.xlsx) chuẩn tiếng Việt 100%.</p>
           </div>
 
           <div class="reports-quick-actions">
@@ -550,14 +550,14 @@
           <div class="bento-box">
             <div class="bento-icon-box bg-gradient-green"><i class="fa-solid fa-coins"></i></div>
             <div class="bento-info">
-              <span class="bento-label">Tổng Tiền Cược Thu</span>
+              <span class="bento-label">Tổng Vào Thu</span>
               <span class="bento-value text-green" id="repStatTotalBuyCost">0 đ</span>
             </div>
           </div>
           <div class="bento-box">
             <div class="bento-icon-box bg-gradient-gold"><i class="fa-solid fa-trophy"></i></div>
             <div class="bento-info">
-              <span class="bento-label">Tổng Tiền Thưởng Phát</span>
+              <span class="bento-label">Tổng Hoa Hậu Phát</span>
               <span class="bento-value text-gold" id="repStatTotalPrizeWon">0 đ</span>
             </div>
           </div>
@@ -573,7 +573,7 @@
                   <h2 class="card-heading" id="reportTableTitle">Danh Sách Khách Hàng - Menu Kèo 150K</h2>
                   <span id="reportCustomerCountBadge" class="badge-gold-neon">0 Khách Hàng</span>
                 </div>
-                <p class="card-caption">Tổng hợp số slot khách đã vào qua các chuyến, tiền cược, tiền thắng và số dư ròng</p>
+                <p class="card-caption">Tổng hợp số slot khách đã vào qua các chuyến, tổng vào, hoa hậu và số dư ròng</p>
               </div>
             </div>
             <div class="top-bar-actions">
@@ -594,8 +594,8 @@
                     <th>Số Chuyến Tham Gia</th>
                     <th>Tổng Slot Đã Vào</th>
                     <th>Chi Tiết Từng Chuyến</th>
-                    <th>Tổng Tiền Cược</th>
-                    <th>Tổng Thưởng</th>
+                    <th>Tổng Vào</th>
+                    <th>Hoa Hậu</th>
                     <th>Net Thực Tế</th>
                     <th>Trạng Thái</th>
                     <th class="text-right">Thao Tác</th>
@@ -647,7 +647,7 @@
               <span class="icon-circle icon-green"><i class="fa-solid fa-clock-rotate-left"></i></span>
               <div>
                 <h2 class="card-heading">Lịch Sử Các Chuyến Đã Diễn Ra (Rounds History)</h2>
-                <p class="card-caption">Danh sách toàn bộ các chuyến đã chốt của các Menu, danh sách người thắng và giải thưởng</p>
+                <p class="card-caption">Danh sách toàn bộ các chuyến đã chốt của các Menu, danh sách người thắng và hoa hậu</p>
               </div>
             </div>
             <div class="top-bar-actions">
@@ -840,7 +840,7 @@
         <div class="attach-product-bar mb-3">
           <div class="attach-header">
             <span class="attach-title"><i class="fa-solid fa-bag-shopping text-gold"></i> MUA KÈM SẢN PHẨM MỸ PHẨM (GỘP CHUNG VÀO BILL):</span>
-            <span class="text-xs text-muted">Vừa chơi cược vừa mua sản phẩm trong cùng 1 hóa đơn & 1 mã QR</span>
+            <span class="text-xs text-muted">Vừa vào slot vừa mua sản phẩm trong cùng 1 hóa đơn & 1 mã QR</span>
           </div>
           <div class="attach-inputs-row mt-2" style="display: flex; gap: 8px; align-items: center;">
             <div style="flex: 2;">
@@ -860,12 +860,12 @@
           </div>
         </div>
         
-        <section id="bbBillPaymentControls" class="bb-bill-payment-controls" hidden aria-label="Thanh toán hóa đơn túi mù">
-          <h3>Xác nhận tiền túi mù</h3>
+        <section id="bbBillPaymentControls" class="bb-bill-payment-controls" hidden aria-label="Thanh toán hóa đơn túi mè">
+          <h3>Xác nhận tiền túi mè</h3>
           <p>Áp dụng cho toàn bộ hóa đơn này, gồm cả mỹ phẩm mua kèm nếu có.</p>
           <div class="bb-bill-payment-buttons">
             <button type="button" id="bbBillUnpaid" onclick="setBlindBagBillPayment(false)" aria-pressed="false">Chưa thanh toán / Còn nợ</button>
-            <button type="button" id="bbBillPaid" onclick="setBlindBagBillPayment(true)" aria-pressed="false">Đã thanh toán tiền túi mù</button>
+            <button type="button" id="bbBillPaid" onclick="setBlindBagBillPayment(true)" aria-pressed="false">Đã thanh toán tiền túi mè</button>
           </div>
           <p id="bbBillPaymentMessage" role="status" aria-live="polite"></p>
         </section>
@@ -971,7 +971,7 @@
         <button class="modal-close" onclick="closeAttachProductModal()">&times;</button>
       </div>
       <div class="modal-scroll-body" style="padding: 20px;">
-        <p class="text-xs text-muted mb-3">Khách vừa tham gia cược slot vừa chốt mua sản phẩm trên live. Chọn sản phẩm bên dưới để gộp chung vào Bill:</p>
+        <p class="text-xs text-muted mb-3">Khách vừa vào slot vừa chốt mua sản phẩm trên live. Chọn sản phẩm bên dưới để gộp chung vào Bill:</p>
         
         <div class="attach-inputs-row mb-3" style="display: flex; gap: 8px; align-items: center;">
           <div style="flex: 2;">
@@ -1121,7 +1121,7 @@
           </select>
         </div>
         <div class="config-field mb-3">
-          <label>Tổng Giá Trị Giải Thưởng (VNĐ) <span style="color: #f43f5e;">*</span></label>
+          <label>Tổng Giá Trị Hoa Hậu (VNĐ) <span style="color: #f43f5e;">*</span></label>
           <input type="number" id="newMenuPrizeValue" class="modern-input" placeholder="Ví dụ: 2500000" step="50000">
         </div>
         <div class="config-field mb-3">
@@ -1172,13 +1172,13 @@
           </select>
         </div>
         <div class="config-field mb-3">
-          <label>Tổng Giá Trị Giải Thưởng (VNĐ) <span style="color: #f43f5e;">*</span></label>
+          <label>Tổng Giá Trị Hoa Hậu (VNĐ) <span style="color: #f43f5e;">*</span></label>
           <input type="number" id="roundModalPrizeValue" class="modern-input" placeholder="1500000" step="50000">
         </div>
         <div class="config-field mb-3" id="roundModalStatusField">
           <label>Trạng Thái Chuyến</label>
           <select id="roundModalStatus" class="modern-select">
-            <option value="open">🟢 Đang mở nhận cược (LIVE)</option>
+            <option value="open">🟢 Đang mở nhận vào slot (LIVE)</option>
             <option value="finished">🏁 Đã kết thúc / Đã chốt</option>
           </select>
         </div>

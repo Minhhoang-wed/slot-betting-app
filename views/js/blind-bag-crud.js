@@ -5,13 +5,13 @@ function blindBagCrudDialog(title,body,saveLabel,action) {
     bbCrudDialog=document.createElement('dialog');bbCrudDialog.className='finance-detail-dialog bb-crud-dialog';
     bbCrudDialog.setAttribute('aria-labelledby','bbCrudTitle');document.body.appendChild(bbCrudDialog);
   }
-  bbCrudDialog.innerHTML=`<form id="bbCrudForm"><div class="bb-modal-header"><h3 id="bbCrudTitle">${blindBagEscape(title)}</h3><button type="button" class="bb-modal-close-btn" aria-label="Đóng quản lý Túi mù">×</button></div><div class="bb-modal-body">${body}<p id="bbCrudMessage" role="status"></p></div><div class="bb-modal-footer"><button type="button" class="btn-ghost-primary" id="bbCrudClose">Đóng</button>${action?`<button type="submit" class="btn-neon-green" id="bbCrudSave">${blindBagEscape(saveLabel)}</button>`:''}</div></form>`;
+  bbCrudDialog.innerHTML=`<form id="bbCrudForm"><div class="bb-modal-header"><h3 id="bbCrudTitle">${blindBagEscape(title)}</h3><button type="button" class="bb-modal-close-btn" aria-label="Đóng quản lý Túi mè">×</button></div><div class="bb-modal-body">${body}<p id="bbCrudMessage" role="status"></p></div><div class="bb-modal-footer"><button type="button" class="btn-ghost-primary" id="bbCrudClose">Đóng</button>${action?`<button type="submit" class="btn-neon-green" id="bbCrudSave">${blindBagEscape(saveLabel)}</button>`:''}</div></form>`;
   bbCrudDialog.querySelector('.bb-modal-close-btn').onclick=()=>bbCrudDialog.close();
   bbCrudDialog.querySelector('#bbCrudClose').onclick=()=>bbCrudDialog.close();
   bbCrudDialog.querySelector('form').onsubmit=async event=>{
     event.preventDefault();if(blindBagBusy||!action)return;
     blindBagBusy=true;const button=bbCrudDialog.querySelector('#bbCrudSave');button.disabled=true;
-    try {await action();bbCrudDialog.close();showToast('Đã lưu thay đổi Túi mù.');}
+    try {await action();bbCrudDialog.close();showToast('Đã lưu thay đổi Túi mè.');}
     catch(error){bbCrudDialog.querySelector('#bbCrudMessage').textContent=error.message;}
     finally {blindBagBusy=false;button.disabled=false;await loadBlindBags();}
   };
@@ -19,14 +19,14 @@ function blindBagCrudDialog(title,body,saveLabel,action) {
 }
 function blindBagCrudReady() {
   if(blindBagBusy)return false;
-  if(blindBagPending){showToast('Hãy xử lý hóa đơn Túi mù đang chờ trước khi sửa/xóa.');return false;}
+  if(blindBagPending){showToast('Hãy xử lý hóa đơn Túi mè đang chờ trước khi sửa/xóa.');return false;}
   return true;
 }
 const bbCrudField=(id,label,value,type='text')=>`<label class="bb-crud-field" for="${id}">${label}<input id="${id}" class="modern-input" type="${type}" value="${blindBagEscape(value)}" ${type==='number'?'min="0" step="1"':'maxlength="100"'} required></label>`;
 function openBlindBagRoundEditor() {
   const round=selectedBlindBag();if(!round||!blindBagCrudReady())return;
   const previousVersion=round.version;
-  blindBagCrudDialog('Sửa đợt Túi mù',bbCrudField('bbCrudName','Tên đợt',round.data.name)+bbCrudField('bbCrudPrice','Giá mỗi slot (đ)',round.data.price,'number')+'<p>Giá mới áp dụng cho slot bán tiếp theo. Các hóa đơn đã bán giữ nguyên số tiền.</p>','Lưu đợt',async()=>{
+  blindBagCrudDialog('Sửa đợt Túi mè',bbCrudField('bbCrudName','Tên đợt',round.data.name)+bbCrudField('bbCrudPrice','Giá mỗi slot (đ)',round.data.price,'number')+'<p>Giá mới áp dụng cho slot bán tiếp theo. Các hóa đơn đã bán giữ nguyên số tiền.</p>','Lưu đợt',async()=>{
     const name=document.getElementById('bbCrudName').value.trim(),price=Number(document.getElementById('bbCrudPrice').value);
     await blindBagAPI('/'+round.id,{name,price,previousVersion},'PUT');
     const item=cart.find(i=>i.blindBagRoundId===round.id);if(item){item.product.price=price;renderCart();}
@@ -59,7 +59,7 @@ async function openBlindBagTrash() {
   if(!blindBagCrudReady())return;
   try {
     const {data}=await blindBagAPI('?deleted=true');
-    blindBagCrudDialog('Đợt Túi mù đã xóa',data.length?data.map((r,i)=>`<div class="bb-crud-trash-row"><div><b>${blindBagEscape(r.data.name)}</b><br>${r.data.slots.length} slot · ${r.data.orders.length} hóa đơn</div><button type="button" class="btn-ghost-primary" data-restore-round="${i}">Khôi phục đợt</button></div>`).join(''):'<p>Chưa có đợt đã xóa.</p>');
+    blindBagCrudDialog('Đợt Túi mè đã xóa',data.length?data.map((r,i)=>`<div class="bb-crud-trash-row"><div><b>${blindBagEscape(r.data.name)}</b><br>${r.data.slots.length} slot · ${r.data.orders.length} hóa đơn</div><button type="button" class="btn-ghost-primary" data-restore-round="${i}">Khôi phục đợt</button></div>`).join(''):'<p>Chưa có đợt đã xóa.</p>');
     bbCrudDialog.querySelectorAll('[data-restore-round]').forEach(button=>button.onclick=()=>restoreBlindBagCrud('/'+data[Number(button.dataset.restoreRound)].id+'/restore',{previousVersion:data[Number(button.dataset.restoreRound)].version}));
   }catch(error){showToast(error.message);}
 }

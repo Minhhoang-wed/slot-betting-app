@@ -11,7 +11,7 @@ function fixture() {
   const returns=[{customerName:'FREEFIRE',slotNumber:1,total:770000,items:[{name:'Phủ Swan Xanh',price:280000},{name:'Mắt Swan',price:240000},{name:'Mắt la 01',price:250000}]},
     {customerName:'FreeFire',slotNumber:2,total:315000,voided:true,items:[{name:'Nước hoa',price:315000}]},
     {customerName:'Free Fire',slotNumber:3,total:70000,items:[{name:'Kẻ mắt',price:70000}]}];
-  const bags=[{data:{name:'Túi mù đợt 2',orders:[order],slots:[],pool:[],returns}}];
+  const bags=[{data:{name:'Túi mè đợt 2',orders:[order],slots:[],pool:[],returns}}];
   app.load('models/BlindBagModel.js').list=async()=>bags;
   return {app,finance,order};
 }

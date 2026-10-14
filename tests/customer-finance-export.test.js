@@ -10,9 +10,9 @@ const Controller=require('../controllers/ReportController');
 
 const person=(customerName,net)=>({customerName,slotNet:net,bagTotal:414000,bagPaid:414000,bagDue:0,buybackTotal:250000,shopPays:Math.max(0,net+250000),customerPays:Math.max(0,-net-250000),events:[
   {type:'Bàn kèo',context:'Gấu',slots:'Chuyến #1',name:'Mua #1, #2 · Thắng #2',quantity:2,amount:net,status:'Đã chốt'},
-  {type:'Mua túi mù và hàng kèm',context:'Túi mù',slots:'1',name:'Hóa đơn',quantity:1,amount:414000,status:'Đã trả tiền'},
-  {type:'Shop thu lại',context:'Túi mù',slots:'1',name:'Son',quantity:1,amount:250000,status:'Ghi có cho khách'},
-  {type:'Shop thu lại',context:'Túi mù',slots:'1',name:'Phấn',quantity:1,amount:290000,status:'Đã hủy phiếu'}]});
+  {type:'Mua túi mè và hàng kèm',context:'Túi mè',slots:'1',name:'Hóa đơn',quantity:1,amount:414000,status:'Đã trả tiền'},
+  {type:'Shop thu lại',context:'Túi mè',slots:'1',name:'Son',quantity:1,amount:250000,status:'Ghi có cho khách'},
+  {type:'Shop thu lại',context:'Túi mè',slots:'1',name:'Phấn',quantity:1,amount:290000,status:'Đã hủy phiếu'}]});
 const data={customers:[person('Kiều',-405000),person('kieu',-90000),person('Khánh',1200000)]};
 
 test('a per-customer export uses exact identity, never a fuzzy search or all customers',()=>{

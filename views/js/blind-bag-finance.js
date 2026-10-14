@@ -22,7 +22,7 @@ function renderBlindBagBillPayment(message = '', failed = false) {
     button.disabled = context.saving || context.unavailable || active;
   }
   const notice = document.getElementById('bbBillPaymentMessage');
-  notice.textContent = message || (context.paid ? 'Đã lưu: hóa đơn này không còn tính vào tiền nợ túi mù.' : 'Hóa đơn này đang tính vào tiền khách còn nợ shop.');
+  notice.textContent = message || (context.paid ? 'Đã lưu: hóa đơn này không còn tính vào tiền nợ túi mè.' : 'Hóa đơn này đang tính vào tiền khách còn nợ shop.');
   notice.classList.toggle('bb-payment-error', failed);
   const status = document.getElementById('bbBillPaymentStatus');
   status.hidden = false;
@@ -68,7 +68,7 @@ async function setBlindBagBillPayment(paid) {
     context.total = result.data.order.total;
     blindBagRounds = blindBagRounds.map(r => r.id === context.roundId ? result.data.round : r);
     if (bbBillPaymentContext === context) renderBlindBagBillPayment('Đã lưu trạng thái thanh toán.');
-    showToast(paid ? 'Đã ghi nhận khách thanh toán tiền túi mù.' : 'Đã ghi nhận hóa đơn chưa thanh toán / còn nợ.');
+    showToast(paid ? 'Đã ghi nhận khách thanh toán tiền túi mè.' : 'Đã ghi nhận hóa đơn chưa thanh toán / còn nợ.');
   } catch (error) {
     if (bbBillPaymentContext === context) renderBlindBagBillPayment('Chưa xác nhận được trạng thái: ' + error.message + ' Bấm lại để kiểm tra / lưu.', true);
   } finally {
@@ -106,7 +106,7 @@ async function setBlindBagPayment(index,paid) {
 let bbPassContext=null;
 function createBlindBagPassModalDOM() {
   const modal=document.createElement('div');modal.id='bbPassModal';modal.className='bb-modal-overlay';
-  modal.innerHTML=`<div class="bb-modal-dialog bb-modal-sm"><div class="bb-modal-header"><h3>Shop thu lại đồ khách pass</h3><button class="bb-modal-close-btn" onclick="closeBlindBagPass()">&times;</button></div><div class="bb-modal-body"><p id="bbPassCustomer"></p><p>Chọn món khách muốn pass. Shop thu theo giá bán hiện tại trong danh mục.</p><div id="bbPassProducts"></div><p class="bb-pass-total">Khách được ghi có: <b id="bbPassTotal">0 đ</b></p><p>Tiền này sẽ cộng vào quyết toán chung với bàn kèo và hóa đơn Túi mù còn thiếu.</p></div><div class="bb-modal-footer"><button class="btn-action-dim" onclick="closeBlindBagPass()">Đóng</button><button id="bbPassSave" class="btn-neon-green" onclick="saveBlindBagPass()">Xác nhận shop thu lại</button></div></div>`;
+  modal.innerHTML=`<div class="bb-modal-dialog bb-modal-sm"><div class="bb-modal-header"><h3>Shop thu lại đồ khách pass</h3><button class="bb-modal-close-btn" onclick="closeBlindBagPass()">&times;</button></div><div class="bb-modal-body"><p id="bbPassCustomer"></p><p>Chọn món khách muốn pass. Shop thu theo giá bán hiện tại trong danh mục.</p><div id="bbPassProducts"></div><p class="bb-pass-total">Khách được ghi có: <b id="bbPassTotal">0 đ</b></p><p>Tiền này sẽ cộng vào quyết toán chung với bàn kèo và hóa đơn Túi mè còn thiếu.</p></div><div class="bb-modal-footer"><button class="btn-action-dim" onclick="closeBlindBagPass()">Đóng</button><button id="bbPassSave" class="btn-neon-green" onclick="saveBlindBagPass()">Xác nhận shop thu lại</button></div></div>`;
   document.body.appendChild(modal);
 }
 function closeBlindBagPass(){document.getElementById('bbPassModal').classList.remove('active');}
@@ -181,7 +181,7 @@ function createFinancePanel() {
     <div class="card-top-bar finance-heading">
       <div class="finance-heading-title">
         <span class="finance-heading-icon" aria-hidden="true"><i class="fa-solid fa-wallet"></i></span>
-        <div><span class="finance-eyebrow">BÀN KÈO · TÚI MÙ · SHOP THU LẠI ĐỒ</span><h2>Tổng kết tiền khách hàng</h2><p>Xem rõ shop cần trả bao nhiêu và khách còn nợ bao nhiêu.</p></div>
+        <div><span class="finance-eyebrow">BÀN KÈO · TÚI MÈ · SHOP THU LẠI ĐỒ</span><h2>Tổng kết tiền khách hàng</h2><p>Xem rõ shop cần trả bao nhiêu và khách còn nợ bao nhiêu.</p></div>
       </div>
       <div class="bb-finance-actions"><a id="financeExportAll" class="btn-neon-green" aria-disabled="true"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> Xuất Excel cả danh sách</a><button class="btn-ghost-primary" onclick="loadFinanceSummary()"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Làm mới</button></div>
     </div>
@@ -199,8 +199,8 @@ function createFinancePanel() {
       <p class="finance-scope-note">Số tiền theo ngày đang chọn. Chuyến bàn kèo chưa chốt vẫn là tạm tính.</p>
       <div class="finance-list-heading"><h3>Chi tiết từng khách</h3><span>Nhấn “Xem chi tiết” để kiểm tra từng giao dịch.</span></div>
       <div id="financeMessage" role="status"></div>
-      <div class="bb-finance-scroll"><table class="bb-table"><thead><tr><th>Khách hàng</th><th class="finance-final-out">Shop cần trả khách</th><th class="finance-final-in">Khách cần trả shop</th><th>Số dư bàn kèo</th><th>Nợ túi mù</th><th>Tiền shop thu đồ pass</th><th>Chi tiết / File</th></tr></thead><tbody id="financeBody"></tbody></table></div>
-      <details class="finance-explanation"><summary>Cách tính số tiền và ngày giao dịch</summary><p>Tiền cuối của khách = số dư bàn kèo − tiền túi mù còn nợ + tiền shop thu lại đồ pass. Số dương là shop trả khách; số âm là khách trả shop. Hóa đơn đã thanh toán không bị trừ lại.</p><p>Ngày giao dịch là ngày mở chuyến, ngày mua túi mù hoặc ngày shop thu lại đồ, theo giờ Việt Nam. Chỉ gồm giao dịch của ngày đã chọn; chọn “Tất cả các ngày” để xem tổng của mọi ngày. Trạng thái thanh toán là trạng thái hiện tại.</p></details>
+      <div class="bb-finance-scroll"><table class="bb-table"><thead><tr><th>Khách hàng</th><th class="finance-final-out">Shop cần trả khách</th><th class="finance-final-in">Khách cần trả shop</th><th>Số dư bàn kèo</th><th>Nợ túi mè</th><th>Tiền shop thu đồ pass</th><th>Chi tiết / File</th></tr></thead><tbody id="financeBody"></tbody></table></div>
+      <details class="finance-explanation"><summary>Cách tính số tiền và ngày giao dịch</summary><p>Tiền cuối của khách = số dư bàn kèo − tiền túi mè còn nợ + tiền shop thu lại đồ pass. Số dương là shop trả khách; số âm là khách trả shop. Hóa đơn đã thanh toán không bị trừ lại.</p><p>Ngày giao dịch là ngày mở chuyến, ngày mua túi mè hoặc ngày shop thu lại đồ, theo giờ Việt Nam. Chỉ gồm giao dịch của ngày đã chọn; chọn “Tất cả các ngày” để xem tổng của mọi ngày. Trạng thái thanh toán là trạng thái hiện tại.</p></details>
     </div>`;
   document.getElementById('tabReports')?.prepend(panel);
   const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
@@ -240,7 +240,7 @@ function renderFinanceSummary() {
     document.getElementById('financeShopPaysCount').textContent=rows.filter(c=>c.shopPays>0).length+' khách cần nhận tiền · '+scope;
     document.getElementById('financeCustomerPaysCount').textContent=rows.filter(c=>c.customerPays>0).length+' khách còn nợ · '+scope;
   }
-  host.innerHTML=rows.length?rows.map(c=>`<tr><td data-label="Khách hàng" class="finance-customer-name"><b>${blindBagEscape(c.customerName)}</b></td><td data-label="Shop cần trả khách" class="finance-final-amount ${c.shopPays?'bb-finance-receive':''}"><b>${c.shopPays?formatVND(c.shopPays):'—'}</b></td><td data-label="Khách cần trả shop" class="finance-final-amount ${c.customerPays?'bb-finance-pay':''}"><b>${c.customerPays?formatVND(c.customerPays):'—'}</b></td><td data-label="Số dư bàn kèo">${formatVND(c.slotNet)}</td><td data-label="Nợ túi mù">${formatVND(c.bagDue)}</td><td data-label="Tiền shop thu đồ pass">${formatVND(c.buybackTotal)}</td><td data-label="Chi tiết / File"><div class="finance-row-actions"><button class="btn-ghost-primary" data-finance-detail="${financeRows.indexOf(c)}" aria-label="Xem chi tiết ${blindBagEscape(c.customerName)}">Xem chi tiết</button><a class="btn-ghost-primary" href="${blindBagEscape(financeExportURL(c.customerName))}" aria-label="Xuất Excel riêng cho ${blindBagEscape(c.customerName)}">Xuất Excel riêng</a></div></td></tr>`).join(''):`<tr><td colspan="7">${financeLoaded?'Không có giao dịch phù hợp trong '+blindBagEscape(financePeriod.label.toLowerCase())+'.':'Chưa tải xong dữ liệu.'}</td></tr>`;
+  host.innerHTML=rows.length?rows.map(c=>`<tr><td data-label="Khách hàng" class="finance-customer-name"><b>${blindBagEscape(c.customerName)}</b></td><td data-label="Shop cần trả khách" class="finance-final-amount ${c.shopPays?'bb-finance-receive':''}"><b>${c.shopPays?formatVND(c.shopPays):'—'}</b></td><td data-label="Khách cần trả shop" class="finance-final-amount ${c.customerPays?'bb-finance-pay':''}"><b>${c.customerPays?formatVND(c.customerPays):'—'}</b></td><td data-label="Số dư bàn kèo">${formatVND(c.slotNet)}</td><td data-label="Nợ túi mè">${formatVND(c.bagDue)}</td><td data-label="Tiền shop thu đồ pass">${formatVND(c.buybackTotal)}</td><td data-label="Chi tiết / File"><div class="finance-row-actions"><button class="btn-ghost-primary" data-finance-detail="${financeRows.indexOf(c)}" aria-label="Xem chi tiết ${blindBagEscape(c.customerName)}">Xem chi tiết</button><a class="btn-ghost-primary" href="${blindBagEscape(financeExportURL(c.customerName))}" aria-label="Xuất Excel riêng cho ${blindBagEscape(c.customerName)}">Xuất Excel riêng</a></div></td></tr>`).join(''):`<tr><td colspan="7">${financeLoaded?'Không có giao dịch phù hợp trong '+blindBagEscape(financePeriod.label.toLowerCase())+'.':'Chưa tải xong dữ liệu.'}</td></tr>`;
 }
 function createFinanceDetailModal() {
   const modal=document.createElement('dialog');modal.id='financeDetailModal';modal.className='finance-detail-dialog';modal.setAttribute('aria-labelledby','financeDetailTitle');
@@ -255,15 +255,15 @@ function openFinanceDetail(index) {
 function showFinanceCustomerDetail(customer,period) {
   const escape=blindBagEscape;
   const time=value=>value?new Date(value).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'Chưa lưu ngày';
-  const groups=[['1. Bàn kèo',['Bàn kèo']],['2. Túi mù và sản phẩm bốc được',['Mua túi mù và hàng kèm','Sản phẩm bốc được']],['3. Shop thu lại đồ pass',['Shop thu lại']]];
+  const groups=[['1. Bàn kèo',['Bàn kèo']],['2. Túi mè và sản phẩm bốc được',['Mua túi mè và hàng kèm','Sản phẩm bốc được']],['3. Shop thu lại đồ pass',['Shop thu lại']]];
   document.getElementById('financeDetailTitle').textContent='Chi tiết khách: '+customer.customerName;
   document.getElementById('financeDetailPeriod').textContent=period.label+' · Giờ Việt Nam';
   document.getElementById('financeDetailExport').href=financeExportURL(customer.customerName,period);
   document.getElementById('financeDetailExport').textContent=period.date?'Xuất Excel khách này theo ngày':'Xuất Excel quyết toán tổng của khách';
-  const note=e=>e.type==='Bàn kèo'?`<p>Tiền slot: ${formatVND(e.buyCost || 0)} · Thưởng: ${formatVND(e.prizeWon || 0)} · Hàng kèm: ${formatVND(e.attachedCost || 0)}</p>`:'';
+  const note=e=>e.type==='Bàn kèo'?`<p>Tổng vào: ${formatVND(e.buyCost || 0)} · Hoa hậu: ${formatVND(e.prizeWon || 0)} · Hàng kèm: ${formatVND(e.attachedCost || 0)}</p>`:'';
   const items=e=>(e.items||e.attachedItems||[]).length?'<p>'+(e.items||e.attachedItems).map(p=>escape(p.name)+' × '+Number(p.quantity??p.qty??1)).join(', ')+'</p>':'';
-  const sections=groups.map(([title,types])=>{const events=customer.events.filter(e=>types.includes(e.type));return `<section class="finance-detail-section"><h4>${title}</h4>${events.length?`<div class="finance-detail-scroll"><table class="bb-table"><thead><tr><th>Thời gian</th><th>Menu / đợt</th><th>Chuyến / slot</th><th>Nội dung</th><th>Số tiền / số dư</th><th>Trạng thái</th></tr></thead><tbody>${events.map(e=>`<tr><td>${escape(time(e.occurredAt))}</td><td>${escape(e.context)}</td><td>${escape(e.slots)}</td><td><b>${escape(e.name)}</b>${note(e)}${items(e)}${e.type==='Mua túi mù và hàng kèm'&&e.discount?'<p>Giảm giá: '+formatVND(e.discount)+'</p>':''}</td><td>${e.type==='Sản phẩm bốc được'?'—':formatVND(e.amount)}</td><td>${escape(e.status)}</td></tr>`).join('')}</tbody></table></div>`:'<p>Không có giao dịch trong phần này.</p>'}</section>`;}).join('');
+  const sections=groups.map(([title,types])=>{const events=customer.events.filter(e=>types.includes(e.type));return `<section class="finance-detail-section"><h4>${title}</h4>${events.length?`<div class="finance-detail-scroll"><table class="bb-table"><thead><tr><th>Thời gian</th><th>Menu / đợt</th><th>Chuyến / slot</th><th>Nội dung</th><th>Số tiền / số dư</th><th>Trạng thái</th></tr></thead><tbody>${events.map(e=>`<tr><td>${escape(time(e.occurredAt))}</td><td>${escape(e.context)}</td><td>${escape(e.slots)}</td><td><b>${escape(e.name)}</b>${note(e)}${items(e)}${e.type==='Mua túi mè và hàng kèm'&&e.discount?'<p>Giảm giá: '+formatVND(e.discount)+'</p>':''}</td><td>${e.type==='Sản phẩm bốc được'?'—':formatVND(e.amount)}</td><td>${escape(e.status)}</td></tr>`).join('')}</tbody></table></div>`:'<p>Không có giao dịch trong phần này.</p>'}</section>`;}).join('');
   const final=customer.customerPays?'KHÁCH CẦN TRẢ SHOP: '+formatVND(customer.customerPays):customer.shopPays?'SHOP CẦN TRẢ KHÁCH: '+formatVND(customer.shopPays):'KHÔNG CÒN CHÊNH LỆCH';
-  document.getElementById('financeDetailContent').innerHTML=`<div class="finance-detail-summary"><div>Số dư bàn kèo<strong>${formatVND(customer.slotNet)}</strong></div><div>Túi mù còn thiếu<strong>${formatVND(customer.bagDue)}</strong></div><div>Tiền pass<strong>${formatVND(customer.buybackTotal)}</strong></div></div><p class="finance-detail-final ${customer.customerPays?'bb-finance-pay':'bb-finance-receive'}">${final}</p><p class="finance-help">Số cuối = số dư bàn kèo − túi mù còn thiếu + tiền pass. Hóa đơn đã trả không bị trừ lại. Phiếu pass đã hủy không được cộng tiền. Chuyến chưa chốt còn tạm tính.</p>${sections}`;
+  document.getElementById('financeDetailContent').innerHTML=`<div class="finance-detail-summary"><div>Số dư bàn kèo<strong>${formatVND(customer.slotNet)}</strong></div><div>Túi mè còn thiếu<strong>${formatVND(customer.bagDue)}</strong></div><div>Tiền pass<strong>${formatVND(customer.buybackTotal)}</strong></div></div><p class="finance-detail-final ${customer.customerPays?'bb-finance-pay':'bb-finance-receive'}">${final}</p><p class="finance-help">Số cuối = số dư bàn kèo − túi mè còn thiếu + tiền pass. Hóa đơn đã trả không bị trừ lại. Phiếu pass đã hủy không được cộng tiền. Chuyến chưa chốt còn tạm tính.</p>${sections}`;
   document.getElementById('financeDetailModal').showModal();
 }

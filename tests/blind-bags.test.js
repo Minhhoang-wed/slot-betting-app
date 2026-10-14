@@ -6,7 +6,7 @@ const { createBlindBagService, createMemoryStore } = require('../services/blindB
 async function setup(store = createMemoryStore()) {
   const catalog = [{ id: 1, name: 'Son', price: 250000 }, { id: 2, name: 'Phấn', price: 290000 }];
   const service = createBlindBagService(store, { getAll: async () => catalog });
-  const round = await service.create({ name: 'Túi mù tháng 10', productIds: Array.from({ length: 45 }, (_, i) => i % 2 + 1) });
+  const round = await service.create({ name: 'Túi mè tháng 10', productIds: Array.from({ length: 45 }, (_, i) => i % 2 + 1) });
   const buy = (quantity, overrides = {}) => service.checkout(round.id, {
     requestId: randomUUID(), customerName: 'Khách A', phone: '0901234567', quantity, items: [], discount: 0, ...overrides
   });
