@@ -16,7 +16,7 @@ Nếu chưa chạy migration 003 cho giá tùy chỉnh, chạy `003_blind_bag_cu
    Hóa đơn cũ chưa có trạng thái cũng được xem là chưa xác nhận trả tiền; admin cần đối chiếu lại.
 6. Tab **Thống kê & Xuất file** → **Quyết toán chung: Bàn kèo + Túi mè + Pass** → **Xuất Excel tổng hợp**.
 
-Số cuối = Số dư bàn kèo − Hóa đơn Túi mè còn thiếu + Tiền pass.
+Số cuối = Tổng ghế − Hóa đơn Túi mè còn thiếu + Tiền pass.
 Số dương: shop trả khách. Số âm: khách trả shop.
 Tên khách được đối chiếu theo chữ hoa/thường và khoảng trắng; giữ dấu tiếng Việt để không gộp nhầm người.
 Nhập cùng tên cho khách ở bàn kèo và Túi mè.

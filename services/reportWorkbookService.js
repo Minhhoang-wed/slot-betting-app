@@ -119,11 +119,11 @@ function finance(data,{customerName}={}) {
   const wb=workbook(),ws=sheet(wb,'Tổng hợp',customerName?'QUYẾT TOÁN RIÊNG KHÁCH HÀNG':'QUYẾT TOÁN BÀN KÈO, TÚI MÈ VÀ PASS',context,[28,21,21,21,21,21,23,23]);
   summary(ws,5,customerName?'KHÁCH CẦN TRẢ SHOP':'TỔNG KHÁCH CẦN TRẢ SHOP',data.customerPays,{fill:colors.orange});
   summary(ws,6,customerName?'SHOP CẦN TRẢ KHÁCH':'TỔNG SHOP CẦN TRẢ KHÁCH',data.shopPays,{fill:colors.green});
-  band(ws,8,'Số cuối = Số dư bàn kèo − Hóa đơn túi mè còn thiếu + Tiền shop thu lại.',{fill:null,color:colors.muted});ws.getRow(8).height=46;
+  band(ws,8,'Số cuối = Tổng ghế − Hóa đơn túi mè còn thiếu + Tiền shop thu lại.',{fill:null,color:colors.muted});ws.getRow(8).height=46;
   band(ws,9,'Hóa đơn chưa xác nhận trả tiền được tính là còn thiếu. Bàn kèo gồm cả chuyến chưa chốt.',{fill:null,color:colors.muted});ws.getRow(9).height=46;
   band(ws,10,'Ngày mở chuyến / ngày mua túi mè / ngày thu lại pass, theo giờ Việt Nam.'+(data.period?.date?' Chỉ tính ngày được chọn, không gồm công nợ ngày khác.':''),{fill:colors.blue});ws.getRow(10).height=52;
   const rows=data.customers.map(c=>[c.customerName,c.slotNet,c.bagTotal,c.bagPaid,c.bagDue,c.buybackTotal,c.shopPays,c.customerPays]);
-  const end=table(ws,11,['Khách hàng','Số dư bàn kèo','Tổng hóa đơn túi mè','Khách đã trả','Túi mè còn thiếu','Tiền pass được nhận','SHOP TRẢ KHÁCH','KHÁCH TRẢ SHOP'],rows,{moneyCols:[2,3,4,5,6,7,8],payCols:[8],receiveCols:[7]});
+  const end=table(ws,11,['Khách hàng','Tổng ghế','Tổng hóa đơn túi mè','Khách đã trả','Túi mè còn thiếu','Tiền pass được nhận','SHOP TRẢ KHÁCH','KHÁCH TRẢ SHOP'],rows,{moneyCols:[2,3,4,5,6,7,8],payCols:[8],receiveCols:[7]});
   rows.forEach((_,i)=>{const r=12+i,c=data.customers[i];ws.getCell(r,5).value={formula:`C${r}-D${r}`,result:c.bagDue};ws.getCell(r,7).value={formula:`MAX(0,B${r}-E${r}+F${r})`,result:c.shopPays};ws.getCell(r,8).value={formula:`MAX(0,E${r}-B${r}-F${r})`,result:c.customerPays};});
   if(rows.length){
     total(ws,end,'TỔNG',[2,3,4,5,6,7,8],12,end-1);

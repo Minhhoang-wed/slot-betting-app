@@ -2907,7 +2907,7 @@ function renderCustomerCombinedBalance(match) {
     <h3>TIỀN CUỐI CÙNG: Bàn kèo + Túi mè + Pass</h3>
     <p class="customer-combined-scope">Tất cả các menu, tất cả các ngày · Theo dữ liệu đã lưu</p>
     <div class="customer-combined-parts">
-      <div><span>1. Số dư Bàn kèo</span><strong>${formatVND(f.slotNet)}</strong><small>Đã tính tiền slot và hàng kèm theo từng chuyến</small></div>
+      <div><span>1. Tổng ghế</span><strong>${formatVND(f.slotNet)}</strong><small>Đã tính tiền slot và hàng kèm theo từng chuyến</small></div>
       <div><span>2. Trừ tiền Túi mè còn thiếu</span><strong>− ${formatVND(f.bagDue)}</strong><small>Đã trả: ${formatVND(f.bagPaid)} / Tổng hóa đơn: ${formatVND(f.bagTotal)}</small></div>
       <div><span>3. Cộng tiền shop thu đồ pass</span><strong>+ ${formatVND(f.buybackTotal)}</strong><small>Chỉ cộng phiếu pass còn hiệu lực</small></div>
     </div>
@@ -2972,7 +2972,7 @@ function renderCustomerSearchDetail(match, insightBox) {
             <span>Tổng vào: <b class="text-gold">${formatVND(match.totalBuyCost)}</b> (${match.totalSlots} slot)</span>
             <span>Hoa hậu: <b class="text-green">${formatVND(match.totalPrizeWon)}</b></span>
             <span>Mỹ phẩm kèm: <b class="text-accent">${formatVND(attachedTotalCost)}</b></span>
-            <span>Số dư riêng Bàn kèo: <b>${formatVND(match.netAmount)}</b></span>
+            <span>Tổng ghế: <b>${formatVND(match.netAmount)}</b></span>
           </div>
           <div class="mt-2" style="width: 100%;">
             <span class="text-xs text-muted font-bold uppercase">CHI TIẾT CÁC MENU & CHUYẾN KHÁCH ĐÃ VÀO:</span>
